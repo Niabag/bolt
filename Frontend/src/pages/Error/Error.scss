@@ -1,0 +1,39 @@
+@import '../../utils/styles/colors.scss';
+
+.styled-link-erorr{
+    color: $primary;
+    font-weight: 500;
+    font-size: 18px;
+    margin-bottom: 180px;
+}
+
+.num-erorr{
+    color: $primary;
+    font-size: 288px;
+    font-weight: 700;
+    margin-top: 100px;
+    margin-bottom: 0px;
+    @media (max-width: 1080px) { 
+      font-size: 96px;
+     }
+}
+
+.description-erorr{
+    color: $primary;
+    font-weight: 500;
+  font-size: 36px;
+  margin-bottom: 120px;
+  @media (max-width: 1080px) { 
+      width: 275px;
+      font-size: 25px;
+      flex-wrap: wrap;
+      text-align: center;
+     }
+}
+
+.container-erorr{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}

@@ -1,0 +1,570 @@
+/* Design professionnel pour l'aperçu du devis */
+
+.devis-preview {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: white;
+  color: #000;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* Barre d'outils */
+.preview-toolbar {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+}
+
+.toolbar-btn {
+  border: none;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  font-size: 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 150px;
+  justify-content: center;
+}
+
+.add-btn {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+}
+
+.reset-btn {
+  background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+}
+
+.pdf-btn {
+  background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+}
+
+.toolbar-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* Contenu principal */
+.preview-content {
+  background: white;
+  padding: 3rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  margin: 1rem 0;
+  min-height: 800px;
+}
+
+/* En-tête du document */
+.document-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 3rem;
+  padding-bottom: 2rem;
+  border-bottom: 3px solid #e2e8f0;
+}
+
+.logo-section {
+  flex: 1;
+}
+
+.company-logo {
+  max-width: 200px;
+  max-height: 100px;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.logo-upload-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 200px;
+  height: 100px;
+  border: 2px dashed #cbd5e0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  color: #718096;
+  text-align: center;
+  padding: 1rem;
+}
+
+.logo-upload-area:hover {
+  border-color: #667eea;
+  background: linear-gradient(135deg, #edf2f7 0%, #e2e8f0 100%);
+  color: #667eea;
+}
+
+.document-title {
+  flex: 1;
+  text-align: right;
+}
+
+.document-title h1 {
+  font-size: 3rem;
+  font-weight: 700;
+  margin: 0;
+  color: #2d3748;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+  letter-spacing: 2px;
+}
+
+/* Informations des parties */
+.parties-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  margin-bottom: 3rem;
+}
+
+.entreprise-section,
+.client-section {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 2rem;
+  border-radius: 12px;
+  border-left: 4px solid #667eea;
+}
+
+.entreprise-section h3,
+.client-section h3 {
+  margin: 0 0 1.5rem 0;
+  color: #2d3748;
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.info-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.company-name,
+.client-name {
+  font-weight: 600 !important;
+  font-size: 1.1rem !important;
+  color: #2d3748 !important;
+}
+
+/* ✅ NOUVEAU: Style pour le champ d'adresse client */
+.client-address {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px dashed #cbd5e0 !important;
+  border-radius: 8px !important;
+  padding: 0.75rem !important;
+  font-size: 0.9rem !important;
+  line-height: 1.5 !important;
+  transition: all 0.3s ease !important;
+  white-space: pre-line !important; /* Permet les retours à la ligne */
+}
+
+.client-address:focus {
+  border-color: #667eea !important;
+  background: white !important;
+  outline: none !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2) !important;
+}
+
+.client-address:hover {
+  border-color: #a0aec0 !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+}
+
+/* Métadonnées du devis */
+.devis-metadata {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 3rem;
+}
+
+.metadata-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.metadata-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.metadata-item label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.devis-number,
+.client-id {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+/* Section prestations */
+.prestations-section {
+  margin-bottom: 3rem;
+}
+
+.prestations-section h3 {
+  margin: 0 0 1.5rem 0;
+  color: #2d3748;
+  font-size: 1.3rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 0.5rem;
+}
+
+.prestations-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.prestations-table th {
+  background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+  color: white;
+  padding: 1rem 0.75rem;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.prestations-table td {
+  padding: 1rem 0.75rem;
+  text-align: center;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: middle;
+}
+
+.prestations-table tbody tr {
+  transition: all 0.3s ease;
+}
+
+.prestations-table tbody tr:hover {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.prestations-table tbody tr:nth-child(even) {
+  background: #f8f9fa;
+}
+
+.description-cell {
+  text-align: left !important;
+  max-width: 300px;
+}
+
+.total-cell {
+  font-weight: 600;
+  color: #48bb78;
+}
+
+/* Champs éditables */
+.editable-input {
+  width: 100%;
+  border: 1px dashed #cbd5e0;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.editable-input:focus {
+  border-color: #667eea;
+  background: white;
+  outline: none;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+}
+
+.editable-input:hover {
+  border-color: #a0aec0;
+  background: rgba(255, 255, 255, 0.95);
+}
+
+/* Sélecteur TVA */
+.tva-text-only {
+  display: none;
+}
+
+.tva-select {
+  width: 70px;
+  border: 1px dashed #cbd5e0;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 0.5rem;
+  text-align: center;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.tva-select:focus {
+  border-color: #667eea;
+  background: white;
+  outline: none;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+}
+
+/* Bouton suppression */
+.remove-article-btn {
+  background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+  color: white;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+}
+
+.remove-article-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 15px rgba(245, 101, 101, 0.3);
+}
+
+.actions-column {
+  width: 80px;
+}
+
+/* Section totaux */
+.totaux-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.totaux-detail h4 {
+  margin: 0 0 1rem 0;
+  color: #2d3748;
+  font-weight: 600;
+}
+
+.tva-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.tva-table th {
+  background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+  color: white;
+  padding: 0.75rem;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.tva-table td {
+  padding: 0.75rem;
+  text-align: center;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.totaux-finaux {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-self: end;
+}
+
+.total-line {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.final-total {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  color: white;
+  font-weight: 700;
+  font-size: 1.1rem;
+  box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
+}
+
+/* Conditions et signature */
+.conditions-section {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 2rem;
+  border-radius: 12px;
+  border-left: 4px solid #667eea;
+}
+
+.conditions-text {
+  margin-bottom: 2rem;
+}
+
+.conditions-text p {
+  margin: 0.5rem 0;
+  color: #4a5568;
+  line-height: 1.6;
+}
+
+.signature-area {
+  text-align: center;
+}
+
+.signature-instruction {
+  font-style: italic;
+  color: #718096;
+  margin-bottom: 2rem;
+}
+
+.signature-box {
+  display: flex;
+  justify-content: space-around;
+  gap: 2rem;
+}
+
+.signature-line {
+  flex: 1;
+  padding: 1rem;
+  border-bottom: 2px solid #2d3748;
+  color: #4a5568;
+  font-weight: 500;
+}
+
+/* Mode PDF - Masquer les éléments d'édition */
+.pdf-mode .editable-input,
+.pdf-mode .tva-select,
+.pdf-mode .logo-upload-area {
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.pdf-mode .tva-select {
+  display: none !important;
+}
+
+.pdf-mode .tva-text-only {
+  display: inline !important;
+}
+
+.pdf-mode .remove-article-btn {
+  display: none !important;
+}
+
+.pdf-mode .actions-column {
+  display: none !important;
+}
+
+.pdf-mode .prestations-table th:last-child {
+  display: none !important;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .preview-content {
+    padding: 1.5rem;
+  }
+  
+  .document-header {
+    flex-direction: column;
+    gap: 2rem;
+    text-align: center;
+  }
+  
+  .parties-info {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  
+  .metadata-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .prestations-table {
+    font-size: 12px;
+  }
+  
+  .prestations-table th,
+  .prestations-table td {
+    padding: 0.5rem 0.25rem;
+  }
+  
+  .totaux-section {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .signature-box {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .document-title h1 {
+    font-size: 2rem;
+  }
+
+  /* ✅ NOUVEAU: Responsive pour le champ d'adresse */
+  .client-address {
+    min-height: 60px !important;
+    font-size: 0.8rem !important;
+  }
+}
+
+/* Animations */
+@keyframes slideInFromTop {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.preview-content {
+  animation: slideInFromTop 0.5s ease-out;
+}
+
+/* Effets de focus */
+.editable-input:focus {
+  animation: focusPulse 0.3s ease-out;
+}
+
+@keyframes focusPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}

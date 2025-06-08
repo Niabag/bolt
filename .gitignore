@@ -1,0 +1,48 @@
+# Variables d'environnement (IMPORTANT: Ne jamais commiter ces fichiers)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Dépendances
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Logs
+logs
+*.log
+
+# Fichiers temporaires
+.tmp/
+temp/
+
+# Fichiers de build
+dist/
+build/
+
+# Fichiers de cache
+.cache/
+.parcel-cache/
+
+# Fichiers IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+
+# Vercel
+.vercel
+
+# Fichiers de base de données locaux
+*.db
+*.sqlite
+*.sqlite3

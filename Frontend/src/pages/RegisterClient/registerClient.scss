@@ -1,0 +1,499 @@
+.register-client-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.register-form {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.register-form h2 {
+  text-align: center;
+  color: #2d3748;
+  margin: 0 0 10px 0;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.form-subtitle {
+  text-align: center;
+  color: #718096;
+  margin: 0 0 30px 0;
+  font-size: 1rem;
+}
+
+/* ✅ NOUVEAU: Container pour chargement */
+.loading-container {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  width: 100%;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.loading-message h2 {
+  color: #2d3748;
+  margin: 0 0 20px 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.loading-message p {
+  color: #718096;
+  margin: 0;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+/* Container pour aucune action */
+.no-actions-container {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  width: 100%;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.no-actions-message h2 {
+  color: #2d3748;
+  margin: 0 0 20px 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.no-actions-message p {
+  color: #718096;
+  margin: 0 0 30px 0;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+/* Container pour téléchargement uniquement */
+.download-only-container {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  width: 100%;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.download-message h2 {
+  color: #2d3748;
+  margin: 0 0 20px 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.download-message p {
+  color: #718096;
+  margin: 0 0 30px 0;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+/* ✅ NOUVEAU: Liste des actions */
+.actions-list {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 25px;
+  text-align: left;
+}
+
+.actions-list h3 {
+  color: #2d3748;
+  margin: 0 0 15px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.actions-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.actions-list li {
+  background: white;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+  font-weight: 500;
+  color: #2d3748;
+}
+
+.actions-list li:last-child {
+  margin-bottom: 0;
+}
+
+/* Container pour actions terminées */
+.actions-completed {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  width: 100%;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.completion-message h2 {
+  color: #2d3748;
+  margin: 0 0 20px 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.completion-message p {
+  color: #718096;
+  margin: 0 0 30px 0;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.redirect-info {
+  background: linear-gradient(135deg, #bee3f8 0%, #90cdf4 100%);
+  color: #2b6cb0;
+  padding: 1rem;
+  border-radius: 12px;
+  margin: 20px 0;
+  border: 1px solid #63b3ed;
+  font-weight: 500;
+}
+
+.redirect-info p {
+  margin: 0;
+  color: #2b6cb0;
+}
+
+/* Section de téléchargement manuel */
+.manual-download-section {
+  background: linear-gradient(135deg, #e6fffa 0%, #b2f5ea 100%);
+  border: 2px solid #38b2ac;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 25px;
+  text-align: center;
+}
+
+.manual-download-btn {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 auto 0.75rem auto;
+  box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
+}
+
+.manual-download-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(72, 187, 120, 0.4);
+}
+
+.manual-download-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.download-help {
+  margin: 0;
+  color: #2d3748;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Notice de redirection */
+.redirect-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #bee3f8 0%, #90cdf4 100%);
+  color: #2b6cb0;
+  padding: 1rem;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  border: 1px solid #63b3ed;
+  font-weight: 500;
+  text-align: center;
+  justify-content: center;
+}
+
+.redirect-icon {
+  font-size: 1.2rem;
+}
+
+/* Sections du formulaire */
+.form-section {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.form-section:last-of-type {
+  border-bottom: none;
+  margin-bottom: 20px;
+}
+
+.form-section h3 {
+  color: #4a5568;
+  margin: 0 0 15px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Ligne avec deux champs */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.register-form input,
+.register-form textarea {
+  width: 100%;
+  padding: 15px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  background: #f8f9fa;
+  box-sizing: border-box;
+  margin-bottom: 15px;
+}
+
+.register-form input:focus,
+.register-form textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  transform: translateY(-1px);
+}
+
+.register-form textarea {
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 15px;
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 15px;
+}
+
+.submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(72, 187, 120, 0.3);
+}
+
+.submit-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.form-footer {
+  text-align: center;
+  color: #718096;
+  font-size: 0.9rem;
+  margin: 0;
+  font-style: italic;
+}
+
+.error-message {
+  background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
+  color: #c53030;
+  padding: 15px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  text-align: center;
+  font-weight: 500;
+  border: 1px solid #f5c6cb;
+}
+
+.success-message {
+  background: linear-gradient(135deg, #c6f6d5 0%, #9ae6b4 100%);
+  color: #22543d;
+  padding: 15px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  text-align: center;
+  font-weight: 500;
+  border: 1px solid #c3e6cb;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .register-client-container {
+    padding: 15px;
+  }
+  
+  .register-form,
+  .download-only-container,
+  .actions-completed,
+  .no-actions-container,
+  .loading-container {
+    padding: 30px 20px;
+  }
+  
+  .register-form h2,
+  .download-message h2,
+  .completion-message h2,
+  .no-actions-message h2,
+  .loading-message h2 {
+    font-size: 1.5rem;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  
+  .register-form input,
+  .register-form textarea {
+    padding: 12px;
+    font-size: 16px;
+  }
+  
+  .submit-btn {
+    padding: 12px;
+    font-size: 16px;
+  }
+
+  .manual-download-btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+  }
+
+  .manual-download-section {
+    padding: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .register-form,
+  .download-only-container,
+  .actions-completed,
+  .no-actions-container,
+  .loading-container {
+    padding: 25px 15px;
+  }
+  
+  .register-form h2,
+  .download-message h2,
+  .completion-message h2,
+  .no-actions-message h2,
+  .loading-message h2 {
+    font-size: 1.3rem;
+  }
+  
+  .form-section h3 {
+    font-size: 1rem;
+  }
+
+  .manual-download-btn {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.register-form,
+.download-only-container,
+.actions-completed,
+.no-actions-container,
+.loading-container {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.redirect-notice,
+.manual-download-section {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+/* Animation pour le bouton de téléchargement */
+.manual-download-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.manual-download-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.manual-download-btn:hover::before {
+  left: 100%;
+}
