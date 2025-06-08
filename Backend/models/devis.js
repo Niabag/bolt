@@ -15,6 +15,7 @@ const devisSchema = new mongoose.Schema({
     default: 'nouveau' 
   },
   tvaRate: Number,
+  dateValidite: String,
   dateDevis: String,
   entrepriseName: String,
   entrepriseEmail: String,

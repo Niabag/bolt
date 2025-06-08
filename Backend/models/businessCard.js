@@ -1,10 +1,4 @@
 const mongoose = require("mongoose");
-// explain this file
-
-
-
-
-
 
 // ✅ SCHÉMA CORRIGÉ: Définition plus flexible pour les actions
 const actionSchema = new mongoose.Schema({
