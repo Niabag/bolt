@@ -1,4 +1,3 @@
-// Frontend/src/pages/RegisterClient/Index.jsx
 import { useState, useEffect, useRef } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { API_ENDPOINTS, apiRequest } from "../../config/api";
@@ -30,6 +29,7 @@ const RegisterClient = () => {
   const [actionsCompleted, setActionsCompleted] = useState(false);
   const [hasActions, setHasActions] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [websiteActionTriggered, setWebsiteActionTriggered] = useState(false); // ✅ NOUVEAU
 
   // ✅ CORRECTION MAJEURE: Récupérer les actions avec la nouvelle route publique
   useEffect(() => {
@@ -164,14 +164,10 @@ const RegisterClient = () => {
           case 'website':
             console.log(`🌐 Action de redirection vers: ${action.url}`);
             if (action.url) {
-              let targetUrl = action.url;
-              // ✅ Vérifier si l'URL a déjà un protocole, sinon ajouter https://
-              if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
-                targetUrl = `https://${targetUrl}`;
-              }
-              setTimeout(() => {
-                window.open(targetUrl, '_blank'); // Ouvrir dans un nouvel onglet
-              }, 1000);
+              // ✅ MODIFIÉ: Utilise window.open pour ouvrir dans un nouvel onglet.
+              // Attention: Cela peut être bloqué par les bloqueurs de pop-up si non directement initié par une interaction utilisateur.
+              window.open(action.url, '_blank');
+              setWebsiteActionTriggered(true); // ✅ NOUVEAU: Indique qu'une action de site web a été tentée
             }
             break;
           default:
@@ -186,12 +182,14 @@ const RegisterClient = () => {
     console.log('✅ Toutes les actions ont été exécutées');
     
     // Si pas de formulaire et redirection finale, rediriger après les actions
-    if (!showForm && finalRedirectUrl) {
+    // La redirection automatique de la page actuelle est évitée si une action de site web a été déclenchée,
+    // car l'utilisateur est censé interagir avec le nouvel onglet.
+    if (!showForm && finalRedirectUrl && !websiteActionTriggered) {
       setTimeout(() => {
         console.log('🌐 Redirection automatique vers:', finalRedirectUrl);
         window.location.href = finalRedirectUrl;
       }, 3000);
-    } else if (!showForm && !finalRedirectUrl) {
+    } else if (!showForm && !finalRedirectUrl && !websiteActionTriggered) {
       setTimeout(() => {
         console.log('🌐 Redirection par défaut vers Google');
         window.location.href = 'https://google.com';
