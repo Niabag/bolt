@@ -1,7 +1,7 @@
-import express from 'express';
-import { Client } from '../models/Client.js';
-import { Service } from '../models/Service.js';
-import { Appointment } from '../models/Appointment.js';
+const express = require('express');
+const Client = require('../models/client');
+const Service = require('../models/Service');
+const Appointment = require('../models/Appointment');
 
 const router = express.Router();
 
@@ -118,4 +118,4 @@ router.get('/period/:period', async (req, res) => {
   }
 });
 
-export default router;
+module.exports = router;

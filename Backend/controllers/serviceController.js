@@ -1,8 +1,8 @@
-import { Service } from '../models/Service.js';
-import { Appointment } from '../models/Appointment.js';
+const Service = require('../models/Service');
+const Appointment = require('../models/Appointment');
 
 // Récupérer tous les services
-export const getAllServices = async (req, res) => {
+exports.getAllServices = async (req, res) => {
   try {
     const services = await Service.find().sort({ createdAt: -1 });
     res.json(services);
@@ -13,7 +13,7 @@ export const getAllServices = async (req, res) => {
 };
 
 // Récupérer un service par ID
-export const getServiceById = async (req, res) => {
+exports.getServiceById = async (req, res) => {
   try {
     const service = await Service.findById(req.params.id);
     if (!service) {
@@ -27,7 +27,7 @@ export const getServiceById = async (req, res) => {
 };
 
 // Créer un nouveau service
-export const createService = async (req, res) => {
+exports.createService = async (req, res) => {
   try {
     const service = new Service(req.body);
     await service.save();
@@ -44,7 +44,7 @@ export const createService = async (req, res) => {
 };
 
 // Mettre à jour un service
-export const updateService = async (req, res) => {
+exports.updateService = async (req, res) => {
   try {
     const service = await Service.findByIdAndUpdate(
       req.params.id,
@@ -67,7 +67,7 @@ export const updateService = async (req, res) => {
 };
 
 // Supprimer un service
-export const deleteService = async (req, res) => {
+exports.deleteService = async (req, res) => {
   try {
     const service = await Service.findByIdAndDelete(req.params.id);
     if (!service) {
@@ -89,7 +89,7 @@ export const deleteService = async (req, res) => {
 };
 
 // Rechercher des services
-export const searchServices = async (req, res) => {
+exports.searchServices = async (req, res) => {
   try {
     const { q } = req.query;
     if (!q) {
