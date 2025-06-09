@@ -1,5 +1,5 @@
-# CRM Application
-
+# CRM Application.
+t
 Une application CRM complète avec gestion des clients et génération de devis.
 
 ## 🚀 Fonctionnalités
