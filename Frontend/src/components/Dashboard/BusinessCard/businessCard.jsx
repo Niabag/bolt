@@ -16,21 +16,8 @@ const BusinessCard = ({ userId, user }) => {
   const [loading, setLoading] = useState(false);
   const [savedCardData, setSavedCardData] = useState(null);
   
-  // États pour la gestion des actions
-  const [showActionsModal, setShowActionsModal] = useState(false);
-  const [editingAction, setEditingAction] = useState(null);
-  const [newAction, setNewAction] = useState({
-    type: 'form',
-    file: 'carte-apercu',
-    url: '',
-    delay: 1000,
-    active: true,
-    order: 1
-  });
-  
-  // ✅ NOUVEAU: États pour les schémas prédéfinis
+  // ✅ NOUVEAU: États pour les schémas prédéfinis uniquement
   const [showSchemasModal, setShowSchemasModal] = useState(false);
-  const [selectedSchema, setSelectedSchema] = useState('');
   
   const [stats, setStats] = useState({
     scansToday: 0,
@@ -114,19 +101,6 @@ const BusinessCard = ({ userId, user }) => {
       generateQRCode();
     }
   }, [cardConfig.actions, userId]);
-
-  // ✅ NOUVEAU: Calculer automatiquement l'ordre pour les nouvelles actions
-  useEffect(() => {
-    if (showActionsModal && !editingAction) {
-      const nextOrder = cardConfig.actions.length + 1;
-      const defaultDelay = nextOrder * 1000;
-      setNewAction(prev => ({
-        ...prev,
-        delay: defaultDelay,
-        order: nextOrder
-      }));
-    }
-  }, [showActionsModal, editingAction, cardConfig.actions.length]);
 
   const loadSavedBusinessCard = async () => {
     try {
@@ -225,7 +199,6 @@ const BusinessCard = ({ userId, user }) => {
     const actionsWithIds = schema.actions.map((action, index) => ({
       ...action,
       id: Date.now() + index,
-      // Assurer que l'ordre et le délai sont corrects
       order: action.order || (index + 1),
       delay: action.delay || ((index + 1) * 1000)
     }));
@@ -260,46 +233,10 @@ const BusinessCard = ({ userId, user }) => {
     showSuccessMessage('✅ Toutes les actions ont été supprimées');
   };
 
-  const handleAddAction = () => {
-    const actionToAdd = {
-      ...newAction,
-      id: Date.now(),
-      delay: newAction.delay,
-      order: newAction.order
-    };
-    
-    const updatedConfig = {
-      ...cardConfig,
-      actions: [...cardConfig.actions, actionToAdd]
-    };
-    
-    setCardConfig(updatedConfig);
-    saveBusinessCardToDB(null, updatedConfig);
-    
-    // Réinitialiser avec le délai par défaut pour la prochaine action
-    const nextDefaultDelay = (updatedConfig.actions.length + 1) * 1000;
-    const nextOrder = updatedConfig.actions.length + 1;
-    setNewAction({
-      type: 'form',
-      file: 'carte-apercu',
-      url: '',
-      delay: nextDefaultDelay,
-      order: nextOrder,
-      active: true
-    });
-    
-    setShowActionsModal(false);
-  };
-
-  const handleEditAction = (action) => {
-    setEditingAction(action);
-    setNewAction({ ...action });
-    setShowActionsModal(true);
-  };
-
-  const handleSaveEditAction = () => {
+  // ✅ FONCTION SIMPLIFIÉE: Modifier l'URL d'un schéma
+  const handleEditSchemaUrl = async (actionId, newUrl) => {
     const updatedActions = cardConfig.actions.map(action =>
-      action.id === editingAction.id ? { ...newAction } : action
+      action.id === actionId ? { ...action, url: newUrl } : action
     );
     
     const updatedConfig = {
@@ -308,77 +245,9 @@ const BusinessCard = ({ userId, user }) => {
     };
     
     setCardConfig(updatedConfig);
-    saveBusinessCardToDB(null, updatedConfig);
+    await saveBusinessCardToDB(null, updatedConfig);
     
-    setEditingAction(null);
-    setNewAction({
-      type: 'form',
-      file: 'carte-apercu',
-      url: '',
-      delay: 1000,
-      order: 1,
-      active: true
-    });
-    setShowActionsModal(false);
-  };
-
-  const handleDeleteAction = (actionId) => {
-    const updatedActions = cardConfig.actions.filter(action => action.id !== actionId);
-    
-    // Recalculer les ordres et délais
-    const actionsWithUpdatedOrder = updatedActions.map((action, index) => ({
-      ...action,
-      order: index + 1,
-      delay: (index + 1) * 1000
-    }));
-    
-    const updatedConfig = {
-      ...cardConfig,
-      actions: actionsWithUpdatedOrder
-    };
-    
-    setCardConfig(updatedConfig);
-    saveBusinessCardToDB(null, updatedConfig);
-  };
-
-  const handleMoveAction = (actionId, direction) => {
-    const actions = [...cardConfig.actions];
-    const currentIndex = actions.findIndex(action => action.id === actionId);
-    
-    if (direction === 'up' && currentIndex > 0) {
-      [actions[currentIndex], actions[currentIndex - 1]] = [actions[currentIndex - 1], actions[currentIndex]];
-    } else if (direction === 'down' && currentIndex < actions.length - 1) {
-      [actions[currentIndex], actions[currentIndex + 1]] = [actions[currentIndex + 1], actions[currentIndex]];
-    }
-    
-    // Recalculer les ordres et délais
-    const actionsWithUpdatedOrder = actions.map((action, index) => ({
-      ...action,
-      order: index + 1,
-      delay: (index + 1) * 1000
-    }));
-    
-    const updatedConfig = {
-      ...cardConfig,
-      actions: actionsWithUpdatedOrder
-    };
-    
-    setCardConfig(updatedConfig);
-    saveBusinessCardToDB(null, updatedConfig);
-  };
-
-  const handleToggleAction = (actionId) => {
-    const updatedActions = cardConfig.actions.map(action =>
-      action.id === actionId ? { ...action, active: !action.active } : action
-    );
-    
-    const updatedConfig = {
-      ...cardConfig,
-      actions: updatedActions
-    };
-    
-    setCardConfig(updatedConfig);
-    saveBusinessCardToDB(null, updatedConfig);
+    showSuccessMessage('✅ URL mise à jour');
   };
 
   const saveBusinessCardToDB = async (cardImage = null, config = null) => {
@@ -886,9 +755,9 @@ const BusinessCard = ({ userId, user }) => {
 
           {/* ✅ NOUVELLE SECTION: Schémas prédéfinis */}
           <div className="config-section">
-            <h3>🎯 Schémas d'actions prédéfinis</h3>
+            <h3>🎯 Schémas d'actions</h3>
             <p className="section-description">
-              Choisissez un schéma prêt à l'emploi pour configurer rapidement vos actions
+              Choisissez un schéma prêt à l'emploi pour configurer l'ordre des actions
             </p>
 
             <div className="schemas-actions">
@@ -923,92 +792,26 @@ const BusinessCard = ({ userId, user }) => {
                       </span>
                     ))}
                 </div>
+                
+                {/* ✅ NOUVEAU: Édition rapide des URLs */}
+                <div className="schema-edit-section">
+                  {cardConfig.actions
+                    .filter(action => action.type === 'website')
+                    .map(action => (
+                      <div key={action.id} className="url-edit-group">
+                        <label>🌐 URL du site web :</label>
+                        <input
+                          type="url"
+                          value={action.url || ''}
+                          onChange={(e) => handleEditSchemaUrl(action.id, e.target.value)}
+                          placeholder="https://www.exemple.com"
+                          className="url-edit-input"
+                        />
+                      </div>
+                    ))}
+                </div>
               </div>
             )}
-          </div>
-
-          {/* Section: Gestion des actions */}
-          <div className="config-section">
-            <h3>🎬 Actions personnalisées</h3>
-            <p className="section-description">
-              Configurez manuellement les actions qui se déclenchent lors du scan
-            </p>
-
-            {/* Liste des actions existantes */}
-            <div className="actions-list">
-              {cardConfig.actions.length === 0 ? (
-                <div className="no-actions">
-                  <p>Aucune action configurée</p>
-                  <p className="no-actions-hint">Utilisez un schéma prédéfini ou ajoutez des actions manuellement</p>
-                </div>
-              ) : (
-                cardConfig.actions
-                  .sort((a, b) => (a.order || 1) - (b.order || 1))
-                  .map((action, index) => (
-                    <div key={action.id} className={`action-item ${action.active ? 'active' : 'inactive'}`}>
-                      <div className="action-order">#{action.order || (index + 1)}</div>
-                      <div className="action-icon">{getActionIcon(action.type)}</div>
-                      <div className="action-content">
-                        <div className="action-title">
-                          {getActionLabel(action.type)}
-                          {action.delay > 0 && <span className="action-delay">+{action.delay}ms</span>}
-                        </div>
-                        <div className="action-details">
-                          {action.type === 'download' && getFileDisplayName(action.file)}
-                          {action.type === 'website' && action.url}
-                          {action.type === 'form' && 'Formulaire d\'inscription'}
-                        </div>
-                      </div>
-                      <div className="action-controls">
-                        <button 
-                          onClick={() => handleMoveAction(action.id, 'up')}
-                          disabled={index === 0}
-                          className="move-btn"
-                          title="Monter"
-                        >
-                          ↑
-                        </button>
-                        <button 
-                          onClick={() => handleMoveAction(action.id, 'down')}
-                          disabled={index === cardConfig.actions.length - 1}
-                          className="move-btn"
-                          title="Descendre"
-                        >
-                          ↓
-                        </button>
-                        <button 
-                          onClick={() => handleToggleAction(action.id)}
-                          className={`toggle-btn ${action.active ? 'active' : 'inactive'}`}
-                          title={action.active ? 'Désactiver' : 'Activer'}
-                        >
-                          {action.active ? '👁️' : '👁️‍🗨️'}
-                        </button>
-                        <button 
-                          onClick={() => handleEditAction(action)}
-                          className="edit-btn"
-                          title="Modifier"
-                        >
-                          ✏️
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteAction(action.id)}
-                          className="delete-btn"
-                          title="Supprimer"
-                        >
-                          🗑️
-                        </button>
-                      </div>
-                    </div>
-                  ))
-              )}
-            </div>
-
-            <button 
-              onClick={() => setShowActionsModal(true)}
-              className="add-action-btn"
-            >
-              ➕ Ajouter une action manuelle
-            </button>
           </div>
         </div>
 
@@ -1160,126 +963,6 @@ const BusinessCard = ({ userId, user }) => {
                 className="btn-cancel"
               >
                 Annuler
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal de gestion des actions manuelles */}
-      {showActionsModal && (
-        <div className="modal-overlay" onClick={() => setShowActionsModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>{editingAction ? 'Modifier l\'action' : 'Ajouter une action'}</h3>
-              <button 
-                onClick={() => setShowActionsModal(false)}
-                className="modal-close"
-              >
-                ✕
-              </button>
-            </div>
-            
-            <div className="modal-body">
-              <div className="form-group">
-                <label>Type d'action :</label>
-                <select
-                  value={newAction.type}
-                  onChange={(e) => setNewAction(prev => ({ ...prev, type: e.target.value }))}
-                >
-                  <option value="form">📝 Formulaire</option>
-                  <option value="download">📥 Téléchargement</option>
-                  <option value="website">🌐 Site web</option>
-                </select>
-              </div>
-
-              {newAction.type === 'download' && (
-                <div className="form-group">
-                  <label>Fichier à télécharger :</label>
-                  <div className="file-display-container">
-                    <div className="file-display-field">
-                      {getFileDisplayName(newAction.file)}
-                    </div>
-                    <small className="file-help-text">
-                      ✅ La carte de visite sera générée automatiquement avec votre design et QR code
-                    </small>
-                  </div>
-                </div>
-              )}
-
-              {newAction.type === 'website' && (
-                <div className="form-group">
-                  <label>URL de destination :</label>
-                  <input
-                    type="url"
-                    value={newAction.url}
-                    onChange={(e) => {
-                      let url = e.target.value;
-                      if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
-                        url = 'https://' + url;
-                      }
-                      setNewAction(prev => ({ ...prev, url }));
-                    }}
-                    placeholder="www.exemple.com"
-                  />
-                  <small>Le QR code redirigera vers le site web spécifié</small>
-                </div>
-              )}
-
-              <div className="form-group">
-                <label>Ordre d'exécution :</label>
-                <input
-                  type="number"
-                  value={newAction.order}
-                  onChange={(e) => {
-                    const order = parseInt(e.target.value) || 1;
-                    const delay = order * 1000;
-                    setNewAction(prev => ({ 
-                      ...prev, 
-                      order: order,
-                      delay: delay
-                    }));
-                  }}
-                  min="1"
-                />
-                <small>Position dans la séquence (1 = premier, 2 = deuxième, etc.)</small>
-              </div>
-
-              <div className="form-group">
-                <label>Délai d'exécution :</label>
-                <input
-                  type="number"
-                  value={newAction.delay}
-                  readOnly
-                  className="delay-readonly"
-                />
-                <small>Calculé automatiquement : {newAction.order} × 1000ms = {newAction.delay}ms</small>
-              </div>
-
-              <div className="form-group">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={newAction.active}
-                    onChange={(e) => setNewAction(prev => ({ ...prev, active: e.target.checked }))}
-                  />
-                  Action active
-                </label>
-              </div>
-            </div>
-            
-            <div className="modal-footer">
-              <button 
-                onClick={() => setShowActionsModal(false)}
-                className="btn-cancel"
-              >
-                Annuler
-              </button>
-              <button 
-                onClick={editingAction ? handleSaveEditAction : handleAddAction}
-                className="btn-save"
-              >
-                {editingAction ? 'Modifier' : 'Ajouter'}
               </button>
             </div>
           </div>
