@@ -22,10 +22,10 @@ const RegisterClient = () => {
   const [error, setError] = useState('');
   const [businessCard, setBusinessCard] = useState(null);
   const [executionStatus, setExecutionStatus] = useState([]);
-  const [currentActionIndex, setCurrentActionIndex] = useState(0);
   const [showForm, setShowForm] = useState(false);
   const [pendingActions, setPendingActions] = useState([]);
   const [hasRedirectedFromWebsite, setHasRedirectedFromWebsite] = useState(false);
+  const [schemaType, setSchemaType] = useState('');
 
   useEffect(() => {
     if (userId) {
@@ -40,12 +40,14 @@ const RegisterClient = () => {
   const checkRedirectionSource = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const fromWebsite = urlParams.get('from') === 'website' || 
+                       urlParams.get('from') === 'qr' ||
                        document.referrer.includes('votre-site.com') ||
                        sessionStorage.getItem('redirectedFromWebsite') === 'true';
     
     if (fromWebsite) {
       setHasRedirectedFromWebsite(true);
       sessionStorage.setItem('redirectedFromWebsite', 'true');
+      console.log('✅ Détection: Retour depuis le site web');
     }
   };
 
@@ -58,7 +60,8 @@ const RegisterClient = () => {
       if (response && response.cardConfig && response.cardConfig.actions) {
         await executeActions(response.cardConfig.actions);
       } else {
-        console.log('Aucune action configurée');
+        console.log('Aucune action configurée - Affichage du formulaire par défaut');
+        setShowForm(true);
         setLoading(false);
       }
     } catch (error) {
@@ -70,30 +73,111 @@ const RegisterClient = () => {
 
   const executeActions = async (actions) => {
     if (!actions || actions.length === 0) {
+      console.log('Aucune action - Formulaire par défaut');
+      setShowForm(true);
       setLoading(false);
       return;
     }
 
-    const sortedActions = actions
-      .filter(action => action.active)
-      .sort((a, b) => (a.order || 1) - (b.order || 1));
+    const activeActions = actions.filter(action => action.active);
+    const sortedActions = activeActions.sort((a, b) => (a.order || 1) - (b.order || 1));
 
-    console.log('🎯 Actions à exécuter:', sortedActions);
+    console.log('🎯 Actions actives à exécuter:', sortedActions);
 
     if (sortedActions.length === 0) {
+      console.log('Aucune action active - Formulaire par défaut');
+      setShowForm(true);
       setLoading(false);
       return;
     }
 
-    // ✅ LOGIQUE CORRIGÉE: Vérifier le type de schéma
-    const hasWebsiteAction = sortedActions.some(action => action.type === 'website');
-    const hasFormAction = sortedActions.some(action => action.type === 'form');
-    
-    // ✅ CAS 1: Schéma "Site Web Direct" (website uniquement)
-    if (hasWebsiteAction && !hasFormAction) {
-      console.log('🌐 Schéma: Site Web Direct - Redirection immédiate');
-      const websiteAction = sortedActions.find(action => action.type === 'website');
+    // ✅ DÉTECTION DU TYPE DE SCHÉMA
+    const hasWebsite = sortedActions.some(a => a.type === 'website');
+    const hasForm = sortedActions.some(a => a.type === 'form');
+    const hasDownload = sortedActions.some(a => a.type === 'download');
+
+    let detectedSchema = '';
+    if (hasWebsite && !hasForm && !hasDownload) {
+      detectedSchema = 'website-only';
+    } else if (hasWebsite && hasForm && !hasDownload) {
+      detectedSchema = 'lead-generation';
+    } else if (!hasWebsite && hasForm && hasDownload) {
+      detectedSchema = 'contact-download';
+    } else if (hasWebsite && hasForm && hasDownload) {
+      detectedSchema = 'complete-funnel';
+    } else if (!hasWebsite && hasForm && !hasDownload) {
+      detectedSchema = 'contact-only';
+    } else if (!hasWebsite && !hasForm && hasDownload) {
+      detectedSchema = 'card-download';
+    } else {
+      detectedSchema = 'custom';
+    }
+
+    setSchemaType(detectedSchema);
+    console.log(`📋 Schéma détecté: ${detectedSchema}`);
+
+    // ✅ EXÉCUTION SELON LE SCHÉMA
+    switch (detectedSchema) {
+      case 'website-only':
+        await executeWebsiteOnlySchema(sortedActions);
+        break;
       
+      case 'lead-generation':
+        await executeLeadGenerationSchema(sortedActions);
+        break;
+      
+      case 'contact-download':
+        await executeContactDownloadSchema(sortedActions);
+        break;
+      
+      case 'complete-funnel':
+        await executeCompleteFunnelSchema(sortedActions);
+        break;
+      
+      case 'contact-only':
+        await executeContactOnlySchema(sortedActions);
+        break;
+      
+      case 'card-download':
+        await executeCardDownloadSchema(sortedActions);
+        break;
+      
+      default:
+        await executeCustomSchema(sortedActions);
+        break;
+    }
+
+    setLoading(false);
+  };
+
+  // ✅ SCHÉMA 1: Site Web Direct (website uniquement)
+  const executeWebsiteOnlySchema = async (actions) => {
+    console.log('🌐 Exécution: Site Web Direct');
+    const websiteAction = actions.find(a => a.type === 'website');
+    
+    if (websiteAction && websiteAction.url) {
+      setExecutionStatus([{
+        action: 'website',
+        status: 'executing',
+        message: 'Redirection vers le site web en cours...'
+      }]);
+      
+      setTimeout(() => {
+        console.log('🌐 Redirection vers:', websiteAction.url);
+        window.location.href = websiteAction.url;
+      }, 1500);
+    } else {
+      setError('URL du site web non configurée');
+    }
+  };
+
+  // ✅ SCHÉMA 2: Génération de Leads (website → form)
+  const executeLeadGenerationSchema = async (actions) => {
+    console.log('🚀 Exécution: Génération de Leads');
+    
+    if (!hasRedirectedFromWebsite) {
+      // Première visite: redirection vers le site web
+      const websiteAction = actions.find(a => a.type === 'website');
       if (websiteAction && websiteAction.url) {
         setExecutionStatus([{
           action: 'website',
@@ -102,56 +186,130 @@ const RegisterClient = () => {
         }]);
         
         setTimeout(() => {
-          window.location.href = websiteAction.url;
-        }, 1000);
-        
-        setLoading(false);
+          const redirectUrl = new URL(websiteAction.url);
+          redirectUrl.searchParams.set('from', 'qr');
+          redirectUrl.searchParams.set('return', window.location.href);
+          console.log('🌐 Redirection Lead Gen vers:', redirectUrl.toString());
+          window.location.href = redirectUrl.toString();
+        }, 1500);
         return;
       }
+    } else {
+      // Retour du site web: afficher le formulaire
+      console.log('📝 Retour du site web - Affichage du formulaire');
+      setShowForm(true);
+      setExecutionStatus([{
+        action: 'form',
+        status: 'form-shown',
+        message: 'Formulaire de contact affiché'
+      }]);
     }
+  };
 
-    // ✅ CAS 2: Schéma avec formulaire
-    if (hasFormAction) {
-      // Si c'est un schéma qui commence par website ET qu'on n'a pas encore été redirigé
-      if (hasWebsiteAction && !hasRedirectedFromWebsite) {
-        console.log('🌐 Première visite - Redirection vers le site web');
-        const websiteAction = sortedActions.find(action => action.type === 'website');
-        
-        if (websiteAction && websiteAction.url) {
-          setExecutionStatus([{
-            action: 'website',
-            status: 'executing',
-            message: 'Redirection vers le site web...'
-          }]);
-          
-          setTimeout(() => {
-            // Ajouter un paramètre pour indiquer la redirection
-            const redirectUrl = new URL(websiteAction.url);
-            redirectUrl.searchParams.set('from', 'qr');
-            window.location.href = redirectUrl.toString();
-          }, 1000);
-          
-          setLoading(false);
-          return;
-        }
-      } else {
-        // Afficher le formulaire (soit pas de website, soit retour du website)
-        console.log('📝 Affichage du formulaire');
-        setShowForm(true);
-        
-        // Préparer les actions restantes après le formulaire
-        const remainingActions = sortedActions.filter(action => action.type !== 'website' && action.type !== 'form');
-        setPendingActions(remainingActions);
-        
+  // ✅ SCHÉMA 3: Contact → Carte (form → download)
+  const executeContactDownloadSchema = async (actions) => {
+    console.log('📝 Exécution: Contact → Carte');
+    setShowForm(true);
+    
+    const downloadAction = actions.find(a => a.type === 'download');
+    if (downloadAction) {
+      setPendingActions([downloadAction]);
+    }
+    
+    setExecutionStatus([{
+      action: 'form',
+      status: 'form-shown',
+      message: 'Formulaire affiché - Téléchargement après soumission'
+    }]);
+  };
+
+  // ✅ SCHÉMA 4: Tunnel Complet (website → form → download)
+  const executeCompleteFunnelSchema = async (actions) => {
+    console.log('🎯 Exécution: Tunnel Complet');
+    
+    if (!hasRedirectedFromWebsite) {
+      // Première visite: redirection vers le site web
+      const websiteAction = actions.find(a => a.type === 'website');
+      if (websiteAction && websiteAction.url) {
         setExecutionStatus([{
-          action: 'form',
-          status: 'form-shown',
-          message: 'Formulaire affiché - Les actions suivantes s\'exécuteront après soumission'
+          action: 'website',
+          status: 'executing',
+          message: 'Redirection vers le site web...'
         }]);
+        
+        setTimeout(() => {
+          const redirectUrl = new URL(websiteAction.url);
+          redirectUrl.searchParams.set('from', 'qr');
+          redirectUrl.searchParams.set('return', window.location.href);
+          console.log('🌐 Redirection Tunnel Complet vers:', redirectUrl.toString());
+          window.location.href = redirectUrl.toString();
+        }, 1500);
+        return;
       }
+    } else {
+      // Retour du site web: formulaire + téléchargement en attente
+      console.log('📝 Retour du site web - Formulaire + téléchargement en attente');
+      setShowForm(true);
+      
+      const downloadAction = actions.find(a => a.type === 'download');
+      if (downloadAction) {
+        setPendingActions([downloadAction]);
+      }
+      
+      setExecutionStatus([{
+        action: 'form',
+        status: 'form-shown',
+        message: 'Formulaire affiché - Téléchargement après soumission'
+      }]);
     }
+  };
 
-    setLoading(false);
+  // ✅ SCHÉMA 5: Contact Uniquement (form seulement)
+  const executeContactOnlySchema = async (actions) => {
+    console.log('📝 Exécution: Contact Uniquement');
+    setShowForm(true);
+    setExecutionStatus([{
+      action: 'form',
+      status: 'form-shown',
+      message: 'Formulaire de contact affiché'
+    }]);
+  };
+
+  // ✅ SCHÉMA 6: Carte de Visite (download seulement)
+  const executeCardDownloadSchema = async (actions) => {
+    console.log('📥 Exécution: Carte de Visite');
+    const downloadAction = actions.find(a => a.type === 'download');
+    
+    if (downloadAction) {
+      setExecutionStatus([{
+        action: 'download',
+        status: 'executing',
+        message: 'Téléchargement de votre carte de visite...'
+      }]);
+      
+      setTimeout(async () => {
+        await handleDownloadAction(downloadAction);
+      }, 1000);
+    }
+  };
+
+  // ✅ SCHÉMA PERSONNALISÉ
+  const executeCustomSchema = async (actions) => {
+    console.log('🔧 Exécution: Schéma Personnalisé');
+    // Pour les schémas personnalisés, on affiche le formulaire par défaut
+    setShowForm(true);
+    
+    // Préparer toutes les actions non-form en attente
+    const nonFormActions = actions.filter(a => a.type !== 'form');
+    if (nonFormActions.length > 0) {
+      setPendingActions(nonFormActions);
+    }
+    
+    setExecutionStatus([{
+      action: 'custom',
+      status: 'form-shown',
+      message: 'Schéma personnalisé - Formulaire affiché'
+    }]);
   };
 
   const executeRemainingActions = async () => {
@@ -164,6 +322,13 @@ const RegisterClient = () => {
 
       if (action.type === 'download') {
         await handleDownloadAction(action);
+      } else if (action.type === 'website') {
+        window.open(action.url, '_blank');
+        setExecutionStatus(prev => [...prev, {
+          action: 'website',
+          status: 'completed',
+          message: 'Site web ouvert dans un nouvel onglet'
+        }]);
       }
     }
   };
@@ -250,21 +415,16 @@ const RegisterClient = () => {
   };
 
   const getSchemaName = () => {
-    if (!businessCard?.cardConfig?.actions) return 'Configuration par défaut';
-    
-    const actions = businessCard.cardConfig.actions.filter(a => a.active);
-    const hasWebsite = actions.some(a => a.type === 'website');
-    const hasForm = actions.some(a => a.type === 'form');
-    const hasDownload = actions.some(a => a.type === 'download');
-    
-    if (hasWebsite && !hasForm && !hasDownload) return '🌐 Site Web Direct';
-    if (hasWebsite && hasForm && !hasDownload) return '🚀 Génération de Leads';
-    if (!hasWebsite && hasForm && hasDownload) return '📝 Contact → Carte';
-    if (hasWebsite && hasForm && hasDownload) return '🎯 Tunnel Complet';
-    if (!hasWebsite && hasForm && !hasDownload) return '📝 Contact Uniquement';
-    if (!hasWebsite && !hasForm && hasDownload) return '📥 Carte de Visite';
-    
-    return 'Stratégie Personnalisée';
+    switch (schemaType) {
+      case 'website-only': return '🌐 Site Web Direct';
+      case 'lead-generation': return '🚀 Génération de Leads';
+      case 'contact-download': return '📝 Contact → Carte';
+      case 'complete-funnel': return '🎯 Tunnel Complet';
+      case 'contact-only': return '📝 Contact Uniquement';
+      case 'card-download': return '📥 Carte de Visite';
+      case 'custom': return '🔧 Stratégie Personnalisée';
+      default: return 'Configuration par défaut';
+    }
   };
 
   const getSchemaSequence = () => {
@@ -322,7 +482,7 @@ const RegisterClient = () => {
         {/* Affichage du schéma actif */}
         {businessCard?.cardConfig?.actions && (
           <div className="schema-display">
-            <h3 className="schema-title">🎯 Stratégie Active :</h3>
+            <h3 className="schema-title">🎯 Stratégie Active : {getSchemaName()}</h3>
             <div className="schema-sequence">
               {getSchemaSequence().map((step, index) => (
                 <span key={index} className="schema-step">
@@ -350,7 +510,7 @@ const RegisterClient = () => {
         )}
 
         {/* Message de redirection depuis le site web */}
-        {hasRedirectedFromWebsite && (
+        {hasRedirectedFromWebsite && showForm && (
           <div className="redirection-info">
             <div className="redirection-icon">✅</div>
             <div className="redirection-content">
@@ -370,8 +530,8 @@ const RegisterClient = () => {
           </div>
         )}
 
-        {/* Actions manuelles disponibles */}
-        {businessCard?.cardConfig?.actions && !showForm && (
+        {/* Actions manuelles disponibles (uniquement si pas de formulaire automatique) */}
+        {businessCard?.cardConfig?.actions && !showForm && !submitted && schemaType !== 'website-only' && schemaType !== 'card-download' && (
           <div className="actions-manual">
             {businessCard.cardConfig.actions
               .filter(action => action.active)
@@ -428,7 +588,7 @@ const RegisterClient = () => {
               {pendingActions.map((action, index) => (
                 <li key={index}>
                   {action.type === 'download' && '📥 Téléchargement de votre carte de visite'}
-                  {action.type === 'website' && '🌐 Redirection vers notre site web'}
+                  {action.type === 'website' && '🌐 Ouverture de notre site web'}
                 </li>
               ))}
             </ul>
