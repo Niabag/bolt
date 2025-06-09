@@ -1,6 +1,7 @@
 // Configuration centralisée de l'API
 const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api',
+  // Use relative path by default so Vite's proxy works in development
+  BASE_URL: import.meta.env.VITE_API_BASE_URL || '/api',
   FRONTEND_URL: import.meta.env.VITE_FRONTEND_URL || 'http://localhost:5173',
   TIMEOUT: 10000, // 10 secondes
 };

@@ -62,7 +62,8 @@ cp .env.example .env
 Modifier le fichier `.env` avec vos configurations :
 ```env
 VITE_API_URL=http://localhost:5000
-VITE_API_BASE_URL=http://localhost:5000/api
+# During development the frontend uses a proxy, so `/api` is sufficient
+VITE_API_BASE_URL=/api
 VITE_FRONTEND_URL=http://localhost:5173
 VITE_NODE_ENV=development
 ```
