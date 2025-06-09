@@ -520,9 +520,13 @@ const BusinessCard = ({ userId, user }) => {
       
       console.log(`📍 Position QR: ${position} (${qrX}, ${qrY}) taille: ${qrSize}px`);
       
+      // Générer le QR code avec la vraie URL
+      const qrUrl = window.location.href;
+      
+      // Utiliser la bibliothèque QRCode
       try {
         const QRCode = await import('qrcode');
-        const qrDataUrl = await QRCode.default.toDataURL(qrValue, {
+        const qrDataUrl = await QRCode.default.toDataURL(qrUrl, {
           width: qrSize,
           margin: 2,
           color: {
@@ -621,14 +625,13 @@ const BusinessCard = ({ userId, user }) => {
     ctx.textAlign = 'center';
     ctx.fillText('CARTE DE VISITE NUMÉRIQUE', centerX, centerY - 80);
     
-    // Nom de l'utilisateur
+    // Informations génériques
     ctx.font = 'bold 36px Arial, sans-serif';
-    ctx.fillText(user?.name || 'Votre Nom', centerX, centerY - 20);
+    ctx.fillText('Professionnel', centerX, centerY - 20);
     
-    // Email
     ctx.font = '28px Arial, sans-serif';
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-    ctx.fillText(user?.email || 'votre@email.com', centerX, centerY + 20);
+    ctx.fillText('contact@entreprise.com', centerX, centerY + 20);
     
     // Ligne de séparation
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
