@@ -23,6 +23,7 @@ const RegisterClient = () => {
   const actionsExecutedRef = useRef(false);
   const dataLoadedRef = useRef(false);
   const currentActionsRef = useRef([]);
+  const redirectedToWebsiteRef = useRef(false);
   
   // États pour contrôler l'affichage
   const [showForm, setShowForm] = useState(false);
@@ -51,6 +52,10 @@ const RegisterClient = () => {
   // ✅ État pour gérer les actions en attente après le formulaire
   const [pendingActionsAfterForm, setPendingActionsAfterForm] = useState([]);
   const [formSubmitted, setFormSubmitted] = useState(false);
+  
+  // ✅ NOUVEAU: État pour suivre si on vient d'une redirection
+  const [isRedirectedFromWebsite, setIsRedirectedFromWebsite] = useState(false);
+  const [websiteUrl, setWebsiteUrl] = useState("");
 
   // ✅ Fonction pour réinitialiser l'état
   const resetState = () => {
@@ -58,6 +63,7 @@ const RegisterClient = () => {
     actionsExecutedRef.current = false;
     dataLoadedRef.current = false;
     currentActionsRef.current = [];
+    redirectedToWebsiteRef.current = false;
     setBusinessCardActions([]);
     setBusinessCardData(null);
     setHasActions(false);
@@ -68,6 +74,8 @@ const RegisterClient = () => {
     setPendingActionsAfterForm([]);
     setFormSubmitted(false);
     setMessage("");
+    setIsRedirectedFromWebsite(false);
+    setWebsiteUrl("");
   };
 
   // ✅ Fonction pour comparer les actions et détecter les changements
@@ -88,6 +96,20 @@ const RegisterClient = () => {
     });
   };
 
+  // ✅ NOUVEAU: Vérifier si on vient d'une redirection
+  useEffect(() => {
+    const checkRedirection = () => {
+      const referrer = document.referrer;
+      if (referrer && referrer !== window.location.href) {
+        console.log('🔄 Détection de redirection depuis:', referrer);
+        setIsRedirectedFromWebsite(true);
+        setWebsiteUrl(referrer);
+      }
+    };
+    
+    checkRedirection();
+  }, []);
+
   // Gestion des actions
   useEffect(() => {
     const detectActions = async () => {
@@ -106,6 +128,10 @@ const RegisterClient = () => {
             if (decodedUrl.startsWith('http://') || decodedUrl.startsWith('https://')) {
               console.log('🌐 URL détectée:', decodedUrl);
               
+              // ✅ CORRECTION: Marquer comme redirection depuis un site web
+              setIsRedirectedFromWebsite(true);
+              setWebsiteUrl(decodedUrl);
+              
               // Créer une action de type website avec délai par défaut
               const websiteAction = {
                 id: Date.now(),
@@ -116,16 +142,28 @@ const RegisterClient = () => {
                 delay: 1000
               };
               
-              console.log('🎯 Création de l\'action website:', websiteAction);
+              // ✅ NOUVEAU: Ajouter une action de formulaire après le site web
+              const formAction = {
+                id: Date.now() + 1,
+                type: 'form',
+                active: true,
+                order: 2,
+                delay: 2000
+              };
+              
+              console.log('🎯 Création des actions:', [websiteAction, formAction]);
               
               // ✅ Vérifier si les actions ont changé
-              if (actionsHaveChanged([websiteAction])) {
+              if (actionsHaveChanged([websiteAction, formAction])) {
                 resetState();
-                setBusinessCardActions([websiteAction]);
-                setSortedActionsForDisplay([websiteAction]);
+                setBusinessCardActions([websiteAction, formAction]);
+                setSortedActionsForDisplay([websiteAction, formAction]);
                 setHasActions(true);
                 setDataLoaded(true);
-                currentActionsRef.current = [websiteAction];
+                currentActionsRef.current = [websiteAction, formAction];
+                
+                // ✅ CORRECTION: Afficher le formulaire immédiatement puisqu'on vient du site web
+                setShowForm(true);
               }
               return;
             }
@@ -189,7 +227,19 @@ const RegisterClient = () => {
               setSortedActionsForDisplay(sortedActions);
               setBusinessCardData(businessCard);
               setHasActions(true);
-              setShowForm(sortedActions.some(a => a.type === 'form'));
+              
+              // ✅ CORRECTION: Si on vient d'une redirection et qu'il y a une action de formulaire, l'afficher
+              if (isRedirectedFromWebsite) {
+                const hasFormAction = sortedActions.some(a => a.type === 'form');
+                if (hasFormAction) {
+                  console.log('📝 Affichage du formulaire après redirection');
+                  setShowForm(true);
+                }
+              } else {
+                // Comportement normal si on n'est pas redirigé
+                setShowForm(sortedActions.some(a => a.type === 'form' && a.order === 1));
+              }
+              
               currentActionsRef.current = sortedActions;
             } else {
               console.log("ℹ️ Aucune action active trouvée");
@@ -218,7 +268,7 @@ const RegisterClient = () => {
 
     // ✅ Toujours exécuter la détection pour vérifier les changements
     detectActions();
-  }, [userId]);
+  }, [userId, isRedirectedFromWebsite]);
 
   // ✅ CORRECTION CRITIQUE: Exécution des actions avec ordre correct
   useEffect(() => {
@@ -244,11 +294,30 @@ const RegisterClient = () => {
       
       console.log(`🚀 EXÉCUTION IMMÉDIATE: Action ${firstAction.order} (${firstAction.type})`);
       
-      // ✅ CORRECTION: Pour "génération de leads", exécuter le site web IMMÉDIATEMENT
-      if (firstAction.type === 'website' && firstAction.url) {
+      // ✅ CORRECTION: Si on vient déjà d'une redirection, ne pas rediriger à nouveau
+      if (firstAction.type === 'website' && firstAction.url && !isRedirectedFromWebsite && !redirectedToWebsiteRef.current) {
         console.log('🌐 REDIRECTION IMMÉDIATE vers:', firstAction.url);
+        redirectedToWebsiteRef.current = true;
         window.location.href = firstAction.url;
         return; // Arrêter car on quitte la page
+      }
+      
+      // ✅ CORRECTION: Si on vient d'une redirection et qu'il y a une action de formulaire, l'afficher
+      if (isRedirectedFromWebsite) {
+        const formAction = sortedActions.find(a => a.type === 'form');
+        if (formAction) {
+          console.log('📝 AFFICHAGE IMMÉDIAT du formulaire après redirection');
+          setShowForm(true);
+          
+          // Gérer les actions suivantes après le formulaire
+          const formIndex = sortedActions.findIndex(a => a.type === 'form');
+          if (formIndex !== -1 && formIndex < sortedActions.length - 1) {
+            const actionsAfterForm = sortedActions.slice(formIndex + 1);
+            setPendingActionsAfterForm(actionsAfterForm);
+            console.log('📋 Actions en attente après formulaire:', actionsAfterForm);
+          }
+          return;
+        }
       }
       
       // ✅ CORRECTION: Pour le formulaire, l'afficher immédiatement
@@ -283,7 +352,7 @@ const RegisterClient = () => {
     };
 
     executeActions();
-  }, [dataLoaded, hasActions, businessCardActions]);
+  }, [dataLoaded, hasActions, businessCardActions, isRedirectedFromWebsite]);
 
   // ✅ Exécuter une séquence d'actions DANS L'ORDRE CONFIGURÉ
   const executeActionsSequence = async (actionsToExecute) => {
@@ -303,6 +372,13 @@ const RegisterClient = () => {
           case 'form':
             console.log(`📝 Affichage du formulaire (Position ${i + 1}, Action configurée ${action.order})`);
             setShowForm(true);
+            
+            // Gérer les actions suivantes
+            const remainingActions = actionsToExecute.slice(i + 1);
+            if (remainingActions.length > 0) {
+              setPendingActionsAfterForm(remainingActions);
+              console.log('📋 Actions en attente après formulaire:', remainingActions);
+            }
             return; // Arrêter et attendre la soumission du formulaire
             
           case 'download':
@@ -312,12 +388,13 @@ const RegisterClient = () => {
             
           case 'website':
             console.log(`🌐 Ouverture du site web (Position ${i + 1}, Action configurée ${action.order}):`, action.url);
-            if (action.url) {
+            if (action.url && !redirectedToWebsiteRef.current) {
               console.log('🚀 Redirection directe vers:', action.url);
+              redirectedToWebsiteRef.current = true;
               window.location.href = action.url;
               return; // Arrêter car on quitte la page
             } else {
-              console.warn('⚠️ Aucune URL fournie pour l\'action website');
+              console.warn('⚠️ Redirection déjà effectuée ou aucune URL fournie');
             }
             break;
             
@@ -328,6 +405,8 @@ const RegisterClient = () => {
         console.error(`❌ Erreur lors de l'exécution de l'action ${action.type}:`, actionError);
       }
     }
+    
+    setActionsCompleted(true);
   };
 
   // ✅ Exécuter les actions en attente après soumission du formulaire
@@ -362,9 +441,12 @@ const RegisterClient = () => {
             
           case 'website':
             console.log('🌐 Redirection post-formulaire vers:', action.url);
-            if (action.url) {
+            if (action.url && !redirectedToWebsiteRef.current) {
+              redirectedToWebsiteRef.current = true;
               window.location.href = action.url;
               return; // Arrêter car on quitte la page
+            } else {
+              console.warn('⚠️ Redirection déjà effectuée ou aucune URL fournie');
             }
             break;
             
@@ -992,6 +1074,21 @@ const RegisterClient = () => {
                 </div>
               ))}
           </div>
+          
+          {/* ✅ NOUVEAU: Message de redirection */}
+          {isRedirectedFromWebsite && websiteUrl && (
+            <div className="redirection-info">
+              <div className="redirection-icon">✅</div>
+              <div className="redirection-content">
+                <h4>Vous avez été redirigé depuis notre site web</h4>
+                <p>Merci de votre intérêt ! Veuillez remplir le formulaire ci-dessous pour nous contacter.</p>
+                <div className="website-badge">
+                  <span className="website-icon">🌐</span>
+                  <a href={websiteUrl} target="_blank" rel="noopener noreferrer">{websiteUrl}</a>
+                </div>
+              </div>
+            </div>
+          )}
           
           {/* ✅ NOUVEAU: Boutons d'actions manuelles */}
           <div className="actions-manual">

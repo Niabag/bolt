@@ -654,7 +654,7 @@ const BusinessCard = ({ userId, user }) => {
   const downloadCardImageOnly = async () => {
     try {
       setLoading(true);
-      console.log('📥 Téléchargement de l\'image de carte seule...');
+      console.log('📥 Téléchargement du template seul...');
       
       if (cardConfig.cardImage && cardConfig.cardImage !== '/images/modern-business-card-design-template-42551612346d5b08984f0b61a8044609_screen.jpg') {
         const link = document.createElement('a');

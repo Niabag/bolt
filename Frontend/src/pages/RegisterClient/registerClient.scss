@@ -131,6 +131,76 @@
   transform: translateY(-1px);
 }
 
+/* ✅ NOUVEAU: Message de redirection */
+.redirection-info {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border: 3px solid #3b82f6;
+  border-radius: 16px;
+  padding: 2rem;
+  margin: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.2);
+}
+
+.redirection-icon {
+  font-size: 3rem;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: white;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 25px rgba(37, 99, 235, 0.3);
+  flex-shrink: 0;
+}
+
+.redirection-content h4 {
+  margin: 0 0 0.5rem 0;
+  color: #1e40af;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.redirection-content p {
+  margin: 0 0 1rem 0;
+  color: #1e40af;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.website-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.website-icon {
+  color: #2563eb;
+  font-size: 1.1rem;
+}
+
+.website-badge a {
+  color: #2563eb;
+  text-decoration: none;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  word-break: break-all;
+}
+
+.website-badge a:hover {
+  text-decoration: underline;
+}
+
 /* ✅ BOUTONS D'ACTIONS MANUELLES */
 .actions-manual {
   padding: 2rem;
@@ -611,13 +681,17 @@
     font-size: 1rem;
   }
   
-  .success-message {
+  .success-message,
+  .redirection-info {
     flex-direction: column;
     text-align: center;
     gap: 1rem;
+    padding: 1.5rem;
+    margin: 1.5rem;
   }
   
-  .success-icon {
+  .success-icon,
+  .redirection-icon {
     width: 60px;
     height: 60px;
     font-size: 2rem;
@@ -628,6 +702,17 @@
   .general-message {
     margin: 1.5rem;
     padding: 1.25rem;
+  }
+  
+  .website-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.75rem;
+  }
+  
+  .website-badge a {
+    font-size: 0.75rem;
   }
 }
 
@@ -726,6 +811,10 @@
 
 .form-group:nth-child(4) {
   animation-delay: 0.3s;
+}
+
+.redirection-info {
+  animation: fadeInUp 0.5s ease-out;
 }
 
 /* ✅ EFFETS VISUELS AVANCÉS */
