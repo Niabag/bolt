@@ -2,8 +2,9 @@ import '../Placeholder/placeholder.scss';
 
 const Contact = () => (
   <div className="placeholder-page">
-    <h1>Contact</h1>
-    <p>Cette page est en construction.</p>
+    <h1>Contactez-nous</h1>
+    <p>Une question ? Notre équipe est disponible pour vous aider.</p>
+    <p>Email : support@crmpro.com</p>
   </div>
 );
 

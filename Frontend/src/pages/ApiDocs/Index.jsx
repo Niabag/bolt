@@ -2,8 +2,9 @@ import '../Placeholder/placeholder.scss';
 
 const ApiDocs = () => (
   <div className="placeholder-page">
-    <h1>ApiDocs</h1>
-    <p>Cette page est en construction.</p>
+    <h1>Documentation API</h1>
+    <p>Intégrez CRM Pro à vos propres outils grâce à notre API REST complète.</p>
+    <p>Toutes les routes sont détaillées avec des exemples pour faciliter votre développement.</p>
   </div>
 );
 
