@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
@@ -222,7 +223,7 @@ const generateRandomDevis = (clientId, userId) => {
 
 // Fonction pour générer une carte de visite
 const generateBusinessCard = (userId) => {
-  // Image de carte de visite par défaut (base64 tronqué pour l'exemple)
+  // Image de carte de visite par défaut
   const defaultCardImage = '/images/modern-business-card-design-template-42551612346d5b08984f0b61a8044609_screen.jpg';
   
   // Configuration de la carte
@@ -259,7 +260,11 @@ const generate25Contacts = async () => {
     console.log('🚀 Génération de 25 utilisateurs de test...');
     
     // Connexion à la base de données
+    const mongoURI = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://localhost:27017/crm-database';
+    console.log('🔍 Tentative de connexion à MongoDB:', mongoURI);
+    
     await connectDB();
+    console.log('✅ Connexion à MongoDB réussie !');
     
     // Créer un utilisateur admin
     const adminPassword = 'password123';
@@ -335,7 +340,7 @@ const generate25Contacts = async () => {
       
       const savedClient = await client.save();
       clients.push(savedClient);
-      console.log(`✅ Client créé: ${email}`);
+      console.log(`✅ Client créé: ${firstName} ${lastName} (${email})`);
       
       // Générer entre 0 et 3 devis pour chaque client
       const devisCount = Math.floor(Math.random() * 4);
@@ -344,7 +349,7 @@ const generate25Contacts = async () => {
         const devisData = generateRandomDevis(savedClient._id, adminUser._id);
         const devis = new Devis(devisData);
         await devis.save();
-        console.log(`✅ Devis créé pour: ${firstName} ${lastName}`);
+        console.log(`✅ Devis créé: ${devisData.title} pour ${firstName} ${lastName}`);
       }
     }
     
@@ -356,7 +361,7 @@ const generate25Contacts = async () => {
     
     const devisCount = await Devis.countDocuments({ userId: adminUser._id });
     
-    console.log('🎉 Génération terminée ! 25 utilisateurs créés avec succès.');
+    console.log('🎉 Génération terminée ! 25 contacts créés avec succès.');
     console.log('📊 Statistiques:');
     console.log(`   - 25 clients créés`);
     console.log(`   - ${devisCount} devis créés`);
