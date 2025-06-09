@@ -153,16 +153,19 @@ const RegisterClient = () => {
             return;
           }
 
-          // Filtrer les actions actives et les trier par ordre
+          // ✅ CORRECTION CRITIQUE: Filtrer les actions actives et les trier correctement par ordre
           let activeActions = businessCard.cardConfig.actions
             .filter(action => action.active)
             .map((action, idx) => ({
               ...action,
-              order: action.order !== undefined ? action.order : idx + 1
+              // ✅ IMPORTANT: Utiliser l'ordre configuré, pas l'index du tableau
+              order: action.order !== undefined ? action.order : (idx + 1)
             }))
-            .sort((a, b) => a.order - b.order);
+            // ✅ CORRECTION: Trier par l'ordre configuré (pas par l'index du tableau)
+            .sort((a, b) => (a.order || 1) - (b.order || 1));
           
-          console.log("✅ Actions actives trouvées:", activeActions);
+          console.log("✅ Actions actives triées par ordre:", activeActions);
+          console.log("📊 Ordre d'exécution prévu:", activeActions.map(a => `${a.order}: ${a.type}`));
           
           // ✅ NOUVEAU: Vérifier si les actions ont changé
           if (actionsHaveChanged(activeActions)) {
@@ -243,37 +246,53 @@ const RegisterClient = () => {
     executeActions();
   }, [dataLoaded, hasActions, businessCardActions]);
 
-  // ✅ FONCTION AMÉLIORÉE: Exécution des actions
+  // ✅ FONCTION CORRIGÉE: Exécution des actions dans le bon ordre
   const executeBusinessCardActions = async (actions) => {
     try {
       console.log('🎬 Démarrage de l\'exécution des actions configurées');
-      console.log('📋 Actions à exécuter:', actions);
+      console.log('📋 Actions reçues:', actions);
 
       if (!actions || actions.length === 0) {
         console.log('❌ Aucune action à exécuter');
         return;
       }
 
-      // Trier les actions par ordre
-      const sortedActions = [...actions].sort((a, b) => (a.order || 1) - (b.order || 1));
-      console.log('📊 Actions triées par ordre:', sortedActions);
+      // ✅ CORRECTION CRITIQUE: Trier les actions par ordre configuré
+      const sortedActions = [...actions].sort((a, b) => {
+        const orderA = a.order || 1;
+        const orderB = b.order || 1;
+        return orderA - orderB;
+      });
       
-      // Exécuter chaque action avec son délai
+      console.log('📊 Actions triées par ordre d\'exécution:', sortedActions);
+      console.log('🎯 Séquence d\'exécution:', sortedActions.map((a, i) => `${i + 1}. Ordre ${a.order}: ${a.type} ${a.url ? `(${a.url})` : ''}`));
+      
+      // Exécuter chaque action avec son délai basé sur sa POSITION dans l'ordre trié
       for (let i = 0; i < sortedActions.length; i++) {
         const action = sortedActions[i];
         
-        // Calculer le délai basé sur la position (1000ms par position)
+        // ✅ CORRECTION: Délai basé sur la position dans l'ordre trié (pas sur l'ordre configuré)
         const delayMs = (i + 1) * 1000;
-        console.log(`⏳ Attente de ${delayMs}ms pour l'action ${i + 1}/${sortedActions.length}`);
+        console.log(`⏳ Attente de ${delayMs}ms pour l'action ${i + 1}/${sortedActions.length} (ordre configuré: ${action.order})`);
         
         await new Promise(resolve => setTimeout(resolve, delayMs));
         
-        console.log(`🎯 Exécution de l'action ${i + 1}:`, action);
+        console.log(`🎯 Exécution de l'action ${i + 1} (ordre ${action.order}):`, action);
         
         try {
           switch (action.type) {
+            case 'form':
+              console.log('📝 Affichage du formulaire (ordre ' + action.order + ')');
+              setShowForm(true);
+              break;
+              
+            case 'download':
+              console.log('📥 Démarrage du téléchargement (ordre ' + action.order + ')');
+              await executeDownloadAction(action);
+              break;
+              
             case 'website':
-              console.log('🌐 Ouverture du site web:', action.url);
+              console.log('🌐 Ouverture du site web (ordre ' + action.order + '):', action.url);
               if (action.url) {
                 // ✅ CORRECTION: Utiliser window.open avec les bons paramètres
                 const newWindow = window.open(action.url, '_blank', 'noopener,noreferrer');
@@ -288,16 +307,6 @@ const RegisterClient = () => {
               }
               break;
               
-            case 'download':
-              console.log('📥 Démarrage du téléchargement');
-              await executeDownloadAction(action);
-              break;
-              
-            case 'form':
-              console.log('📝 Affichage du formulaire');
-              setShowForm(true);
-              break;
-              
             default:
               console.warn('⚠️ Type d\'action non reconnu:', action.type);
           }
@@ -306,7 +315,7 @@ const RegisterClient = () => {
         }
       }
       
-      console.log('✅ Toutes les actions ont été exécutées');
+      console.log('✅ Toutes les actions ont été exécutées dans l\'ordre configuré');
       setActionsCompleted(true);
       
     } catch (error) {
@@ -781,10 +790,31 @@ const RegisterClient = () => {
             <div className="bg-white p-6 rounded-lg shadow-md mt-4">
               <h3 className="text-lg font-semibold mb-4">Actions configurées :</h3>
               
-              {/* ✅ NOUVEAU: Affichage de toutes les actions */}
+              {/* ✅ NOUVEAU: Affichage de toutes les actions dans l'ordre configuré */}
               <div className="space-y-3">
-                {businessCardActions.map((action, index) => (
+                {businessCardActions
+                  .sort((a, b) => (a.order || 1) - (b.order || 1)) // Trier par ordre pour l'affichage
+                  .map((action, index) => (
                   <div key={action.id} className="action-item">
+                    {action.type === 'form' && (
+                      <div className="text-sm text-gray-600 p-3 bg-indigo-50 rounded border-l-4 border-indigo-400">
+                        📝 <strong>Action {action.order}:</strong> Formulaire de contact - Affiché ci-dessous
+                      </div>
+                    )}
+                    
+                    {action.type === 'download' && (
+                      <button
+                        type="button"
+                        className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                        onClick={() => {
+                          console.log('🟢 Clic manuel sur le bouton téléchargement');
+                          executeDownloadAction(action);
+                        }}
+                      >
+                        📥 <strong>Action {action.order}:</strong> Télécharger la carte de visite
+                      </button>
+                    )}
+                    
                     {action.type === 'website' && action.url && (
                       <button
                         type="button"
@@ -797,27 +827,8 @@ const RegisterClient = () => {
                           }
                         }}
                       >
-                        🌐 Ouvrir le site web ({index + 1})
+                        🌐 <strong>Action {action.order}:</strong> Ouvrir le site web
                       </button>
-                    )}
-                    
-                    {action.type === 'download' && (
-                      <button
-                        type="button"
-                        className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                        onClick={() => {
-                          console.log('🟢 Clic manuel sur le bouton téléchargement');
-                          executeDownloadAction(action);
-                        }}
-                      >
-                        📥 Télécharger la carte de visite ({index + 1})
-                      </button>
-                    )}
-                    
-                    {action.type === 'form' && (
-                      <div className="text-sm text-gray-600 p-2 bg-gray-50 rounded">
-                        📝 Formulaire de contact ({index + 1}) - Affiché ci-dessous
-                      </div>
                     )}
                   </div>
                 ))}
@@ -826,9 +837,9 @@ const RegisterClient = () => {
               {/* ✅ NOUVEAU: Statut d'exécution automatique */}
               <div className="mt-4 p-3 bg-blue-50 text-blue-700 rounded-md text-sm">
                 {actionsCompleted ? (
-                  <span>✅ Actions automatiques exécutées</span>
+                  <span>✅ Actions automatiques exécutées dans l'ordre configuré</span>
                 ) : (
-                  <span>⏳ Exécution automatique en cours...</span>
+                  <span>⏳ Exécution automatique en cours dans l'ordre configuré...</span>
                 )}
               </div>
             </div>
