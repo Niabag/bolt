@@ -9,6 +9,7 @@ Une application CRM complète avec gestion des clients et génération de devis.
 - **Génération de devis** : Création et édition de devis professionnels
 - **QR Code** : Génération de liens d'inscription pour les clients
 - **Export PDF** : Téléchargement des devis en format PDF
+- **Schémas d'actions** : Plusieurs séquences pour afficher site ou formulaire selon vos besoins
 
 ## 📋 Prérequis
 
