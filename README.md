@@ -38,7 +38,9 @@ cp .env.example .env
 
 Modifier le fichier `.env` avec vos configurations :
 ```env
+# URL de connexion MongoDB
 MONGO_URI=mongodb://localhost:27017/crm-database
+# ou utilisez MONGODB_URI
 PORT=5000
 NODE_ENV=development
 JWT_SECRET=votre_secret_jwt_tres_securise
@@ -110,7 +112,7 @@ crm-application/
 ## 🔧 Configuration des variables d'environnement
 
 ### Backend (.env)
-- `MONGO_URI` : URL de connexion MongoDB
+- `MONGO_URI` / `MONGODB_URI` : URL de connexion MongoDB
 - `PORT` : Port du serveur (défaut: 5000)
 - `NODE_ENV` : Environnement (development/production)
 - `JWT_SECRET` : Clé secrète pour JWT
