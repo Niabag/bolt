@@ -19,7 +19,7 @@ const RegisterClient = () => {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   
-  // ✅ NOUVEAU: Références pour éviter les exécutions multiples
+  // ✅ Références pour éviter les exécutions multiples
   const actionsExecutedRef = useRef(false);
   const dataLoadedRef = useRef(false);
   const currentActionsRef = useRef([]);
@@ -45,14 +45,14 @@ const RegisterClient = () => {
   
   const scannerRef = useRef(null);
 
-  // ✅ NOUVEAU: État pour les actions triées pour l'affichage
+  // ✅ État pour les actions triées pour l'affichage
   const [sortedActionsForDisplay, setSortedActionsForDisplay] = useState([]);
   
-  // ✅ NOUVEAU: État pour gérer les actions en attente après le formulaire
+  // ✅ État pour gérer les actions en attente après le formulaire
   const [pendingActionsAfterForm, setPendingActionsAfterForm] = useState([]);
   const [formSubmitted, setFormSubmitted] = useState(false);
 
-  // ✅ NOUVEAU: Fonction pour réinitialiser l'état
+  // ✅ Fonction pour réinitialiser l'état
   const resetState = () => {
     console.log('🔄 Réinitialisation de l\'état');
     actionsExecutedRef.current = false;
@@ -70,7 +70,7 @@ const RegisterClient = () => {
     setMessage("");
   };
 
-  // ✅ NOUVEAU: Fonction pour comparer les actions et détecter les changements
+  // ✅ Fonction pour comparer les actions et détecter les changements
   const actionsHaveChanged = (newActions) => {
     const currentActions = currentActionsRef.current;
     
@@ -118,7 +118,7 @@ const RegisterClient = () => {
               
               console.log('🎯 Création de l\'action website:', websiteAction);
               
-              // ✅ NOUVEAU: Vérifier si les actions ont changé
+              // ✅ Vérifier si les actions ont changé
               if (actionsHaveChanged([websiteAction])) {
                 resetState();
                 setBusinessCardActions([websiteAction]);
@@ -178,7 +178,7 @@ const RegisterClient = () => {
           console.log("✅ Actions actives triées par ordre:", sortedActions);
           console.log("📊 Ordre d'affichage et d'exécution:", sortedActions.map((a, i) => `Position ${i + 1}: Action ${a.order} (${a.type})`));
           
-          // ✅ NOUVEAU: Vérifier si les actions ont changé
+          // ✅ Vérifier si les actions ont changé
           if (actionsHaveChanged(sortedActions)) {
             console.log('🔄 Actions ont changé, réinitialisation...');
             resetState();
@@ -186,7 +186,7 @@ const RegisterClient = () => {
             if (sortedActions.length > 0) {
               console.log("🎯 Nouvelles actions à configurer:", sortedActions);
               setBusinessCardActions(sortedActions);
-              setSortedActionsForDisplay(sortedActions); // ✅ NOUVEAU: Actions triées pour l'affichage
+              setSortedActionsForDisplay(sortedActions);
               setBusinessCardData(businessCard);
               setHasActions(true);
               setShowForm(sortedActions.some(a => a.type === 'form'));
@@ -216,11 +216,11 @@ const RegisterClient = () => {
       }
     };
 
-    // ✅ NOUVEAU: Toujours exécuter la détection pour vérifier les changements
+    // ✅ Toujours exécuter la détection pour vérifier les changements
     detectActions();
-  }, [userId]); // Supprimer dataLoaded de la dépendance
+  }, [userId]);
 
-  // ✅ NOUVEAU: Exécution des actions avec meilleure gestion
+  // ✅ CORRECTION CRITIQUE: Exécution des actions avec ordre correct
   useEffect(() => {
     const executeActions = async () => {
       // Vérifier toutes les conditions nécessaires
@@ -238,74 +238,60 @@ const RegisterClient = () => {
       // Marquer comme exécuté AVANT l'exécution pour éviter les doublons
       actionsExecutedRef.current = true;
       
-      // Attendre un délai initial avant de commencer
-      setTimeout(() => {
-        executeBusinessCardActions(businessCardActions);
-      }, 500);
+      // ✅ CORRECTION CRITIQUE: Exécuter immédiatement la première action
+      const sortedActions = [...businessCardActions].sort((a, b) => (a.order || 1) - (b.order || 1));
+      const firstAction = sortedActions[0];
+      
+      console.log(`🚀 EXÉCUTION IMMÉDIATE: Action ${firstAction.order} (${firstAction.type})`);
+      
+      // ✅ CORRECTION: Pour "génération de leads", exécuter le site web IMMÉDIATEMENT
+      if (firstAction.type === 'website' && firstAction.url) {
+        console.log('🌐 REDIRECTION IMMÉDIATE vers:', firstAction.url);
+        window.location.href = firstAction.url;
+        return; // Arrêter car on quitte la page
+      }
+      
+      // ✅ CORRECTION: Pour le formulaire, l'afficher immédiatement
+      if (firstAction.type === 'form') {
+        console.log('📝 AFFICHAGE IMMÉDIAT du formulaire');
+        setShowForm(true);
+        
+        // Gérer les actions suivantes
+        const remainingActions = sortedActions.slice(1);
+        if (remainingActions.length > 0) {
+          setPendingActionsAfterForm(remainingActions);
+          console.log('📋 Actions en attente après formulaire:', remainingActions);
+        }
+        return;
+      }
+      
+      // ✅ CORRECTION: Pour le téléchargement, l'exécuter immédiatement
+      if (firstAction.type === 'download') {
+        console.log('📥 TÉLÉCHARGEMENT IMMÉDIAT');
+        await executeDownloadAction(firstAction);
+        
+        // Continuer avec les actions suivantes
+        const remainingActions = sortedActions.slice(1);
+        if (remainingActions.length > 0) {
+          setTimeout(() => {
+            executeActionsSequence(remainingActions);
+          }, 1000);
+        } else {
+          setActionsCompleted(true);
+        }
+      }
     };
 
     executeActions();
   }, [dataLoaded, hasActions, businessCardActions]);
 
-  // ✅ FONCTION CORRIGÉE: Exécution des actions avec gestion spéciale pour le formulaire
-  const executeBusinessCardActions = async (actions) => {
-    try {
-      console.log('🎬 Démarrage de l\'exécution des actions configurées');
-      console.log('📋 Actions reçues:', actions);
-
-      if (!actions || actions.length === 0) {
-        console.log('❌ Aucune action à exécuter');
-        return;
-      }
-
-      // ✅ CORRECTION CRITIQUE: Les actions sont déjà triées par ordre configuré
-      const sortedActions = actions;
-      
-      console.log('📊 Actions dans l\'ordre d\'exécution:', sortedActions);
-      console.log('🎯 Séquence d\'exécution:', sortedActions.map((a, i) => `${i + 1}. Action ${a.order}: ${a.type} ${a.url ? `(${a.url})` : ''}`));
-      
-      // ✅ CORRECTION CRITIQUE: Exécuter TOUJOURS la première action en premier
-      const firstAction = sortedActions[0];
-      console.log(`🚀 DÉMARRAGE: Exécution immédiate de la première action (Action ${firstAction.order}: ${firstAction.type})`);
-      
-      // ✅ NOUVEAU: Séparer les actions avant et après le formulaire
-      const hasFormAction = sortedActions.some(a => a.type === 'form');
-      
-      if (hasFormAction) {
-        console.log('📝 Formulaire détecté dans la séquence');
-        
-        // Trouver l'index de l'action formulaire
-        const formActionIndex = sortedActions.findIndex(a => a.type === 'form');
-        const actionsBeforeForm = sortedActions.slice(0, formActionIndex + 1); // Inclure le formulaire
-        const actionsAfterForm = sortedActions.slice(formActionIndex + 1); // Actions après le formulaire
-        
-        console.log('📋 Actions avant formulaire (inclus):', actionsBeforeForm);
-        console.log('📋 Actions après formulaire:', actionsAfterForm);
-        
-        // Stocker les actions à exécuter après le formulaire
-        setPendingActionsAfterForm(actionsAfterForm);
-        
-        // ✅ CORRECTION: Exécuter les actions avant le formulaire DANS L'ORDRE
-        await executeActionsSequence(actionsBeforeForm);
-      } else {
-        // Pas de formulaire, exécuter toutes les actions normalement
-        await executeActionsSequence(sortedActions);
-      }
-      
-      console.log('✅ Actions initiales exécutées');
-      
-    } catch (error) {
-      console.error('❌ Erreur lors de l\'exécution des actions:', error);
-    }
-  };
-
-  // ✅ FONCTION CORRIGÉE: Exécuter une séquence d'actions DANS L'ORDRE CONFIGURÉ
+  // ✅ Exécuter une séquence d'actions DANS L'ORDRE CONFIGURÉ
   const executeActionsSequence = async (actionsToExecute) => {
     for (let i = 0; i < actionsToExecute.length; i++) {
       const action = actionsToExecute[i];
       
-      // ✅ CORRECTION CRITIQUE: Délai basé sur la POSITION dans la séquence (pas sur l'ordre configuré)
-      const delayMs = (i + 1) * 1000; // Position 1 = 1000ms, Position 2 = 2000ms, Position 3 = 3000ms
+      // Délai basé sur la POSITION dans la séquence
+      const delayMs = (i + 1) * 1000;
       console.log(`⏳ Attente de ${delayMs}ms pour l'action en position ${i + 1} (Action configurée ${action.order}: ${action.type})`);
       
       await new Promise(resolve => setTimeout(resolve, delayMs));
@@ -317,8 +303,7 @@ const RegisterClient = () => {
           case 'form':
             console.log(`📝 Affichage du formulaire (Position ${i + 1}, Action configurée ${action.order})`);
             setShowForm(true);
-            // ✅ IMPORTANT: Ne pas continuer avec les actions suivantes, attendre la soumission du formulaire
-            return;
+            return; // Arrêter et attendre la soumission du formulaire
             
           case 'download':
             console.log(`📥 Démarrage du téléchargement (Position ${i + 1}, Action configurée ${action.order})`);
@@ -328,11 +313,9 @@ const RegisterClient = () => {
           case 'website':
             console.log(`🌐 Ouverture du site web (Position ${i + 1}, Action configurée ${action.order}):`, action.url);
             if (action.url) {
-              // ✅ SOLUTION ANTI-POPUP: Redirection directe dans la même fenêtre
               console.log('🚀 Redirection directe vers:', action.url);
               window.location.href = action.url;
-              // ✅ IMPORTANT: Arrêter l'exécution des actions suivantes car on quitte la page
-              return;
+              return; // Arrêter car on quitte la page
             } else {
               console.warn('⚠️ Aucune URL fournie pour l\'action website');
             }
@@ -343,22 +326,22 @@ const RegisterClient = () => {
         }
       } catch (actionError) {
         console.error(`❌ Erreur lors de l'exécution de l'action ${action.type}:`, actionError);
-        // ✅ IMPORTANT: Continuer avec les actions suivantes même en cas d'erreur
       }
     }
   };
 
-  // ✅ NOUVELLE FONCTION: Exécuter les actions en attente après soumission du formulaire
+  // ✅ Exécuter les actions en attente après soumission du formulaire
   const executeActionsAfterForm = async () => {
     if (pendingActionsAfterForm.length === 0) {
       console.log('✅ Aucune action en attente après le formulaire');
+      setActionsCompleted(true);
       return;
     }
     
     console.log('🎬 Exécution des actions en attente après soumission du formulaire');
     console.log('📋 Actions en attente:', pendingActionsAfterForm);
     
-    // ✅ CORRECTION: Exécuter les actions restantes avec délais basés sur leur position dans la séquence restante
+    // Exécuter les actions restantes avec délais
     for (let i = 0; i < pendingActionsAfterForm.length; i++) {
       const action = pendingActionsAfterForm[i];
       
@@ -397,12 +380,12 @@ const RegisterClient = () => {
     setActionsCompleted(true);
   };
 
-  // ✅ FONCTION AMÉLIORÉE: Téléchargement avec les vraies données
+  // ✅ FONCTION CORRIGÉE: Téléchargement de la vraie carte de visite
   const executeDownloadAction = async (action) => {
     try {
       console.log('📥 Génération de la carte de visite pour téléchargement...');
       
-      if (action.file === 'carte-apercu' || !action.file) {
+      if (action.file === 'carte-visite' || action.file === 'carte-apercu' || !action.file) {
         console.log('🖼️ Génération de la carte avec les données configurées...');
         const cardImageData = await generateBusinessCardFromData();
         
@@ -410,7 +393,7 @@ const RegisterClient = () => {
           // Télécharger l'image générée
           const link = document.createElement('a');
           link.href = cardImageData;
-          link.download = 'carte-de-visite-qr.png';
+          link.download = 'carte-de-visite-numerique.png';
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
@@ -428,7 +411,6 @@ const RegisterClient = () => {
         link.download = action.file.split('/').pop() || 'fichier';
         document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
         
         showDownloadMessage();
       }
@@ -437,7 +419,7 @@ const RegisterClient = () => {
     }
   };
 
-  // Génération basée sur les vraies données de la carte
+  // ✅ FONCTION CORRIGÉE: Génération de carte de visite professionnelle
   const generateBusinessCardFromData = async () => {
     return new Promise(async (resolve) => {
       try {
@@ -462,6 +444,9 @@ const RegisterClient = () => {
                 // Dessiner l'image de carte de visite
                 ctx.drawImage(cardImage, 0, 0, canvas.width, canvas.height);
                 
+                // Ajouter les informations utilisateur
+                await addUserInfoToCard(ctx, canvas, businessCardData);
+                
                 // Ajouter le QR code si configuré
                 if (businessCardData.cardConfig && businessCardData.cardConfig.showQR) {
                   await addQRCodeToCard(ctx, canvas, businessCardData.cardConfig);
@@ -479,14 +464,14 @@ const RegisterClient = () => {
             });
           } catch (imageError) {
             console.log('📝 Génération d\'une carte par défaut');
-            await generateFallbackCard(ctx, canvas);
+            await generateDefaultCard(ctx, canvas);
           }
         } else {
           console.log('📝 Aucune image, génération d\'une carte par défaut');
-          await generateFallbackCard(ctx, canvas);
+          await generateDefaultCard(ctx, canvas);
         }
         
-        const dataUrl = canvas.toDataURL('image/png');
+        const dataUrl = canvas.toDataURL('image/png', 1.0);
         console.log('✅ Carte de visite générée avec succès');
         resolve(dataUrl);
         
@@ -497,15 +482,82 @@ const RegisterClient = () => {
     });
   };
 
-  // Ajouter le QR code sur la carte
+  // ✅ NOUVELLE FONCTION: Ajouter les informations utilisateur sur la carte
+  const addUserInfoToCard = async (ctx, canvas, businessCardData) => {
+    try {
+      // Récupérer les informations de l'utilisateur depuis les données de la carte
+      const userId = businessCardData.userId;
+      
+      try {
+        // Récupérer les informations de l'utilisateur depuis l'API
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/users/public/${userId}`);
+        const userData = await response.json();
+        
+        if (userData && userData.user) {
+          const user = userData.user;
+          
+          // Zone de texte (côté gauche de la carte)
+          const textX = 50;
+          const textY = 100;
+          
+          // Fond semi-transparent pour le texte
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+          ctx.fillRect(textX - 20, textY - 40, 400, 200);
+          
+          // Nom de l'utilisateur
+          ctx.fillStyle = '#1f2937';
+          ctx.font = 'bold 36px Arial, sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillText(user.name || 'Votre Nom', textX, textY);
+          
+          // Email
+          ctx.fillStyle = '#4b5563';
+          ctx.font = '24px Arial, sans-serif';
+          ctx.fillText(user.email || 'votre@email.com', textX, textY + 50);
+          
+          // Ligne de séparation
+          ctx.strokeStyle = '#e5e7eb';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(textX, textY + 70);
+          ctx.lineTo(textX + 360, textY + 70);
+          ctx.stroke();
+          
+          // Informations supplémentaires
+          ctx.fillStyle = '#6b7280';
+          ctx.font = '20px Arial, sans-serif';
+          ctx.fillText('📱 Scannez le QR code', textX, textY + 110);
+          ctx.fillText('💼 Carte de visite numérique', textX, textY + 140);
+        }
+      } catch (userError) {
+        console.error('❌ Erreur récupération utilisateur:', userError);
+        
+        // Fallback avec texte générique
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.fillRect(50, 60, 400, 200);
+        
+        ctx.fillStyle = '#1f2937';
+        ctx.font = 'bold 36px Arial, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('Carte de Visite', 70, 120);
+        
+        ctx.fillStyle = '#4b5563';
+        ctx.font = '24px Arial, sans-serif';
+        ctx.fillText('Professionnelle', 70, 160);
+      }
+    } catch (error) {
+      console.error('❌ Erreur ajout informations utilisateur:', error);
+    }
+  };
+
+  // ✅ FONCTION CORRIGÉE: Ajouter le QR code sur la carte
   const addQRCodeToCard = async (ctx, canvas, config) => {
     try {
-      const qrSize = config.qrSize || 100;
+      const qrSize = config.qrSize || 120;
       const position = config.qrPosition || 'top-right';
       
-      // Calculer la position du QR code
       let qrX, qrY;
-      const margin = 20;
+      const margin = 30;
       
       switch (position) {
         case 'bottom-right':
@@ -539,21 +591,27 @@ const RegisterClient = () => {
         const QRCode = await import('qrcode');
         const qrDataUrl = await QRCode.default.toDataURL(qrUrl, {
           width: qrSize,
-          margin: 1,
+          margin: 2,
           color: {
-            dark: '#000000',
-            light: '#FFFFFF'
-          }
+            dark: '#1f2937',
+            light: '#ffffff'
+          },
+          errorCorrectionLevel: 'M'
         });
         
         await new Promise((resolve) => {
           const qrImage = new Image();
           qrImage.onload = () => {
-            // Fond blanc pour le QR code
+            // Fond blanc avec bordure pour le QR code
             ctx.fillStyle = 'white';
-            ctx.fillRect(qrX - 5, qrY - 5, qrSize + 10, qrSize + 10);
+            ctx.fillRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20);
             
-            // Dessiner le QR code
+            // Bordure subtile
+            ctx.strokeStyle = '#e5e7eb';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20);
+            
+            // QR code
             ctx.drawImage(qrImage, qrX, qrY, qrSize, qrSize);
             
             console.log('✅ QR code ajouté à la carte');
@@ -578,7 +636,7 @@ const RegisterClient = () => {
     ctx.fillRect(x - 5, y - 5, size + 10, size + 10);
     
     // QR code simplifié
-    ctx.fillStyle = 'black';
+    ctx.fillStyle = '#1f2937';
     ctx.fillRect(x, y, size, size);
     
     // Motif de QR code basique
@@ -594,54 +652,75 @@ const RegisterClient = () => {
     }
     
     // Texte au centre
-    ctx.fillStyle = 'black';
-    ctx.font = 'bold 12px Arial';
+    ctx.fillStyle = '#1f2937';
+    ctx.font = 'bold 14px Arial';
     ctx.textAlign = 'center';
     ctx.fillText('QR', x + size/2, y + size/2);
     
     console.log('✅ QR code fallback ajouté');
   };
 
-  // Générer une carte par défaut
-  const generateFallbackCard = async (ctx, canvas) => {
-    // Fond dégradé
+  // ✅ FONCTION CORRIGÉE: Générer une carte par défaut professionnelle
+  const generateDefaultCard = async (ctx, canvas) => {
+    // Fond dégradé professionnel
     const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-    gradient.addColorStop(0, '#667eea');
-    gradient.addColorStop(1, '#764ba2');
+    gradient.addColorStop(0, '#1e40af');
+    gradient.addColorStop(0.5, '#3b82f6');
+    gradient.addColorStop(1, '#1d4ed8');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
+    // Motif géométrique subtil
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+    for (let i = 0; i < canvas.width; i += 100) {
+      for (let j = 0; j < canvas.height; j += 100) {
+        ctx.fillRect(i, j, 2, 2);
+      }
+    }
+    
+    // Zone principale d'informations
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    
     // Titre principal
     ctx.fillStyle = 'white';
-    ctx.font = 'bold 48px Arial';
+    ctx.font = 'bold 48px Arial, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('CARTE DE VISITE NUMÉRIQUE', canvas.width / 2, 80);
+    ctx.fillText('CARTE DE VISITE NUMÉRIQUE', centerX, centerY - 80);
     
-    // Informations de contact
-    ctx.font = '32px Arial';
-    ctx.fillText('Votre Nom', canvas.width / 2, 140);
+    // Informations génériques
+    ctx.font = 'bold 36px Arial, sans-serif';
+    ctx.fillText('Professionnel', centerX, centerY - 20);
     
-    ctx.font = '24px Arial';
-    ctx.fillText('votre.email@exemple.com', canvas.width / 2, 180);
-    ctx.fillText('06 12 34 56 78', canvas.width / 2, 210);
+    ctx.font = '28px Arial, sans-serif';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.fillText('contact@entreprise.com', centerX, centerY + 20);
+    
+    // Ligne de séparation
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(centerX - 200, centerY + 50);
+    ctx.lineTo(centerX + 200, centerY + 50);
+    ctx.stroke();
+    
+    // Instructions
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.font = '22px Arial, sans-serif';
+    ctx.fillText('📱 Scannez le QR code pour me contacter', centerX, centerY + 90);
     
     // Ajouter le QR code si configuré
     if (businessCardData && businessCardData.cardConfig && businessCardData.cardConfig.showQR) {
       await addQRCodeToCard(ctx, canvas, businessCardData.cardConfig);
     }
     
-    // Texte d'instruction
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-    ctx.font = '18px Arial';
-    ctx.textAlign = 'left';
-    ctx.fillText('📱 Scannez le QR code pour vous inscrire', 40, canvas.height - 80);
-    ctx.fillText('💼 Recevez automatiquement nos informations', 40, canvas.height - 50);
+    console.log('✅ Carte par défaut générée');
   };
 
   // Fonction de téléchargement manuel
   const handleManualDownload = async () => {
     console.log('📥 Téléchargement manuel demandé');
-    await executeDownloadAction({ type: 'download', file: 'carte-apercu' });
+    await executeDownloadAction({ type: 'download', file: 'carte-visite' });
   };
 
   // Afficher le message de téléchargement
@@ -652,19 +731,21 @@ const RegisterClient = () => {
         position: fixed;
         top: 20px;
         right: 20px;
-        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         color: white;
-        padding: 1rem 1.5rem;
+        padding: 16px 24px;
         border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
+        box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
         z-index: 9999;
-        font-weight: 500;
+        font-weight: 600;
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.75rem;
+        font-size: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
       ">
-        <span style="font-size: 1.2rem;">📥</span>
-        <span>Carte de visite téléchargée !</span>
+        <span style="font-size: 1.5rem;">📥</span>
+        <span>Carte de visite téléchargée avec succès !</span>
       </div>
     `;
     
@@ -750,7 +831,7 @@ const RegisterClient = () => {
     
     console.log('📱 QR Code scanné:', decodedText);
     
-    // ✅ NOUVEAU: Réinitialiser l'état avant de traiter le nouveau scan
+    // ✅ Réinitialiser l'état avant de traiter le nouveau scan
     resetState();
     
     // Traitement des URLs directes
@@ -781,9 +862,6 @@ const RegisterClient = () => {
       
       return;
     }
-    
-    // Traitement des userId (logique existante)
-    // ... (le reste du code pour gérer les userId, etc.)
   };
 
   const handleError = (error) => {
@@ -812,7 +890,7 @@ const RegisterClient = () => {
       setMessage("✅ Formulaire envoyé avec succès !");
       setFormSubmitted(true);
       
-      // ✅ NOUVEAU: Exécuter les actions en attente après soumission du formulaire
+      // ✅ Exécuter les actions en attente après soumission du formulaire
       console.log('🎬 Formulaire soumis, exécution des actions en attente...');
       setTimeout(() => {
         executeActionsAfterForm();
@@ -831,7 +909,7 @@ const RegisterClient = () => {
   // Attendre le chargement des données
   if (!dataLoaded) {
     return (
-      <div className="register-client">
+      <div className="professional-contact-page">
         <div className="loading-container">
           <div className="loading-content">
             <div className="loading-spinner"></div>
@@ -846,16 +924,19 @@ const RegisterClient = () => {
   // Si aucune action configurée → Scanner QR
   if (!hasActions && !showForm) {
     return (
-      <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md mx-auto">
-          <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900 mb-8">
-              Scanner une carte de visite
-            </h2>
-            
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <div id="qr-reader" className="w-full"></div>
-            </div>
+      <div className="professional-contact-page">
+        <div className="contact-container">
+          <div className="contact-header">
+            <h1 className="contact-title">
+              📱 Scanner une Carte de Visite
+            </h1>
+            <p className="contact-subtitle">
+              Positionnez le QR code dans la zone de scan
+            </p>
+          </div>
+          
+          <div className="scanner-container">
+            <div id="qr-reader" className="qr-reader-area"></div>
           </div>
         </div>
       </div>
@@ -1158,12 +1239,15 @@ const RegisterClient = () => {
 
   // Fallback
   return (
-    <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md mx-auto">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8">
-            Chargement...
-          </h2>
+    <div className="professional-contact-page">
+      <div className="contact-container">
+        <div className="contact-header">
+          <h1 className="contact-title">
+            ⏳ Chargement...
+          </h1>
+          <p className="contact-subtitle">
+            Veuillez patienter pendant l'initialisation
+          </p>
         </div>
       </div>
     </div>
