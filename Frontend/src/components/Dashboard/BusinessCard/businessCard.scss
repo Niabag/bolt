@@ -195,6 +195,166 @@
   margin-right: 10px;
 }
 
+/* ✅ NOUVEAU: Styles pour les schémas prédéfinis */
+.schemas-actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.schemas-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 200px;
+  justify-content: center;
+}
+
+.schemas-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.clear-all-btn {
+  background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+  color: white;
+  border: none;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 150px;
+  justify-content: center;
+}
+
+.clear-all-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(245, 101, 101, 0.3);
+}
+
+.current-schema-preview {
+  background: linear-gradient(135deg, #e6fffa 0%, #b2f5ea 100%);
+  border: 2px solid #38b2ac;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 1rem;
+}
+
+.current-schema-preview h4 {
+  margin: 0 0 1rem 0;
+  color: #2d3748;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.schema-sequence {
+  font-size: 0.9rem;
+  color: #2d3748;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.schema-step {
+  display: inline-block;
+  margin: 0.25rem 0;
+}
+
+/* ✅ NOUVEAU: Modal des schémas */
+.schemas-modal {
+  max-width: 800px;
+  width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.schemas-description {
+  margin: 0 0 2rem 0;
+  color: #4a5568;
+  font-size: 1rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.schemas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.schema-card {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.schema-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  border-color: #667eea;
+  background: linear-gradient(135deg, #f0f4ff 0%, #e0e7ff 100%);
+}
+
+.schema-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.schema-card h4 {
+  margin: 0 0 1rem 0;
+  color: #2d3748;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.schema-description {
+  margin: 0 0 1rem 0;
+  color: #4a5568;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.schema-sequence-preview {
+  background: rgba(255, 255, 255, 0.8);
+  padding: 0.75rem;
+  border-radius: 8px;
+  border-left: 3px solid #667eea;
+  text-align: left;
+}
+
+.schema-sequence-preview strong {
+  color: #2d3748;
+  font-size: 0.8rem;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.schema-sequence-preview span {
+  color: #4a5568;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
 /* Upload de fichiers */
 .file-upload {
   position: relative;
@@ -298,6 +458,12 @@
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
   border-radius: 12px;
   border: 2px dashed #e2e8f0;
+}
+
+.no-actions-hint {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: #a0aec0;
 }
 
 .action-item {
@@ -590,6 +756,13 @@
   font-size: 0.8rem;
   font-style: italic;
   line-height: 1.4;
+}
+
+/* ✅ NOUVEAU: Champ en lecture seule pour le délai */
+.delay-readonly {
+  background: #f8f9fa !important;
+  color: #6c757d !important;
+  cursor: not-allowed !important;
 }
 
 /* Aperçu de la carte */
@@ -926,6 +1099,19 @@
   .download-with-qr-btn {
     min-width: auto;
   }
+
+  .schemas-actions {
+    flex-direction: column;
+  }
+
+  .schemas-btn,
+  .clear-all-btn {
+    min-width: auto;
+  }
+
+  .schemas-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1011,4 +1197,32 @@
 
 .modal-content {
   animation: fadeInUp 0.3s ease-out;
+}
+
+.schema-card {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+.schema-card:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.schema-card:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.schema-card:nth-child(4) {
+  animation-delay: 0.3s;
+}
+
+.schema-card:nth-child(5) {
+  animation-delay: 0.4s;
+}
+
+.schema-card:nth-child(6) {
+  animation-delay: 0.5s;
+}
+
+.schema-card:nth-child(7) {
+  animation-delay: 0.6s;
 }

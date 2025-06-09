@@ -20,12 +20,17 @@ const BusinessCard = ({ userId, user }) => {
   const [showActionsModal, setShowActionsModal] = useState(false);
   const [editingAction, setEditingAction] = useState(null);
   const [newAction, setNewAction] = useState({
-    type: 'download',
+    type: 'form',
     file: 'carte-apercu',
     url: '',
-    delay: 1000, // Délai par défaut initialisé à 1000ms
-    active: true
+    delay: 1000,
+    active: true,
+    order: 1
   });
+  
+  // ✅ NOUVEAU: États pour les schémas prédéfinis
+  const [showSchemasModal, setShowSchemasModal] = useState(false);
+  const [selectedSchema, setSelectedSchema] = useState('');
   
   const [stats, setStats] = useState({
     scansToday: 0,
@@ -33,6 +38,68 @@ const BusinessCard = ({ userId, user }) => {
     totalScans: 0,
     conversions: 0
   });
+
+  // ✅ NOUVEAU: Schémas d'actions prédéfinis
+  const actionSchemas = {
+    'form-website': {
+      name: 'Formulaire → Site web',
+      description: 'Formulaire de contact puis redirection vers votre site',
+      icon: '📝🌐',
+      sequence: 'Formulaire (1s) → Site web (2s)',
+      actions: [
+        { type: 'form', order: 1, delay: 1000, active: true },
+        { type: 'website', order: 2, delay: 2000, active: true, url: 'https://www.exemple.com' }
+      ]
+    },
+    'form-download': {
+      name: 'Formulaire → Téléchargement',
+      description: 'Formulaire de contact puis téléchargement automatique',
+      icon: '📝📥',
+      sequence: 'Formulaire (1s) → Téléchargement (2s)',
+      actions: [
+        { type: 'form', order: 1, delay: 1000, active: true },
+        { type: 'download', order: 2, delay: 2000, active: true, file: 'carte-apercu' }
+      ]
+    },
+    'form-download-website': {
+      name: 'Formulaire → Téléchargement → Site web',
+      description: 'Formulaire, puis téléchargement, puis redirection',
+      icon: '📝📥🌐',
+      sequence: 'Formulaire (1s) → Téléchargement (2s) → Site web (3s)',
+      actions: [
+        { type: 'form', order: 1, delay: 1000, active: true },
+        { type: 'download', order: 2, delay: 2000, active: true, file: 'carte-apercu' },
+        { type: 'website', order: 3, delay: 3000, active: true, url: 'https://www.exemple.com' }
+      ]
+    },
+    'website-only': {
+      name: 'Site web uniquement',
+      description: 'Redirection directe vers votre site web',
+      icon: '🌐',
+      sequence: 'Site web (1s)',
+      actions: [
+        { type: 'website', order: 1, delay: 1000, active: true, url: 'https://www.exemple.com' }
+      ]
+    },
+    'form-only': {
+      name: 'Formulaire uniquement',
+      description: 'Affichage du formulaire de contact seulement',
+      icon: '📝',
+      sequence: 'Formulaire (1s)',
+      actions: [
+        { type: 'form', order: 1, delay: 1000, active: true }
+      ]
+    },
+    'download-only': {
+      name: 'Téléchargement uniquement',
+      description: 'Téléchargement automatique de la carte de visite',
+      icon: '📥',
+      sequence: 'Téléchargement (1s)',
+      actions: [
+        { type: 'download', order: 1, delay: 1000, active: true, file: 'carte-apercu' }
+      ]
+    }
+  };
 
   useEffect(() => {
     if (userId) {
@@ -48,15 +115,18 @@ const BusinessCard = ({ userId, user }) => {
     }
   }, [cardConfig.actions, userId]);
 
+  // ✅ NOUVEAU: Calculer automatiquement l'ordre pour les nouvelles actions
   useEffect(() => {
-    if (showActionsModal) {
-      const defaultDelay = (cardConfig.actions.length + 1) * 1000;
+    if (showActionsModal && !editingAction) {
+      const nextOrder = cardConfig.actions.length + 1;
+      const defaultDelay = nextOrder * 1000;
       setNewAction(prev => ({
         ...prev,
-        delay: defaultDelay
+        delay: defaultDelay,
+        order: nextOrder
       }));
     }
-  }, [showActionsModal, cardConfig.actions.length]);
+  }, [showActionsModal, editingAction, cardConfig.actions.length]);
 
   const loadSavedBusinessCard = async () => {
     try {
@@ -91,9 +161,7 @@ const BusinessCard = ({ userId, user }) => {
       let targetUrl;
       if (redirectAction && redirectAction.url) {
         try {
-          // S'assurer que l'URL est valide
           const url = new URL(redirectAction.url);
-          // Construire l'URL de redirection avec l'URL complète du site web
           targetUrl = `${window.location.origin}/register-client/${encodeURIComponent(redirectAction.url)}`;
           console.log("🌐 URL de redirection construite:", targetUrl);
         } catch (urlError) {
@@ -145,11 +213,59 @@ const BusinessCard = ({ userId, user }) => {
     }
   };
 
+  // ✅ NOUVELLE FONCTION: Appliquer un schéma prédéfini
+  const handleApplySchema = async (schemaKey) => {
+    const schema = actionSchemas[schemaKey];
+    if (!schema) return;
+
+    console.log('🎯 Application du schéma:', schema.name);
+    console.log('📋 Actions du schéma:', schema.actions);
+
+    // Créer les actions avec des IDs uniques
+    const actionsWithIds = schema.actions.map((action, index) => ({
+      ...action,
+      id: Date.now() + index,
+      // Assurer que l'ordre et le délai sont corrects
+      order: action.order || (index + 1),
+      delay: action.delay || ((index + 1) * 1000)
+    }));
+
+    const updatedConfig = {
+      ...cardConfig,
+      actions: actionsWithIds
+    };
+
+    setCardConfig(updatedConfig);
+    await saveBusinessCardToDB(null, updatedConfig);
+    
+    setShowSchemasModal(false);
+    showSuccessMessage(`✅ Schéma "${schema.name}" appliqué avec succès !`);
+  };
+
+  // ✅ NOUVELLE FONCTION: Réinitialiser toutes les actions
+  const handleClearAllActions = async () => {
+    const confirmClear = window.confirm(
+      "❗ Supprimer toutes les actions configurées ?"
+    );
+    if (!confirmClear) return;
+
+    const updatedConfig = {
+      ...cardConfig,
+      actions: []
+    };
+
+    setCardConfig(updatedConfig);
+    await saveBusinessCardToDB(null, updatedConfig);
+    
+    showSuccessMessage('✅ Toutes les actions ont été supprimées');
+  };
+
   const handleAddAction = () => {
     const actionToAdd = {
       ...newAction,
       id: Date.now(),
-      delay: newAction.delay // Utiliser le délai affiché dans le panneau
+      delay: newAction.delay,
+      order: newAction.order
     };
     
     const updatedConfig = {
@@ -162,11 +278,13 @@ const BusinessCard = ({ userId, user }) => {
     
     // Réinitialiser avec le délai par défaut pour la prochaine action
     const nextDefaultDelay = (updatedConfig.actions.length + 1) * 1000;
+    const nextOrder = updatedConfig.actions.length + 1;
     setNewAction({
-      type: 'download',
+      type: 'form',
       file: 'carte-apercu',
       url: '',
       delay: nextDefaultDelay,
+      order: nextOrder,
       active: true
     });
     
@@ -194,39 +312,33 @@ const BusinessCard = ({ userId, user }) => {
     
     setEditingAction(null);
     setNewAction({
-      type: 'download',
+      type: 'form',
       file: 'carte-apercu',
       url: '',
-      delay: 0,
+      delay: 1000,
+      order: 1,
       active: true
     });
     setShowActionsModal(false);
   };
 
   const handleDeleteAction = (actionId) => {
-    // Filtrer l'action à supprimer
     const updatedActions = cardConfig.actions.filter(action => action.id !== actionId);
     
-    // Forcer le recalcul des délais en fonction des nouvelles positions
-    const actionsWithUpdatedDelays = updatedActions.map((action, index) => ({
+    // Recalculer les ordres et délais
+    const actionsWithUpdatedOrder = updatedActions.map((action, index) => ({
       ...action,
-      delay: (index + 1) * 1000 // Forcer le délai en fonction de la nouvelle position
+      order: index + 1,
+      delay: (index + 1) * 1000
     }));
     
     const updatedConfig = {
       ...cardConfig,
-      actions: actionsWithUpdatedDelays
+      actions: actionsWithUpdatedOrder
     };
     
     setCardConfig(updatedConfig);
     saveBusinessCardToDB(null, updatedConfig);
-    
-    // Mettre à jour le délai par défaut pour la prochaine action
-    const nextDefaultDelay = (actionsWithUpdatedDelays.length + 1) * 1000;
-    setNewAction(prev => ({
-      ...prev,
-      delay: nextDefaultDelay
-    }));
   };
 
   const handleMoveAction = (actionId, direction) => {
@@ -239,26 +351,20 @@ const BusinessCard = ({ userId, user }) => {
       [actions[currentIndex], actions[currentIndex + 1]] = [actions[currentIndex + 1], actions[currentIndex]];
     }
     
-    // Recalculer les délais en fonction des nouvelles positions
-    const actionsWithUpdatedDelays = actions.map((action, index) => ({
+    // Recalculer les ordres et délais
+    const actionsWithUpdatedOrder = actions.map((action, index) => ({
       ...action,
-      delay: (index + 1) * 1000 // Forcer le délai en fonction de la nouvelle position
+      order: index + 1,
+      delay: (index + 1) * 1000
     }));
     
     const updatedConfig = {
       ...cardConfig,
-      actions: actionsWithUpdatedDelays
+      actions: actionsWithUpdatedOrder
     };
     
     setCardConfig(updatedConfig);
     saveBusinessCardToDB(null, updatedConfig);
-    
-    // Mettre à jour le délai par défaut pour la prochaine action
-    const nextDefaultDelay = (actionsWithUpdatedDelays.length + 1) * 1000;
-    setNewAction(prev => ({
-      ...prev,
-      delay: nextDefaultDelay
-    }));
   };
 
   const handleToggleAction = (actionId) => {
@@ -275,7 +381,7 @@ const BusinessCard = ({ userId, user }) => {
     saveBusinessCardToDB(null, updatedConfig);
   };
 
-    const saveBusinessCardToDB = async (cardImage = null, config = null) => {
+  const saveBusinessCardToDB = async (cardImage = null, config = null) => {
     try {
       setLoading(true);
       
@@ -301,15 +407,12 @@ const BusinessCard = ({ userId, user }) => {
       });
       
       setSavedCardData(response.businessCard);
-      // ✅ NOUVEAU: Mettre à jour cardConfig avec les données du serveur
       setCardConfig(prev => ({
         ...prev,
         ...response.businessCard.cardConfig,
         cardImage: response.businessCard.cardImage
       }));
       console.log('✅ Carte de visite sauvegardée en BDD');
-      
-      showSuccessMessage('✅ Carte sauvegardée');
       
     } catch (error) {
       console.error('❌ Erreur sauvegarde carte de visite:', error);
@@ -781,11 +884,54 @@ const BusinessCard = ({ userId, user }) => {
             )}
           </div>
 
+          {/* ✅ NOUVELLE SECTION: Schémas prédéfinis */}
+          <div className="config-section">
+            <h3>🎯 Schémas d'actions prédéfinis</h3>
+            <p className="section-description">
+              Choisissez un schéma prêt à l'emploi pour configurer rapidement vos actions
+            </p>
+
+            <div className="schemas-actions">
+              <button 
+                onClick={() => setShowSchemasModal(true)}
+                className="schemas-btn"
+              >
+                🎨 Choisir un schéma
+              </button>
+              
+              {cardConfig.actions.length > 0 && (
+                <button 
+                  onClick={handleClearAllActions}
+                  className="clear-all-btn"
+                >
+                  🗑️ Tout supprimer
+                </button>
+              )}
+            </div>
+
+            {/* Aperçu du schéma actuel */}
+            {cardConfig.actions.length > 0 && (
+              <div className="current-schema-preview">
+                <h4>📋 Schéma actuel :</h4>
+                <div className="schema-sequence">
+                  {cardConfig.actions
+                    .sort((a, b) => (a.order || 1) - (b.order || 1))
+                    .map((action, index) => (
+                      <span key={action.id} className="schema-step">
+                        {getActionIcon(action.type)} {getActionLabel(action.type)}
+                        {index < cardConfig.actions.length - 1 && ' → '}
+                      </span>
+                    ))}
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Section: Gestion des actions */}
           <div className="config-section">
-            <h3>🎬 Actions après scan</h3>
+            <h3>🎬 Actions personnalisées</h3>
             <p className="section-description">
-              Configurez les actions qui se déclenchent quand quelqu'un scanne votre QR code
+              Configurez manuellement les actions qui se déclenchent lors du scan
             </p>
 
             {/* Liste des actions existantes */}
@@ -793,64 +939,67 @@ const BusinessCard = ({ userId, user }) => {
               {cardConfig.actions.length === 0 ? (
                 <div className="no-actions">
                   <p>Aucune action configurée</p>
+                  <p className="no-actions-hint">Utilisez un schéma prédéfini ou ajoutez des actions manuellement</p>
                 </div>
               ) : (
-                cardConfig.actions.map((action, index) => (
-                  <div key={action.id} className={`action-item ${action.active ? 'active' : 'inactive'}`}>
-                    <div className="action-order">#{index + 1}</div>
-                    <div className="action-icon">{getActionIcon(action.type)}</div>
-                    <div className="action-content">
-                      <div className="action-title">
-                        {getActionLabel(action.type)}
-                        {action.delay > 0 && <span className="action-delay">+{action.delay}ms</span>}
+                cardConfig.actions
+                  .sort((a, b) => (a.order || 1) - (b.order || 1))
+                  .map((action, index) => (
+                    <div key={action.id} className={`action-item ${action.active ? 'active' : 'inactive'}`}>
+                      <div className="action-order">#{action.order || (index + 1)}</div>
+                      <div className="action-icon">{getActionIcon(action.type)}</div>
+                      <div className="action-content">
+                        <div className="action-title">
+                          {getActionLabel(action.type)}
+                          {action.delay > 0 && <span className="action-delay">+{action.delay}ms</span>}
+                        </div>
+                        <div className="action-details">
+                          {action.type === 'download' && getFileDisplayName(action.file)}
+                          {action.type === 'website' && action.url}
+                          {action.type === 'form' && 'Formulaire d\'inscription'}
+                        </div>
                       </div>
-                      <div className="action-details">
-                        {action.type === 'download' && getFileDisplayName(action.file)}
-                        {action.type === 'website' && action.url}
-                        {action.type === 'form' && 'Formulaire d\'inscription'}
+                      <div className="action-controls">
+                        <button 
+                          onClick={() => handleMoveAction(action.id, 'up')}
+                          disabled={index === 0}
+                          className="move-btn"
+                          title="Monter"
+                        >
+                          ↑
+                        </button>
+                        <button 
+                          onClick={() => handleMoveAction(action.id, 'down')}
+                          disabled={index === cardConfig.actions.length - 1}
+                          className="move-btn"
+                          title="Descendre"
+                        >
+                          ↓
+                        </button>
+                        <button 
+                          onClick={() => handleToggleAction(action.id)}
+                          className={`toggle-btn ${action.active ? 'active' : 'inactive'}`}
+                          title={action.active ? 'Désactiver' : 'Activer'}
+                        >
+                          {action.active ? '👁️' : '👁️‍🗨️'}
+                        </button>
+                        <button 
+                          onClick={() => handleEditAction(action)}
+                          className="edit-btn"
+                          title="Modifier"
+                        >
+                          ✏️
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteAction(action.id)}
+                          className="delete-btn"
+                          title="Supprimer"
+                        >
+                          🗑️
+                        </button>
                       </div>
                     </div>
-                    <div className="action-controls">
-                      <button 
-                        onClick={() => handleMoveAction(action.id, 'up')}
-                        disabled={index === 0}
-                        className="move-btn"
-                        title="Monter"
-                      >
-                        ↑
-                      </button>
-                      <button 
-                        onClick={() => handleMoveAction(action.id, 'down')}
-                        disabled={index === cardConfig.actions.length - 1}
-                        className="move-btn"
-                        title="Descendre"
-                      >
-                        ↓
-                      </button>
-                      <button 
-                        onClick={() => handleToggleAction(action.id)}
-                        className={`toggle-btn ${action.active ? 'active' : 'inactive'}`}
-                        title={action.active ? 'Désactiver' : 'Activer'}
-                      >
-                        {action.active ? '👁️' : '👁️‍🗨️'}
-                      </button>
-                      <button 
-                        onClick={() => handleEditAction(action)}
-                        className="edit-btn"
-                        title="Modifier"
-                      >
-                        ✏️
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteAction(action.id)}
-                        className="delete-btn"
-                        title="Supprimer"
-                      >
-                        🗑️
-                      </button>
-                    </div>
-                  </div>
-                ))
+                  ))
               )}
             </div>
 
@@ -858,7 +1007,7 @@ const BusinessCard = ({ userId, user }) => {
               onClick={() => setShowActionsModal(true)}
               className="add-action-btn"
             >
-              ➕ Ajouter une action
+              ➕ Ajouter une action manuelle
             </button>
           </div>
         </div>
@@ -934,12 +1083,15 @@ const BusinessCard = ({ userId, user }) => {
                     <div className="qr-actions-info">
                       <strong>Actions configurées :</strong>
                       <ul>
-                        {cardConfig.actions.filter(a => a.active).map((action, index) => (
-                          <li key={action.id}>
-                            {getActionIcon(action.type)} {getActionLabel(action.type)}
-                            {action.delay > 0 && ` (+${action.delay}ms)`}
-                          </li>
-                        ))}
+                        {cardConfig.actions
+                          .filter(a => a.active)
+                          .sort((a, b) => (a.order || 1) - (b.order || 1))
+                          .map((action) => (
+                            <li key={action.id}>
+                              {getActionIcon(action.type)} {getActionLabel(action.type)}
+                              {action.delay > 0 && ` (+${action.delay}ms)`}
+                            </li>
+                          ))}
                       </ul>
                     </div>
                   )}
@@ -964,7 +1116,57 @@ const BusinessCard = ({ userId, user }) => {
         </div>
       </div>
 
-      {/* Modal de gestion des actions */}
+      {/* ✅ NOUVELLE MODAL: Sélection de schémas */}
+      {showSchemasModal && (
+        <div className="modal-overlay" onClick={() => setShowSchemasModal(false)}>
+          <div className="modal-content schemas-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>🎯 Choisir un schéma d'actions</h3>
+              <button 
+                onClick={() => setShowSchemasModal(false)}
+                className="modal-close"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="modal-body">
+              <p className="schemas-description">
+                Sélectionnez un schéma prédéfini pour configurer automatiquement l'ordre des actions :
+              </p>
+              
+              <div className="schemas-grid">
+                {Object.entries(actionSchemas).map(([key, schema]) => (
+                  <div 
+                    key={key} 
+                    className="schema-card"
+                    onClick={() => handleApplySchema(key)}
+                  >
+                    <div className="schema-icon">{schema.icon}</div>
+                    <h4>{schema.name}</h4>
+                    <p className="schema-description">{schema.description}</p>
+                    <div className="schema-sequence-preview">
+                      <strong>Séquence :</strong>
+                      <span>{schema.sequence}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div className="modal-footer">
+              <button 
+                onClick={() => setShowSchemasModal(false)}
+                className="btn-cancel"
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de gestion des actions manuelles */}
       {showActionsModal && (
         <div className="modal-overlay" onClick={() => setShowActionsModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -985,8 +1187,8 @@ const BusinessCard = ({ userId, user }) => {
                   value={newAction.type}
                   onChange={(e) => setNewAction(prev => ({ ...prev, type: e.target.value }))}
                 >
-                  <option value="download">📥 Téléchargement</option>
                   <option value="form">📝 Formulaire</option>
+                  <option value="download">📥 Téléchargement</option>
                   <option value="website">🌐 Site web</option>
                 </select>
               </div>
@@ -1013,27 +1215,45 @@ const BusinessCard = ({ userId, user }) => {
                     value={newAction.url}
                     onChange={(e) => {
                       let url = e.target.value;
-                      // S'assurer que l'URL commence par http:// ou https://
                       if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
                         url = 'https://' + url;
                       }
                       setNewAction(prev => ({ ...prev, url }));
                     }}
-                    placeholder="www.goldassurance.fr/home"
+                    placeholder="www.exemple.com"
                   />
                   <small>Le QR code redirigera vers le site web spécifié</small>
                 </div>
               )}
 
               <div className="form-group">
-                <label>Délai d'exécution (ms) :</label>
+                <label>Ordre d'exécution :</label>
+                <input
+                  type="number"
+                  value={newAction.order}
+                  onChange={(e) => {
+                    const order = parseInt(e.target.value) || 1;
+                    const delay = order * 1000;
+                    setNewAction(prev => ({ 
+                      ...prev, 
+                      order: order,
+                      delay: delay
+                    }));
+                  }}
+                  min="1"
+                />
+                <small>Position dans la séquence (1 = premier, 2 = deuxième, etc.)</small>
+              </div>
+
+              <div className="form-group">
+                <label>Délai d'exécution :</label>
                 <input
                   type="number"
                   value={newAction.delay}
-                  onChange={(e) => setNewAction(prev => ({ ...prev, delay: parseInt(e.target.value) || 0 }))}
-                  min="0"
-                  step="100"
+                  readOnly
+                  className="delay-readonly"
                 />
+                <small>Calculé automatiquement : {newAction.order} × 1000ms = {newAction.delay}ms</small>
               </div>
 
               <div className="form-group">
