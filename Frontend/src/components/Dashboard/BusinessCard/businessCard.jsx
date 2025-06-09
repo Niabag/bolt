@@ -23,7 +23,7 @@ const BusinessCard = ({ userId, user }) => {
     type: 'download',
     file: 'carte-apercu',
     url: '',
-    delay: 0,
+    delay: 1000, // Délai par défaut initialisé à 1000ms
     active: true
   });
   
@@ -47,6 +47,16 @@ const BusinessCard = ({ userId, user }) => {
       generateQRCode();
     }
   }, [cardConfig.actions, userId]);
+
+  useEffect(() => {
+    if (showActionsModal) {
+      const defaultDelay = (cardConfig.actions.length + 1) * 1000;
+      setNewAction(prev => ({
+        ...prev,
+        delay: defaultDelay
+      }));
+    }
+  }, [showActionsModal, cardConfig.actions.length]);
 
   const loadSavedBusinessCard = async () => {
     try {
@@ -80,8 +90,16 @@ const BusinessCard = ({ userId, user }) => {
       
       let targetUrl;
       if (redirectAction && redirectAction.url) {
-        const destination = redirectAction.url.replace(/^https?:\/\//, '');
-        targetUrl = `${window.location.origin}/register-client/${destination}`;
+        try {
+          // S'assurer que l'URL est valide
+          const url = new URL(redirectAction.url);
+          // Construire l'URL de redirection avec l'URL complète du site web
+          targetUrl = `${window.location.origin}/register-client/${encodeURIComponent(redirectAction.url)}`;
+          console.log("🌐 URL de redirection construite:", targetUrl);
+        } catch (urlError) {
+          console.error("❌ URL invalide:", redirectAction.url);
+          targetUrl = `${FRONTEND_ROUTES.CLIENT_REGISTER(userId)}`;
+        }
       } else {
         targetUrl = `${FRONTEND_ROUTES.CLIENT_REGISTER(userId)}`;
       }
@@ -130,7 +148,8 @@ const BusinessCard = ({ userId, user }) => {
   const handleAddAction = () => {
     const actionToAdd = {
       ...newAction,
-      id: Date.now()
+      id: Date.now(),
+      delay: newAction.delay // Utiliser le délai affiché dans le panneau
     };
     
     const updatedConfig = {
@@ -141,11 +160,13 @@ const BusinessCard = ({ userId, user }) => {
     setCardConfig(updatedConfig);
     saveBusinessCardToDB(null, updatedConfig);
     
+    // Réinitialiser avec le délai par défaut pour la prochaine action
+    const nextDefaultDelay = (updatedConfig.actions.length + 1) * 1000;
     setNewAction({
       type: 'download',
       file: 'carte-apercu',
       url: '',
-      delay: 0,
+      delay: nextDefaultDelay,
       active: true
     });
     
@@ -183,14 +204,29 @@ const BusinessCard = ({ userId, user }) => {
   };
 
   const handleDeleteAction = (actionId) => {
+    // Filtrer l'action à supprimer
     const updatedActions = cardConfig.actions.filter(action => action.id !== actionId);
+    
+    // Forcer le recalcul des délais en fonction des nouvelles positions
+    const actionsWithUpdatedDelays = updatedActions.map((action, index) => ({
+      ...action,
+      delay: (index + 1) * 1000 // Forcer le délai en fonction de la nouvelle position
+    }));
+    
     const updatedConfig = {
       ...cardConfig,
-      actions: updatedActions
+      actions: actionsWithUpdatedDelays
     };
     
     setCardConfig(updatedConfig);
     saveBusinessCardToDB(null, updatedConfig);
+    
+    // Mettre à jour le délai par défaut pour la prochaine action
+    const nextDefaultDelay = (actionsWithUpdatedDelays.length + 1) * 1000;
+    setNewAction(prev => ({
+      ...prev,
+      delay: nextDefaultDelay
+    }));
   };
 
   const handleMoveAction = (actionId, direction) => {
@@ -203,13 +239,26 @@ const BusinessCard = ({ userId, user }) => {
       [actions[currentIndex], actions[currentIndex + 1]] = [actions[currentIndex + 1], actions[currentIndex]];
     }
     
+    // Recalculer les délais en fonction des nouvelles positions
+    const actionsWithUpdatedDelays = actions.map((action, index) => ({
+      ...action,
+      delay: (index + 1) * 1000 // Forcer le délai en fonction de la nouvelle position
+    }));
+    
     const updatedConfig = {
       ...cardConfig,
-      actions
+      actions: actionsWithUpdatedDelays
     };
     
     setCardConfig(updatedConfig);
     saveBusinessCardToDB(null, updatedConfig);
+    
+    // Mettre à jour le délai par défaut pour la prochaine action
+    const nextDefaultDelay = (actionsWithUpdatedDelays.length + 1) * 1000;
+    setNewAction(prev => ({
+      ...prev,
+      delay: nextDefaultDelay
+    }));
   };
 
   const handleToggleAction = (actionId) => {
@@ -962,10 +1011,17 @@ const BusinessCard = ({ userId, user }) => {
                   <input
                     type="url"
                     value={newAction.url}
-                    onChange={(e) => setNewAction(prev => ({ ...prev, url: e.target.value }))}
-                    placeholder="https://google.com"
+                    onChange={(e) => {
+                      let url = e.target.value;
+                      // S'assurer que l'URL commence par http:// ou https://
+                      if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+                        url = 'https://' + url;
+                      }
+                      setNewAction(prev => ({ ...prev, url }));
+                    }}
+                    placeholder="www.goldassurance.fr/home"
                   />
-                  <small>Le QR code redirigera vers: /register-client/[votre-url]</small>
+                  <small>Le QR code redirigera vers le site web spécifié</small>
                 </div>
               )}
 

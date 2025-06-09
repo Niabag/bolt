@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { API_ENDPOINTS, apiRequest } from "../../config/api";
 import "./registerClient.scss";
+import { Html5QrcodeScanner } from "html5-qrcode";
 
 const RegisterClient = () => {
   const { userId } = useParams();
@@ -19,96 +20,155 @@ const RegisterClient = () => {
   const [loading, setLoading] = useState(false);
   const actionsExecutedRef = useRef(false);
   
-  // Gestion de la redirection finale
-  const [finalRedirectUrl, setFinalRedirectUrl] = useState('');
-  const [businessCardActions, setBusinessCardActions] = useState([]);
-  const [businessCardData, setBusinessCardData] = useState(null);
-  
   // États pour contrôler l'affichage
   const [showForm, setShowForm] = useState(false);
   const [actionsCompleted, setActionsCompleted] = useState(false);
   const [hasActions, setHasActions] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
-  const [websiteActionTriggered, setWebsiteActionTriggered] = useState(false); // ✅ NOUVEAU
+  const [businessCardActions, setBusinessCardActions] = useState([]);
+  const [businessCardData, setBusinessCardData] = useState(null);
+  const [message, setMessage] = useState("");
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    message: ""
+  });
+  const scannerRef = useRef(null);
 
-  // ✅ CORRECTION MAJEURE: Récupérer les actions avec la nouvelle route publique
+  // Ajout d'un état pour stocker les actions à afficher
+  const [websiteAction, setWebsiteAction] = useState(null);
+  const [downloadAction, setDownloadAction] = useState(null);
+
+  // Fonction pour calculer le délai en fonction de la position
+  const calculateDelayFromPosition = (position) => {
+    return position * 1000; // 1000ms pour position 1, 2000ms pour position 2, etc.
+  };
+
+  // Fonction pour mettre à jour les délais des actions
+  const updateActionsDelays = (actions) => {
+    return actions.map((action, index) => ({
+      ...action,
+      delay: calculateDelayFromPosition(index + 1)
+    }));
+  };
+
+  // Gestion des actions
   useEffect(() => {
-    const detectRedirectAndActions = async () => {
-      // Extraire la destination de l'URL
-      const pathParts = window.location.pathname.split('/');
-      const lastPart = pathParts[pathParts.length - 1];
-      
-      // Si ce n'est pas un userId MongoDB, c'est une destination
-      if (lastPart && lastPart.length !== 24 && !lastPart.match(/^[0-9a-fA-F]{24}$/)) {
-        setFinalRedirectUrl(`https://${lastPart}`);
-        console.log('🌐 Redirection finale détectée:', `https://${lastPart}`);
-      }
-      
-      // ✅ CORRECTION: Utiliser la nouvelle route publique
+    const detectActions = async () => {
       try {
-        const actualUserId = userId || '507f1f77bcf86cd799439011';
-        console.log('🔍 Récupération des données de carte pour userId:', actualUserId);
+        // Extraire la destination de l'URL
+        const pathParts = window.location.pathname.split('/');
+        const lastPart = pathParts[pathParts.length - 1];
         
-        // ✅ NOUVEAU: Utiliser la route publique spécifique
-        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/business-cards/public/${actualUserId}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json'
+        // Vérifier si c'est une URL encodée
+        if (lastPart && lastPart.includes('%')) {
+          try {
+            // Décoder l'URL du site web
+            const decodedUrl = decodeURIComponent(lastPart);
+            if (decodedUrl.startsWith('http://') || decodedUrl.startsWith('https://')) {
+              console.log('🌐 URL détectée:', decodedUrl);
+              
+              // Créer une action de type website avec délai par défaut
+              const websiteAction = {
+                id: Date.now(),
+                type: 'website',
+                url: decodedUrl,
+                active: true,
+                order: 1,
+                delay: 1000
+              };
+              
+              console.log('🎯 Création de l\'action website:', websiteAction);
+              setBusinessCardActions([websiteAction]);
+              setWebsiteAction(websiteAction);
+              setHasActions(true);
+              setDataLoaded(true);
+              return;
+            }
+          } catch (error) {
+            console.error('❌ Erreur lors du décodage de l\'URL:', error);
           }
-        });
+        }
         
-        if (response.ok) {
-          const cardData = await response.json();
-          console.log('📋 Données de carte récupérées:', cardData);
+        // Si ce n'est pas une URL, c'est un userId
+        const actualUserId = userId || lastPart;
+        console.log('🔍 Vérification du userId:', actualUserId);
+        
+        if (actualUserId && actualUserId.length === 24 && actualUserId.match(/^[0-9a-fA-F]{24}$/)) {
+          console.log('🔍 Récupération des données de carte pour userId:', actualUserId);
           
-          setBusinessCardData(cardData);
+          const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/business-cards/public/${actualUserId}`);
+          const data = await response.json();
           
-          if (cardData.cardConfig && cardData.cardConfig.actions && cardData.cardConfig.actions.length > 0) {
-            // ✅ CORRECTION: Filtrer SEULEMENT les actions actives
-            const activeActions = cardData.cardConfig.actions.filter(action => action.active === true);
+          console.log("📦 Données reçues de l'API:", data);
+          
+          if (!data.businessCard) {
+            console.log("❌ Pas de carte de visite dans la réponse");
+            setMessage("ℹ️ Aucune action configurée. Cette carte de visite n'a pas d'actions configurées.");
+            setLoading(false);
+            return;
+          }
+
+          const businessCard = data.businessCard;
+          console.log("📋 Carte de visite trouvée:", businessCard);
+          
+          if (!businessCard.cardConfig?.actions || businessCard.cardConfig.actions.length === 0) {
+            console.log("❌ Pas d'actions dans la carte de visite");
+            setMessage("ℹ️ Aucune action configurée. Cette carte de visite n'a pas d'actions configurées.");
+            setLoading(false);
+            return;
+          }
+
+          // Filtrer les actions actives
+          let activeActions = businessCard.cardConfig.actions.filter(action => action.active);
+          // Assigner l'ordre si absent
+          activeActions = activeActions.map((action, idx) => ({
+            ...action,
+            order: action.order !== undefined ? action.order : idx + 1
+          }));
+          console.log("✅ Actions actives trouvées:", activeActions);
+          
+          if (activeActions.length > 0) {
+            console.log("🎯 Actions à exécuter:", activeActions);
             setBusinessCardActions(activeActions);
-            setHasActions(activeActions.length > 0);
-            
-            console.log('✅ Actions actives trouvées:', activeActions);
-            console.log('📊 Nombre d\'actions actives:', activeActions.length);
-            
-            // ✅ CORRECTION: Déterminer si on affiche le formulaire
-            const hasFormAction = activeActions.some(action => action.type === 'form');
-            setShowForm(hasFormAction);
-            
-            console.log(`📝 Affichage du formulaire: ${hasFormAction ? 'OUI' : 'NON'}`);
-            
+            setBusinessCardData(businessCard);
+            setHasActions(true);
+            setShowForm(activeActions.some(a => a.type === 'form'));
           } else {
-            console.log('ℹ️ Aucune action configurée ou aucune action active');
-            setBusinessCardActions([]);
+            console.log("ℹ️ Aucune action active trouvée");
             setHasActions(false);
             setShowForm(false);
           }
-        } else if (response.status === 404) {
-          console.log('ℹ️ Aucune carte de visite configurée pour cet utilisateur');
-          setBusinessCardActions([]);
-          setHasActions(false);
-          setShowForm(false);
         } else {
-          console.log('⚠️ Erreur lors de la récupération:', response.status);
-          setBusinessCardActions([]);
+          console.log('❌ ID utilisateur invalide');
           setHasActions(false);
           setShowForm(false);
         }
       } catch (error) {
-        console.log('ℹ️ Erreur lors de la récupération des données de carte:', error);
-        setBusinessCardActions([]);
+        console.error('❌ Erreur:', error);
         setHasActions(false);
         setShowForm(false);
+      } finally {
+        setDataLoaded(true);
       }
-      
-      setDataLoaded(true);
     };
 
-    detectRedirectAndActions();
-  }, [userId]);
+    if (!dataLoaded) {
+      detectActions();
+    }
+  }, [userId, dataLoaded]);
 
-  // ✅ CORRECTION: Exécuter les actions SEULEMENT après chargement complet
+  useEffect(() => {
+    if (businessCardActions && businessCardActions.length > 0) {
+      setWebsiteAction(businessCardActions.find(a => a.type === 'website'));
+      setDownloadAction(businessCardActions.find(a => a.type === 'download'));
+    } else {
+      setWebsiteAction(null);
+      setDownloadAction(null);
+    }
+  }, [businessCardActions]);
+
+  // Exécution des actions
   useEffect(() => {
     if (dataLoaded && hasActions && businessCardActions.length > 0 && !actionsExecutedRef.current) {
       actionsExecutedRef.current = true;
@@ -116,84 +176,60 @@ const RegisterClient = () => {
       console.log('📋 Actions à exécuter:', businessCardActions);
       
       setTimeout(() => {
-        executeBusinessCardActions();
+        executeBusinessCardActions(businessCardActions);
       }, 1000);
     } else if (dataLoaded && !hasActions) {
-      console.log('ℹ️ Aucune action configurée - redirection directe');
-      // Redirection immédiate si pas d'actions
-      setTimeout(() => {
-        if (finalRedirectUrl) {
-          console.log('🌐 Redirection immédiate vers:', finalRedirectUrl);
-          window.location.href = finalRedirectUrl;
-        } else {
-          console.log('🌐 Redirection par défaut vers Google');
-          window.location.href = 'https://google.com';
-        }
-      }, 2000);
+      console.log('ℹ️ Aucune action configurée');
     }
-  }, [dataLoaded, hasActions, businessCardActions, finalRedirectUrl]);
+  }, [dataLoaded, hasActions, businessCardActions]);
 
-  // ✅ CORRECTION: Exécuter SEULEMENT les actions configurées
-  const executeBusinessCardActions = async () => {
-    if (!hasActions || businessCardActions.length === 0) {
-      console.log('ℹ️ Aucune action à exécuter');
-      return;
-    }
+  const executeBusinessCardActions = async (actions) => {
+    try {
+      console.log('🎬 Démarrage de l\'exécution des actions configurées');
+      console.log('📋 Actions à exécuter:', actions);
 
-    console.log('🎬 Début d\'exécution des actions:', businessCardActions);
-
-    for (const action of businessCardActions) {
-      try {
-        console.log(`🎯 Exécution de l'action: ${action.type} (ID: ${action.id})`);
+      // Trier les actions par ordre
+      const sortedActions = [...actions].sort((a, b) => a.order - b.order);
+      
+      // Exécuter chaque action avec son délai
+      for (const action of sortedActions) {
+        console.log('🎬 Démarrage de l\'exécution des actions');
         
-        // Attendre le délai configuré
-        if (action.delay > 0) {
-          console.log(`⏳ Attente de ${action.delay}ms pour l'action ${action.type}`);
-          await new Promise(resolve => setTimeout(resolve, action.delay));
-        }
-
+        // Forcer le délai en fonction de la position
+        const forcedDelay = action.order * 1000; // 1 = 1000ms, 2 = 2000ms, etc.
+        console.log(`⏳ Attente de ${forcedDelay}ms pour l'action en position ${action.order} (délai configuré)`);
+        await new Promise(resolve => setTimeout(resolve, forcedDelay));
+        
+        console.log(`🎯 Exécution de l'action en position ${action.order}:`, action);
+        
         switch (action.type) {
-          case 'download':
-            console.log('📥 Exécution de l\'action de téléchargement');
-            await executeDownloadAction(action);
-            break;
-          case 'form':
-            console.log('📝 Action formulaire - affichage du formulaire');
-            setShowForm(true);
-            break;
           case 'website':
-            console.log(`🌐 Action de redirection vers: ${action.url}`);
-            if (action.url) {
-              // ✅ MODIFIÉ: Utilise window.open pour ouvrir dans un nouvel onglet.
-              // Attention: Cela peut être bloqué par les bloqueurs de pop-up si non directement initié par une interaction utilisateur.
-              window.open(action.url, '_blank');
-              setWebsiteActionTriggered(true); // ✅ NOUVEAU: Indique qu'une action de site web a été tentée
-            }
+            console.log('🌐 Ouverture du site web:', action.url);
+            if (action.url) window.open(action.url, '_blank');
             break;
+            
+          case 'download':
+            console.log('📥 Téléchargement du fichier:', action.url);
+            if (action.url) window.open(action.url, '_blank');
+            else console.warn('Aucune URL de fichier à télécharger.');
+            break;
+            
+          case 'form':
+            console.log('📝 Affichage du formulaire');
+            setShowForm(true);
+            setHasActions(true);
+            setBusinessCardData(businessCardData);
+            break;
+            
           default:
-            console.log(`❓ Type d'action non reconnu: ${action.type}`);
+            console.log('⚠️ Type d\'action non reconnu:', action.type);
         }
-      } catch (error) {
-        console.error(`❌ Erreur lors de l'exécution de l'action ${action.type}:`, error);
       }
-    }
-    
-    setActionsCompleted(true);
-    console.log('✅ Toutes les actions ont été exécutées');
-    
-    // Si pas de formulaire et redirection finale, rediriger après les actions
-    // La redirection automatique de la page actuelle est évitée si une action de site web a été déclenchée,
-    // car l'utilisateur est censé interagir avec le nouvel onglet.
-    if (!showForm && finalRedirectUrl && !websiteActionTriggered) {
-      setTimeout(() => {
-        console.log('🌐 Redirection automatique vers:', finalRedirectUrl);
-        window.location.href = finalRedirectUrl;
-      }, 3000);
-    } else if (!showForm && !finalRedirectUrl && !websiteActionTriggered) {
-      setTimeout(() => {
-        console.log('🌐 Redirection par défaut vers Google');
-        window.location.href = 'https://google.com';
-      }, 3000);
+      
+      console.log('✅ Toutes les actions ont été exécutées');
+      
+    } catch (error) {
+      console.error('❌ Erreur lors de l\'exécution des actions:', error);
     }
   };
 
@@ -486,10 +522,6 @@ const RegisterClient = () => {
       const pathParts = window.location.pathname.split('/');
       let actualUserId = userId;
       
-      if (finalRedirectUrl) {
-        actualUserId = userId || '507f1f77bcf86cd799439011';
-      }
-
       await apiRequest(API_ENDPOINTS.CLIENTS.REGISTER(actualUserId), {
         method: "POST",
         body: JSON.stringify({ 
@@ -508,12 +540,7 @@ const RegisterClient = () => {
       
       // Redirection finale
       setTimeout(() => {
-        if (finalRedirectUrl) {
-          console.log('🌐 Redirection vers:', finalRedirectUrl);
-          window.location.href = finalRedirectUrl;
-        } else {
-          window.location.href = 'https://google.com';
-        }
+        window.location.href = 'https://google.com';
       }, 2000);
       
     } catch (err) {
@@ -524,14 +551,94 @@ const RegisterClient = () => {
     }
   };
 
+  useEffect(() => {
+    // Attendre que le DOM soit prêt
+    const timer = setTimeout(() => {
+      if (!hasActions && !scannerRef.current) {
+        try {
+          const scanner = new Html5QrcodeScanner("qr-reader", {
+            qrbox: {
+              width: 250,
+              height: 250
+            },
+            fps: 10
+          });
+
+          scanner.render(handleScan, handleError);
+          scannerRef.current = scanner;
+        } catch (error) {
+          console.error("❌ Erreur lors de l'initialisation du scanner:", error);
+        }
+      }
+    }, 1000);
+
+    return () => {
+      clearTimeout(timer);
+      if (scannerRef.current) {
+        scannerRef.current.clear();
+      }
+    };
+  }, [hasActions]);
+
+  const handleScan = (decodedText) => {
+    if (!decodedText) return;
+    // On ne fait plus de redirection automatique !
+    if (decodedText.startsWith('http://') || decodedText.startsWith('https://')) {
+      const websiteAction = {
+        id: Date.now(),
+        type: 'website',
+        url: decodedText,
+        active: true,
+        order: 1,
+        delay: 1000
+      };
+      setBusinessCardActions([websiteAction]);
+      setWebsiteAction(websiteAction);
+      setHasActions(true);
+      setDataLoaded(true);
+      setShowForm(false);
+      setDownloadAction(null);
+      return;
+    }
+    // ... (le reste du code pour gérer les userId, etc.)
+  };
+
+  const handleError = (error) => {
+    console.error("❌ Erreur de scan:", error);
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      // Ici, vous pouvez ajouter la logique pour envoyer les données du formulaire
+      console.log("📤 Envoi du formulaire:", formData);
+      setMessage("✅ Formulaire envoyé avec succès !");
+    } catch (error) {
+      console.error("❌ Erreur lors de l'envoi du formulaire:", error);
+      setMessage("❌ Erreur lors de l'envoi du formulaire");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // ✅ NOUVEAU: Affichage conditionnel selon les actions configurées
   
   // Attendre le chargement des données
   if (!dataLoaded) {
     return (
-      <div className="register-client-container">
+      <div className="register-client">
         <div className="loading-container">
-          <div className="loading-message">
+          <div className="loading-content">
+            <div className="loading-spinner"></div>
             <h2>⏳ Chargement...</h2>
             <p>Récupération de la configuration...</p>
           </div>
@@ -543,21 +650,11 @@ const RegisterClient = () => {
   // Si aucune action configurée → Redirection directe
   if (!hasActions && !showForm) {
     return (
-      <div className="register-client-container">
+      <div className="register-client">
         <div className="no-actions-container">
-          <div className="no-actions-message">
-            <h2>🌐 Redirection en cours...</h2>
-            <p>Aucune action configurée. Redirection automatique.</p>
-            
-            {finalRedirectUrl ? (
-              <div className="redirect-info">
-                <p>Redirection vers <strong>{finalRedirectUrl}</strong>...</p>
-              </div>
-            ) : (
-              <div className="redirect-info">
-                <p>Redirection vers <strong>Google</strong>...</p>
-              </div>
-            )}
+          <div className="no-actions-content">
+            <h2>ℹ️ Aucune action configurée</h2>
+            <p>Cette carte de visite n'a pas d'actions configurées.</p>
           </div>
         </div>
       </div>
@@ -567,7 +664,7 @@ const RegisterClient = () => {
   // Si actions configurées mais pas de formulaire → Actions uniquement
   if (hasActions && !showForm && !actionsCompleted) {
     return (
-      <div className="register-client-container">
+      <div className="register-client">
         <div className="download-only-container">
           <div className="download-message">
             <h2>📥 Actions en cours...</h2>
@@ -595,13 +692,6 @@ const RegisterClient = () => {
               </button>
               <p className="download-help">Cliquez pour télécharger la carte de visite</p>
             </div>
-            
-            {finalRedirectUrl && (
-              <div className="redirect-notice">
-                <span className="redirect-icon">🌐</span>
-                <span>Redirection vers <strong>{finalRedirectUrl}</strong> après les actions...</span>
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -611,17 +701,11 @@ const RegisterClient = () => {
   // Si actions terminées sans formulaire → Message de fin
   if (hasActions && actionsCompleted && !showForm) {
     return (
-      <div className="register-client-container">
+      <div className="register-client">
         <div className="actions-completed">
           <div className="completion-message">
             <h2>✅ Actions terminées</h2>
             <p>Toutes les actions configurées ont été exécutées avec succès.</p>
-            
-            {finalRedirectUrl && (
-              <div className="redirect-info">
-                <p>Redirection vers <strong>{finalRedirectUrl}</strong> dans quelques secondes...</p>
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -630,137 +714,108 @@ const RegisterClient = () => {
 
   // Affichage du formulaire (SEULEMENT si action form configurée)
   return (
-    <div className="register-client-container">
-      <form onSubmit={handleRegister} className="register-form">
-        <h2>📝 Inscription Prospect</h2>
-        <p className="form-subtitle">Remplissez vos informations pour être recontacté</p>
-        
-        {/* Bouton de téléchargement manuel si données disponibles */}
-        {businessCardData && (
-          <div className="manual-download-section">
-            <button 
-              type="button"
-              onClick={handleManualDownload}
-              className="manual-download-btn"
-              disabled={loading || success}
-            >
-              📥 Télécharger la carte de visite
-            </button>
-            <p className="download-help">Cliquez pour télécharger votre carte de visite avec QR code</p>
-          </div>
-        )}
-        
-        {finalRedirectUrl && (
-          <div className="redirect-notice">
-            <span className="redirect-icon">🌐</span>
-            <span>Après inscription, vous serez redirigé vers: <strong>{finalRedirectUrl}</strong></span>
-          </div>
-        )}
-        
-        {error && <div className="error-message">{error}</div>}
-        {success && (
-          <div className="success-message">
-            ✅ Inscription réussie ! 
-            {finalRedirectUrl 
-              ? ` Redirection vers ${finalRedirectUrl} dans 2 secondes...` 
-              : ' Redirection vers Google dans 2 secondes...'
-            }
-          </div>
-        )}
-        
-        {/* Informations principales */}
-        <div className="form-section">
-          <h3>👤 Informations personnelles</h3>
+    <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md mx-auto">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8">
+            {hasActions ? 'Actions de la carte de visite' : 'Scanner une carte de visite'}
+          </h2>
           
-          <input
-            type="text"
-            placeholder="Nom et prénom *"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            disabled={success}
-          />
-          
-          <input
-            type="email"
-            placeholder="Email *"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            disabled={success}
-          />
-          
-          <input
-            type="tel"
-            placeholder="Téléphone *"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            required
-            disabled={success}
-          />
-        </div>
+          {!hasActions && (
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <div id="qr-reader" className="w-full"></div>
+            </div>
+          )}
 
-        {/* Adresse */}
-        <div className="form-section">
-          <h3>📍 Adresse</h3>
-          
-          <input
-            type="text"
-            placeholder="Adresse (rue, numéro)"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            disabled={success}
-          />
-          
-          <div className="form-row">
-            <input
-              type="text"
-              placeholder="Code postal"
-              value={postalCode}
-              onChange={(e) => setPostalCode(e.target.value)}
-              disabled={success}
-              maxLength={5}
-            />
-            
-            <input
-              type="text"
-              placeholder="Ville"
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-              disabled={success}
-            />
-          </div>
-        </div>
+          {/* Affichage des actions configurées avec boutons */}
+          {hasActions && (
+            <div className="bg-white p-6 rounded-lg shadow-md mt-4">
+              <h3 className="text-lg font-semibold mb-2">Actions configurées :</h3>
+              {websiteAction && websiteAction.url && (
+                <button
+                  type="button"
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mb-2"
+                  onClick={() => {
+                    console.log('🔵 Clic sur le bouton site web', websiteAction.url);
+                    window.open(websiteAction.url, '_blank', 'noopener,noreferrer');
+                  }}
+                >
+                  🌐 Ouvrir le site web
+                </button>
+              )}
+              {downloadAction && downloadAction.url && (
+                <button
+                  type="button"
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 mb-2"
+                  onClick={() => {
+                    console.log('🟢 Clic sur le bouton téléchargement', downloadAction.url);
+                    window.open(downloadAction.url, '_blank', 'noopener,noreferrer');
+                  }}
+                >
+                  📥 Télécharger la carte de visite
+                </button>
+              )}
+            </div>
+          )}
 
-        {/* Informations complémentaires */}
-        <div className="form-section">
-          <h3>🏢 Informations complémentaires</h3>
-          
-          <input
-            type="text"
-            placeholder="Entreprise / Organisation"
-            value={company}
-            onChange={(e) => setCompany(e.target.value)}
-            disabled={success}
-          />
-          
-          <textarea
-            placeholder="Votre projet, besoins, commentaires..."
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            disabled={success}
-            rows={3}
-          />
+          {/* Formulaire affiché automatiquement si présent */}
+          {showForm && (
+            <div className="bg-white p-6 rounded-lg shadow-md mt-4">
+              <h3 className="text-xl font-semibold mb-4">Formulaire de contact</h3>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700">Nom</label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="message" className="block text-sm font-medium text-gray-700">Message</label>
+                  <textarea
+                    id="message"
+                    name="message"
+                    value={formData.message}
+                    onChange={handleChange}
+                    rows="4"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    required
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  Envoyer
+                </button>
+              </form>
+            </div>
+          )}
+
+          {message && (
+            <div className="mt-4 p-4 bg-blue-50 text-blue-700 rounded-md">
+              {message}
+            </div>
+          )}
         </div>
-        
-        <button type="submit" disabled={loading || success} className="submit-btn">
-          {loading ? "Inscription en cours..." : success ? "Inscription réussie !" : "✅ S'inscrire"}
-        </button>
-        
-        <p className="form-footer">
-          * Champs obligatoires • Vos données sont sécurisées
-        </p>
-      </form>
+      </div>
     </div>
   );
 };

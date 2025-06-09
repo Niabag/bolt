@@ -244,7 +244,7 @@ const getPublicBusinessCard = async (req, res) => {
     }
 
     console.log("✅ Carte de visite publique récupérée");
-    res.json(businessCard);
+    res.json({ businessCard }); // Envelopper la carte de visite dans un objet
 
   } catch (error) {
     console.error("❌ Erreur récupération publique carte de visite:", error);
