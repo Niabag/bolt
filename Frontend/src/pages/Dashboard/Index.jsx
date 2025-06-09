@@ -7,6 +7,7 @@ import Analytics from "../../components/Dashboard/Analytics/analytics";
 import Settings from "../../components/Dashboard/Settings/settings";
 import Notifications from "../../components/Dashboard/Notifications/notifications";
 import BusinessCard from "../../components/Dashboard/BusinessCard/businessCard";
+import Billing from "../../components/Dashboard/Billing/billing";
 import { API_ENDPOINTS, FRONTEND_ROUTES, apiRequest } from "../../config/api";
 import { useNavigate } from "react-router-dom";
 import "./dashboard.scss";
@@ -114,12 +115,27 @@ const Dashboard = () => {
 
   const menuItems = [
     { id: "dashboard", icon: "📊", label: "Tableau de bord" },
-    { id: "clients", icon: "👤", label: "Prospects" },
+    { id: "clients", icon: "👥", label: "Prospects" },
     { id: "devis", icon: "📄", label: "Devis" },
+    { id: "billing", icon: "💰", label: "Facturation" },
     { id: "notifications", icon: "🔔", label: "Notifications" },
     { id: "carte", icon: "💼", label: "Carte de visite" },
     { id: "settings", icon: "⚙️", label: "Paramètres" }
   ];
+
+  const getPageTitle = () => {
+    switch (activeTab) {
+      case "dashboard": return "📊 Tableau de bord";
+      case "clients": return "👥 Mes Prospects";
+      case "devis": return "📄 Mes Devis";
+      case "devis-creation": return "📝 Création de Devis";
+      case "billing": return "💰 Facturation";
+      case "notifications": return "🔔 Notifications";
+      case "carte": return "💼 Carte de Visite";
+      case "settings": return "⚙️ Paramètres";
+      default: return "CRM Pro";
+    }
+  };
 
   return (
     <div className="dashboard-layout">
@@ -136,15 +152,7 @@ const Dashboard = () => {
         </div>
         
         <div className="header-center">
-          <h1 className="page-title">
-            {activeTab === "dashboard" && "📊 Tableau de bord"}
-            {activeTab === "clients" && "👤 Mes Prospects"}
-            {activeTab === "devis" && "📄 Mes Devis"}
-            {activeTab === "devis-creation" && "📝 Création de Devis"}
-            {activeTab === "notifications" && "🔔 Notifications"}
-            {activeTab === "carte" && "💼 Carte de Visite"}
-            {activeTab === "settings" && "⚙️ Paramètres"}
-          </h1>
+          <h1 className="page-title">{getPageTitle()}</h1>
         </div>
         
         <div className="header-right">
@@ -177,7 +185,12 @@ const Dashboard = () => {
             {menuItems.map((item) => (
               <button
                 key={item.id}
-                className={`nav-item ${activeTab === item.id || (activeTab === "devis-creation" && item.id === "devis") ? "active" : ""}`}
+                className={`nav-item ${
+                  activeTab === item.id || 
+                  (activeTab === "devis-creation" && item.id === "devis") 
+                    ? "active" 
+                    : ""
+                }`}
                 onClick={() => {
                   setActiveTab(item.id);
                   if (item.id !== "devis" && item.id !== "devis-creation") {
@@ -227,6 +240,13 @@ const Dashboard = () => {
                 setEditingDevis(null);
                 setActiveTab("devis");
               } : null}
+            />
+          )}
+
+          {activeTab === "billing" && (
+            <Billing 
+              clients={clients}
+              onRefresh={fetchClients}
             />
           )}
 
