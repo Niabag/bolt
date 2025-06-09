@@ -32,11 +32,17 @@ const RegisterClient = () => {
   const [businessCardActions, setBusinessCardActions] = useState([]);
   const [businessCardData, setBusinessCardData] = useState(null);
   const [message, setMessage] = useState("");
+  
+  // ✅ NOUVEAU: États pour le formulaire professionnel
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    message: ""
+    phone: "",
+    company: "",
+    message: "",
+    subject: "Demande de contact"
   });
+  
   const scannerRef = useRef(null);
 
   // ✅ NOUVEAU: État pour les actions triées pour l'affichage
@@ -859,193 +865,292 @@ const RegisterClient = () => {
   // Si actions configurées → Affichage des actions avec boutons manuels
   if (hasActions) {
     return (
-      <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md mx-auto">
-          <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900 mb-8">
-              Actions de la carte de visite
-            </h2>
-            
-            {/* Affichage des actions configurées avec boutons */}
-            <div className="bg-white p-6 rounded-lg shadow-md mt-4">
-              <h3 className="text-lg font-semibold mb-4">
-                Schéma actuel :
-                <br />
-                <span className="text-sm font-normal text-gray-600">
-                  {sortedActionsForDisplay.map((action, index) => (
-                    <span key={action.id}>
-                      {action.type === 'form' && '📝 Formulaire'}
-                      {action.type === 'download' && '📥 Téléchargement'}
-                      {action.type === 'website' && '🌐 Site web'}
-                      {index < sortedActionsForDisplay.length - 1 && ' → '}
-                    </span>
-                  ))}
+      <div className="professional-contact-page">
+        <div className="contact-container">
+          <div className="contact-header">
+            <h1 className="contact-title">
+              💼 Carte de Visite Numérique
+            </h1>
+            <p className="contact-subtitle">
+              Découvrez nos services et entrons en contact
+            </p>
+          </div>
+          
+          {/* ✅ NOUVEAU: Affichage du schéma configuré */}
+          <div className="schema-display">
+            <h3 className="schema-title">
+              🎯 Actions configurées :
+            </h3>
+            <div className="schema-sequence">
+              {sortedActionsForDisplay.map((action, index) => (
+                <span key={action.id} className="schema-step">
+                  {action.type === 'form' && '📝 Formulaire'}
+                  {action.type === 'download' && '📥 Téléchargement'}
+                  {action.type === 'website' && '🌐 Site web'}
+                  {index < sortedActionsForDisplay.length - 1 && ' → '}
                 </span>
-              </h3>
-              
-              {/* ✅ NOUVEAU: Affichage des URLs de sites web */}
-              {sortedActionsForDisplay
-                .filter(action => action.type === 'website')
-                .map(action => (
-                  <div key={action.id} className="mb-3 p-3 bg-blue-50 rounded border-l-4 border-blue-400">
-                    <div className="text-sm text-gray-700">
-                      <strong>🌐 URL du site web :</strong>
-                      <br />
-                      <a 
-                        href={action.url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-800 underline break-all"
-                      >
-                        {action.url}
-                      </a>
-                    </div>
+              ))}
+            </div>
+            
+            {/* ✅ NOUVEAU: Affichage des URLs de sites web */}
+            {sortedActionsForDisplay
+              .filter(action => action.type === 'website')
+              .map(action => (
+                <div key={action.id} className="website-info">
+                  <div className="website-label">
+                    <strong>🌐 Site web :</strong>
                   </div>
-                ))}
-              
-              {/* ✅ CORRECTION CRITIQUE: Utiliser sortedActionsForDisplay au lieu de businessCardActions */}
-              <div className="space-y-3">
-                {sortedActionsForDisplay.map((action, index) => (
-                  <div key={action.id} className="action-item">
-                    {action.type === 'form' && (
-                      <div className="text-sm text-gray-600 p-3 bg-indigo-50 rounded border-l-4 border-indigo-400">
-                        📝 <strong>Action {action.order}:</strong> Formulaire de contact - Affiché ci-dessous
-                      </div>
-                    )}
-                    
-                    {action.type === 'download' && (
-                      <button
-                        type="button"
-                        className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                        onClick={() => {
-                          console.log('🟢 Clic manuel sur le bouton téléchargement');
-                          executeDownloadAction(action);
-                        }}
-                      >
-                        📥 <strong>Action {action.order}:</strong> Télécharger la carte de visite
-                      </button>
-                    )}
-                    
-                    {action.type === 'website' && action.url && (
-                      <button
-                        type="button"
-                        className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                        onClick={() => {
-                          console.log('🔵 Clic manuel sur le bouton site web', action.url);
-                          // ✅ CORRECTION: Redirection directe pour les clics manuels aussi
-                          window.location.href = action.url;
-                        }}
-                      >
-                        🌐 <strong>Action {action.order}:</strong> Ouvrir le site web
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-              
-              {/* ✅ NOUVEAU: Statut d'exécution automatique avec gestion du formulaire */}
-              <div className="mt-4 p-3 bg-blue-50 text-blue-700 rounded-md text-sm">
-                {formSubmitted && actionsCompleted ? (
-                  <span>✅ Toutes les actions ont été exécutées dans l'ordre configuré</span>
-                ) : formSubmitted ? (
-                  <span>⏳ Exécution des actions en attente après soumission du formulaire...</span>
-                ) : showForm ? (
-                  <span>📝 Formulaire affiché - Les actions suivantes s'exécuteront après soumission</span>
-                ) : actionsCompleted ? (
-                  <span>✅ Actions automatiques exécutées dans l'ordre configuré</span>
-                ) : (
-                  <span>⏳ Exécution automatique en cours dans l'ordre configuré...</span>
+                  <a 
+                    href={action.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="website-link"
+                  >
+                    {action.url}
+                  </a>
+                </div>
+              ))}
+          </div>
+          
+          {/* ✅ NOUVEAU: Boutons d'actions manuelles */}
+          <div className="actions-manual">
+            {sortedActionsForDisplay.map((action, index) => (
+              <div key={action.id} className="action-manual-item">
+                {action.type === 'download' && (
+                  <button
+                    type="button"
+                    className="action-btn download-btn"
+                    onClick={() => {
+                      console.log('🟢 Clic manuel sur le bouton téléchargement');
+                      executeDownloadAction(action);
+                    }}
+                  >
+                    <span className="btn-icon">📥</span>
+                    <span className="btn-text">Télécharger la carte de visite</span>
+                    <span className="btn-order">Action {action.order}</span>
+                  </button>
+                )}
+                
+                {action.type === 'website' && action.url && (
+                  <button
+                    type="button"
+                    className="action-btn website-btn"
+                    onClick={() => {
+                      console.log('🔵 Clic manuel sur le bouton site web', action.url);
+                      window.location.href = action.url;
+                    }}
+                  >
+                    <span className="btn-icon">🌐</span>
+                    <span className="btn-text">Visiter notre site web</span>
+                    <span className="btn-order">Action {action.order}</span>
+                  </button>
                 )}
               </div>
-              
-              {/* ✅ NOUVEAU: Affichage des actions en attente */}
-              {pendingActionsAfterForm.length > 0 && showForm && !formSubmitted && (
-                <div className="mt-2 p-3 bg-yellow-50 text-yellow-700 rounded-md text-sm">
-                  <strong>Actions en attente après soumission :</strong>
-                  <ul className="mt-1 list-disc list-inside">
-                    {pendingActionsAfterForm.map(action => (
-                      <li key={action.id}>
-                        Action {action.order}: {action.type === 'website' ? `Site web (${action.url})` : action.type}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
+            ))}
+          </div>
 
-            {/* Formulaire affiché automatiquement si présent */}
-            {showForm && (
-              <div className="bg-white p-6 rounded-lg shadow-md mt-4">
-                <h3 className="text-xl font-semibold mb-4">Formulaire de contact</h3>
-                
-                {/* ✅ NOUVEAU: Message de succès après soumission */}
-                {formSubmitted && (
-                  <div className="mb-4 p-4 bg-green-50 text-green-700 rounded-md">
-                    ✅ Formulaire envoyé avec succès ! 
+          {/* ✅ NOUVEAU: Formulaire de contact professionnel */}
+          {showForm && (
+            <div className="contact-form-section">
+              <div className="form-header">
+                <h3 className="form-title">📝 Formulaire de Contact</h3>
+                <p className="form-description">
+                  Laissez-nous vos coordonnées et nous vous recontacterons rapidement
+                </p>
+              </div>
+              
+              {/* ✅ NOUVEAU: Message de succès après soumission */}
+              {formSubmitted && (
+                <div className="success-message">
+                  <div className="success-icon">✅</div>
+                  <div className="success-content">
+                    <h4>Formulaire envoyé avec succès !</h4>
+                    <p>Nous vous recontacterons dans les plus brefs délais.</p>
                     {pendingActionsAfterForm.length > 0 && (
-                      <div className="mt-2 text-sm">
+                      <div className="pending-actions-info">
                         Exécution des actions suivantes en cours...
                       </div>
                     )}
                   </div>
-                )}
-                
-                {!formSubmitted && (
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                      <label htmlFor="name" className="block text-sm font-medium text-gray-700">Nom</label>
+                </div>
+              )}
+              
+              {!formSubmitted && (
+                <form onSubmit={handleSubmit} className="contact-form">
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label htmlFor="name" className="form-label">
+                        <span className="label-icon">👤</span>
+                        Nom complet *
+                      </label>
                       <input
                         type="text"
                         id="name"
                         name="name"
                         value={formData.name}
                         onChange={handleChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        className="form-input"
+                        placeholder="Votre nom et prénom"
                         required
                       />
                     </div>
-                    <div>
-                      <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+                    
+                    <div className="form-group">
+                      <label htmlFor="email" className="form-label">
+                        <span className="label-icon">📧</span>
+                        Email *
+                      </label>
                       <input
                         type="email"
                         id="email"
                         name="email"
                         value={formData.email}
                         onChange={handleChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        className="form-input"
+                        placeholder="votre@email.com"
                         required
                       />
                     </div>
-                    <div>
-                      <label htmlFor="message" className="block text-sm font-medium text-gray-700">Message</label>
-                      <textarea
-                        id="message"
-                        name="message"
-                        value={formData.message}
+                  </div>
+                  
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label htmlFor="phone" className="form-label">
+                        <span className="label-icon">📞</span>
+                        Téléphone
+                      </label>
+                      <input
+                        type="tel"
+                        id="phone"
+                        name="phone"
+                        value={formData.phone}
                         onChange={handleChange}
-                        rows="4"
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                        required
+                        className="form-input"
+                        placeholder="06 12 34 56 78"
                       />
                     </div>
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                    
+                    <div className="form-group">
+                      <label htmlFor="company" className="form-label">
+                        <span className="label-icon">🏢</span>
+                        Entreprise
+                      </label>
+                      <input
+                        type="text"
+                        id="company"
+                        name="company"
+                        value={formData.company}
+                        onChange={handleChange}
+                        className="form-input"
+                        placeholder="Nom de votre entreprise"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="form-group">
+                    <label htmlFor="subject" className="form-label">
+                      <span className="label-icon">📋</span>
+                      Sujet
+                    </label>
+                    <select
+                      id="subject"
+                      name="subject"
+                      value={formData.subject}
+                      onChange={handleChange}
+                      className="form-select"
                     >
-                      {loading ? 'Envoi en cours...' : 'Envoyer'}
-                    </button>
-                  </form>
-                )}
-              </div>
-            )}
+                      <option value="Demande de contact">Demande de contact</option>
+                      <option value="Demande de devis">Demande de devis</option>
+                      <option value="Information produit">Information produit</option>
+                      <option value="Support technique">Support technique</option>
+                      <option value="Partenariat">Partenariat</option>
+                      <option value="Autre">Autre</option>
+                    </select>
+                  </div>
+                  
+                  <div className="form-group">
+                    <label htmlFor="message" className="form-label">
+                      <span className="label-icon">💬</span>
+                      Message *
+                    </label>
+                    <textarea
+                      id="message"
+                      name="message"
+                      value={formData.message}
+                      onChange={handleChange}
+                      rows="5"
+                      className="form-textarea"
+                      placeholder="Décrivez votre demande ou votre projet..."
+                      required
+                    />
+                  </div>
+                  
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="submit-btn"
+                  >
+                    <span className="btn-icon">
+                      {loading ? '⏳' : '📤'}
+                    </span>
+                    <span className="btn-text">
+                      {loading ? 'Envoi en cours...' : 'Envoyer le message'}
+                    </span>
+                  </button>
+                </form>
+              )}
+            </div>
+          )}
 
-            {message && !formSubmitted && (
-              <div className="mt-4 p-4 bg-blue-50 text-blue-700 rounded-md">
-                {message}
+          {/* ✅ NOUVEAU: Statut d'exécution automatique */}
+          <div className="execution-status">
+            {formSubmitted && actionsCompleted ? (
+              <div className="status-message completed">
+                <span className="status-icon">✅</span>
+                <span>Toutes les actions ont été exécutées dans l'ordre configuré</span>
+              </div>
+            ) : formSubmitted ? (
+              <div className="status-message pending">
+                <span className="status-icon">⏳</span>
+                <span>Exécution des actions en attente après soumission du formulaire...</span>
+              </div>
+            ) : showForm ? (
+              <div className="status-message form-shown">
+                <span className="status-icon">📝</span>
+                <span>Formulaire affiché - Les actions suivantes s'exécuteront après soumission</span>
+              </div>
+            ) : actionsCompleted ? (
+              <div className="status-message completed">
+                <span className="status-icon">✅</span>
+                <span>Actions automatiques exécutées dans l'ordre configuré</span>
+              </div>
+            ) : (
+              <div className="status-message executing">
+                <span className="status-icon">⏳</span>
+                <span>Exécution automatique en cours dans l'ordre configuré...</span>
               </div>
             )}
           </div>
+          
+          {/* ✅ NOUVEAU: Affichage des actions en attente */}
+          {pendingActionsAfterForm.length > 0 && showForm && !formSubmitted && (
+            <div className="pending-actions">
+              <h4>Actions en attente après soumission :</h4>
+              <ul>
+                {pendingActionsAfterForm.map(action => (
+                  <li key={action.id}>
+                    Action {action.order}: {action.type === 'website' ? `Site web (${action.url})` : action.type}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {message && !formSubmitted && (
+            <div className="general-message">
+              {message}
+            </div>
+          )}
         </div>
       </div>
     );

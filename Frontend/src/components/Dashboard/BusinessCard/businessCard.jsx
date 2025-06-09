@@ -16,7 +16,7 @@ const BusinessCard = ({ userId, user }) => {
   const [loading, setLoading] = useState(false);
   const [savedCardData, setSavedCardData] = useState(null);
   
-  // ✅ NOUVEAU: États pour les schémas prédéfinis uniquement
+  // ✅ NOUVEAU: États pour les schémas prédéfinis
   const [showSchemasModal, setShowSchemasModal] = useState(false);
   
   const [stats, setStats] = useState({
@@ -26,62 +26,68 @@ const BusinessCard = ({ userId, user }) => {
     conversions: 0
   });
 
-  // ✅ NOUVEAU: Schémas d'actions prédéfinis
+  // ✅ NOUVEAU: Schémas d'actions prédéfinis professionnels
   const actionSchemas = {
-    'form-website': {
-      name: 'Formulaire → Site web',
-      description: 'Formulaire de contact puis redirection vers votre site',
+    'contact-website': {
+      name: '📝 Contact → Site Web',
+      description: 'Formulaire de contact professionnel puis redirection vers votre site',
       icon: '📝🌐',
       sequence: 'Formulaire (1s) → Site web (2s)',
+      category: 'Génération de leads',
       actions: [
         { type: 'form', order: 1, delay: 1000, active: true },
-        { type: 'website', order: 2, delay: 2000, active: true, url: 'https://www.exemple.com' }
+        { type: 'website', order: 2, delay: 2000, active: true, url: 'https://www.votre-site.com' }
       ]
     },
-    'form-download': {
-      name: 'Formulaire → Téléchargement',
-      description: 'Formulaire de contact puis téléchargement automatique',
+    'contact-download': {
+      name: '📝 Contact → Téléchargement',
+      description: 'Formulaire de contact puis téléchargement automatique de votre carte',
       icon: '📝📥',
       sequence: 'Formulaire (1s) → Téléchargement (2s)',
+      category: 'Capture de leads',
       actions: [
         { type: 'form', order: 1, delay: 1000, active: true },
         { type: 'download', order: 2, delay: 2000, active: true, file: 'carte-apercu' }
       ]
     },
-    'form-download-website': {
-      name: 'Formulaire → Téléchargement → Site web',
-      description: 'Formulaire, puis téléchargement, puis redirection',
+    'contact-download-website': {
+      name: '📝 Contact → Téléchargement → Site',
+      description: 'Séquence complète : contact, téléchargement puis redirection',
       icon: '📝📥🌐',
       sequence: 'Formulaire (1s) → Téléchargement (2s) → Site web (3s)',
+      category: 'Conversion maximale',
       actions: [
         { type: 'form', order: 1, delay: 1000, active: true },
         { type: 'download', order: 2, delay: 2000, active: true, file: 'carte-apercu' },
-        { type: 'website', order: 3, delay: 3000, active: true, url: 'https://www.exemple.com' }
+        { type: 'website', order: 3, delay: 3000, active: true, url: 'https://www.votre-site.com' }
       ]
     },
-    'website-only': {
-      name: 'Site web uniquement',
-      description: 'Redirection directe vers votre site web',
+    'website-direct': {
+      name: '🌐 Site Web Direct',
+      description: 'Redirection immédiate vers votre site web principal',
       icon: '🌐',
       sequence: 'Site web (1s)',
+      category: 'Redirection simple',
       actions: [
-        { type: 'website', order: 1, delay: 1000, active: true, url: 'https://www.exemple.com' }
+        { type: 'website', order: 1, delay: 1000, active: true, url: 'https://www.votre-site.com' }
       ]
     },
-    'form-only': {
-      name: 'Formulaire uniquement',
-      description: 'Affichage du formulaire de contact seulement',
+    'contact-only': {
+      name: '📝 Formulaire Uniquement',
+      description: 'Affichage du formulaire de contact professionnel seulement',
       icon: '📝',
       sequence: 'Formulaire (1s)',
+      category: 'Capture simple',
       actions: [
         { type: 'form', order: 1, delay: 1000, active: true }
       ]
     },
     'download-only': {
-      name: 'Téléchargement uniquement',
-      description: 'Téléchargement automatique de la carte de visite',
+      name: '📥 Téléchargement Direct',
+      description: 'Téléchargement automatique de votre carte de visite',
       icon: '📥',
       sequence: 'Téléchargement (1s)',
+      category: 'Partage direct',
       actions: [
         { type: 'download', order: 1, delay: 1000, active: true, file: 'carte-apercu' }
       ]
@@ -300,18 +306,19 @@ const BusinessCard = ({ userId, user }) => {
       right: 20px;
       background: #48bb78;
       color: white;
-      padding: 10px 20px;
-      border-radius: 8px;
+      padding: 15px 25px;
+      border-radius: 12px;
       z-index: 9999;
-      font-weight: 500;
-      box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
+      font-weight: 600;
+      box-shadow: 0 8px 25px rgba(72, 187, 120, 0.4);
+      font-size: 14px;
     `;
     document.body.appendChild(successMsg);
     setTimeout(() => {
       if (document.body.contains(successMsg)) {
         document.body.removeChild(successMsg);
       }
-    }, 3000);
+    }, 4000);
   };
 
   const showErrorMessage = (message) => {
@@ -323,18 +330,19 @@ const BusinessCard = ({ userId, user }) => {
       right: 20px;
       background: #f56565;
       color: white;
-      padding: 10px 20px;
-      border-radius: 8px;
+      padding: 15px 25px;
+      border-radius: 12px;
       z-index: 9999;
-      font-weight: 500;
-      box-shadow: 0 4px 15px rgba(245, 101, 101, 0.3);
+      font-weight: 600;
+      box-shadow: 0 8px 25px rgba(245, 101, 101, 0.4);
+      font-size: 14px;
     `;
     document.body.appendChild(errorMsg);
     setTimeout(() => {
       if (document.body.contains(errorMsg)) {
         document.body.removeChild(errorMsg);
       }
-    }, 3000);
+    }, 4000);
   };
 
   const handleConfigChange = async (field, value) => {
@@ -664,7 +672,7 @@ const BusinessCard = ({ userId, user }) => {
       {/* En-tête */}
       <div className="card-header">
         <h2>💼 Carte de Visite Numérique</h2>
-        <p>Créez et personnalisez votre carte de visite avec QR code</p>
+        <p>Créez et personnalisez votre carte de visite avec QR code intelligent</p>
       </div>
 
       {/* Layout en colonnes */}
@@ -753,11 +761,11 @@ const BusinessCard = ({ userId, user }) => {
             )}
           </div>
 
-          {/* ✅ NOUVELLE SECTION: Schémas prédéfinis */}
+          {/* ✅ NOUVELLE SECTION: Schémas prédéfinis professionnels */}
           <div className="config-section">
-            <h3>🎯 Schémas d'actions</h3>
+            <h3>🎯 Schémas d'Actions Professionnels</h3>
             <p className="section-description">
-              Choisissez un schéma prêt à l'emploi pour configurer l'ordre des actions
+              Choisissez un schéma prêt à l'emploi pour optimiser la conversion de vos prospects
             </p>
 
             <div className="schemas-actions">
@@ -804,7 +812,7 @@ const BusinessCard = ({ userId, user }) => {
                           type="url"
                           value={action.url || ''}
                           onChange={(e) => handleEditSchemaUrl(action.id, e.target.value)}
-                          placeholder="https://www.exemple.com"
+                          placeholder="https://www.votre-site.com"
                           className="url-edit-input"
                         />
                       </div>
@@ -851,7 +859,7 @@ const BusinessCard = ({ userId, user }) => {
 
           {/* QR Code et actions */}
           <div className="qr-section">
-            <h3>📱 QR Code</h3>
+            <h3>📱 QR Code Intelligent</h3>
             
             <div className="qr-display">
               <div className="qr-code-wrapper">
@@ -919,12 +927,12 @@ const BusinessCard = ({ userId, user }) => {
         </div>
       </div>
 
-      {/* ✅ NOUVELLE MODAL: Sélection de schémas */}
+      {/* ✅ NOUVELLE MODAL: Sélection de schémas professionnels */}
       {showSchemasModal && (
         <div className="modal-overlay" onClick={() => setShowSchemasModal(false)}>
           <div className="modal-content schemas-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>🎯 Choisir un schéma d'actions</h3>
+              <h3>🎯 Schémas d'Actions Professionnels</h3>
               <button 
                 onClick={() => setShowSchemasModal(false)}
                 className="modal-close"
@@ -935,7 +943,7 @@ const BusinessCard = ({ userId, user }) => {
             
             <div className="modal-body">
               <p className="schemas-description">
-                Sélectionnez un schéma prédéfini pour configurer automatiquement l'ordre des actions :
+                Sélectionnez un schéma optimisé pour maximiser la conversion de vos prospects :
               </p>
               
               <div className="schemas-grid">
@@ -945,7 +953,10 @@ const BusinessCard = ({ userId, user }) => {
                     className="schema-card"
                     onClick={() => handleApplySchema(key)}
                   >
-                    <div className="schema-icon">{schema.icon}</div>
+                    <div className="schema-header">
+                      <div className="schema-icon">{schema.icon}</div>
+                      <div className="schema-category">{schema.category}</div>
+                    </div>
                     <h4>{schema.name}</h4>
                     <p className="schema-description">{schema.description}</p>
                     <div className="schema-sequence-preview">
