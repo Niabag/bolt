@@ -2,8 +2,8 @@ import '../Placeholder/placeholder.scss';
 
 const Press = () => (
   <div className="placeholder-page">
-    <h1>Press</h1>
-    <p>Cette page est en construction.</p>
+    <h1>Presse</h1>
+    <p>Téléchargez notre kit média et retrouvez nos dernières actualités.</p>
   </div>
 );
 

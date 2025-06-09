@@ -3,7 +3,7 @@ import '../Placeholder/placeholder.scss';
 const Blog = () => (
   <div className="placeholder-page">
     <h1>Blog</h1>
-    <p>Cette page est en construction.</p>
+    <p>Consultez nos derniers articles pour obtenir des conseils sur le développement de votre activité.</p>
   </div>
 );
 
