@@ -1,7 +1,7 @@
 const BusinessCard = require("../models/businessCard");
 
 // ✅ FONCTION CORRIGÉE: Sauvegarder ou mettre à jour la carte de visite
-exports.saveBusinessCard = async (req, res) => {
+const saveBusinessCard = async (req, res) => {
   try {
     const { cardImage, cardConfig } = req.body;
     const userId = req.userId;
@@ -188,7 +188,7 @@ exports.saveBusinessCard = async (req, res) => {
       
       // Détailler les erreurs de validation
       const validationErrors = Object.keys(error.errors).map(key => {
-        return `${key}: ${error.errors[key].message}`;
+        return `${error.errors[key].message}`;
       });
       
       return res.status(400).json({ 
@@ -206,7 +206,7 @@ exports.saveBusinessCard = async (req, res) => {
 };
 
 // Récupérer la carte de visite de l'utilisateur
-exports.getBusinessCard = async (req, res) => {
+const getBusinessCard = async (req, res) => {
   try {
     const userId = req.userId;
 
@@ -230,8 +230,33 @@ exports.getBusinessCard = async (req, res) => {
   }
 };
 
+// ✅ NOUVELLE FONCTION: Récupérer la carte de visite publiquement par userId
+const getPublicBusinessCard = async (req, res) => {
+  try {
+    const { userId } = req.params; // Récupérer l'ID utilisateur des paramètres de l'URL
+
+    console.log("📋 Récupération publique de la carte de visite pour userId:", userId);
+
+    const businessCard = await BusinessCard.findOne({ userId });
+
+    if (!businessCard) {
+      return res.status(404).json({ message: "Aucune carte de visite trouvée pour cet utilisateur" });
+    }
+
+    console.log("✅ Carte de visite publique récupérée");
+    res.json(businessCard);
+
+  } catch (error) {
+    console.error("❌ Erreur récupération publique carte de visite:", error);
+    res.status(500).json({ 
+      message: "Erreur lors de la récupération publique de la carte de visite", 
+      error: error.message 
+    });
+  }
+};
+
 // Supprimer la carte de visite
-exports.deleteBusinessCard = async (req, res) => {
+const deleteBusinessCard = async (req, res) => {
   try {
     const userId = req.userId;
 
@@ -256,7 +281,7 @@ exports.deleteBusinessCard = async (req, res) => {
 };
 
 // ✅ FONCTION CORRIGÉE: Mettre à jour seulement la configuration
-exports.updateCardConfig = async (req, res) => {
+const updateCardConfig = async (req, res) => {
   try {
     const { cardConfig } = req.body;
     const userId = req.userId;
@@ -319,4 +344,13 @@ exports.updateCardConfig = async (req, res) => {
       error: error.message 
     });
   }
+};
+
+// ✅ EXPORTATION DE TOUTES LES FONCTIONS À LA FIN
+module.exports = {
+  saveBusinessCard,
+  getBusinessCard,
+  getPublicBusinessCard,
+  deleteBusinessCard,
+  updateCardConfig
 };

@@ -25,7 +25,7 @@
     "jsonwebtoken": "^9.0.0",
     "mongoose": "^7.2.1",
     "mongoose-unique-validator": "^4.0.0",
-    "nodemon": "^3.0.1",
+    "nodemon": "^3.1.10",
     "vercel": "^37.14.0"
   }
 }

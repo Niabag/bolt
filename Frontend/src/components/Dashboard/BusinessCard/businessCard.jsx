@@ -226,7 +226,7 @@ const BusinessCard = ({ userId, user }) => {
     saveBusinessCardToDB(null, updatedConfig);
   };
 
-  const saveBusinessCardToDB = async (cardImage = null, config = null) => {
+    const saveBusinessCardToDB = async (cardImage = null, config = null) => {
     try {
       setLoading(true);
       
@@ -252,6 +252,12 @@ const BusinessCard = ({ userId, user }) => {
       });
       
       setSavedCardData(response.businessCard);
+      // ✅ NOUVEAU: Mettre à jour cardConfig avec les données du serveur
+      setCardConfig(prev => ({
+        ...prev,
+        ...response.businessCard.cardConfig,
+        cardImage: response.businessCard.cardImage
+      }));
       console.log('✅ Carte de visite sauvegardée en BDD');
       
       showSuccessMessage('✅ Carte sauvegardée');

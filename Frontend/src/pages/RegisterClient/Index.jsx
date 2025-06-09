@@ -1,3 +1,4 @@
+// Frontend/src/pages/RegisterClient/Index.jsx
 import { useState, useEffect, useRef } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { API_ENDPOINTS, apiRequest } from "../../config/api";
@@ -163,8 +164,13 @@ const RegisterClient = () => {
           case 'website':
             console.log(`🌐 Action de redirection vers: ${action.url}`);
             if (action.url) {
+              let targetUrl = action.url;
+              // ✅ Vérifier si l'URL a déjà un protocole, sinon ajouter https://
+              if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
+                targetUrl = `https://${targetUrl}`;
+              }
               setTimeout(() => {
-                window.location.href = action.url;
+                window.open(targetUrl, '_blank'); // Ouvrir dans un nouvel onglet
               }, 1000);
             }
             break;
