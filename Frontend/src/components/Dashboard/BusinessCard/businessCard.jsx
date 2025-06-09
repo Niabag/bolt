@@ -30,7 +30,7 @@ const BusinessCard = ({ userId, user }) => {
   const actionSchemas = {
     'lead-generation': {
       name: '🚀 Génération de Leads',
-      description: 'Site web immédiat puis formulaire de contact pour maximiser les conversions',
+      description: 'Site web immédiat dans un nouvel onglet puis formulaire de contact pour maximiser les conversions',
       icon: '🚀📝',
       sequence: 'Site web (1s) → Formulaire (2s)',
       category: 'Conversion maximale',

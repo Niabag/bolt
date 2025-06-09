@@ -184,35 +184,30 @@ const RegisterClient = () => {
   // ✅ SCHÉMA 2: Génération de Leads (website → form)
   const executeLeadGenerationSchema = async (actions) => {
     console.log('🚀 Exécution: Génération de Leads');
-    
-    if (!hasRedirectedFromWebsite) {
-      // Première visite: redirection vers le site web
-      const websiteAction = actions.find(a => a.type === 'website');
-      if (websiteAction && websiteAction.url) {
-        setExecutionStatus([{
-          action: 'website',
-          status: 'executing',
-          message: 'Redirection vers le site web...'
-        }]);
-        
-        setTimeout(() => {
-          const redirectUrl = new URL(websiteAction.url);
-          redirectUrl.searchParams.set('from', 'qr');
-          redirectUrl.searchParams.set('return', window.location.href);
-          console.log('🌐 Redirection Lead Gen vers:', redirectUrl.toString());
-          window.location.href = redirectUrl.toString();
-        }, 1500);
-        return;
-      }
-    } else {
-      // Retour du site web: afficher le formulaire
-      console.log('📝 Retour du site web - Affichage du formulaire');
-      setShowForm(true);
-      setExecutionStatus([{
-        action: 'form',
-        status: 'form-shown',
-        message: 'Formulaire de contact affiché'
-      }]);
+
+    const websiteAction = actions.find(a => a.type === 'website');
+    const formAction = actions.find(a => a.type === 'form');
+
+    if (websiteAction) {
+      setExecutionStatus([{ action: 'website', status: 'executing', message: 'Ouverture du site web...' }]);
+      setTimeout(() => {
+        window.open(websiteAction.url, '_blank');
+        setExecutionStatus(prev => [
+          ...prev,
+          { action: 'website', status: 'completed', message: 'Site web ouvert dans un nouvel onglet' }
+        ]);
+      }, websiteAction.delay || 1000);
+    }
+
+    if (formAction) {
+      setTimeout(() => {
+        console.log('📝 Affichage du formulaire de contact');
+        setShowForm(true);
+        setExecutionStatus(prev => [
+          ...prev,
+          { action: 'form', status: 'form-shown', message: 'Formulaire de contact affiché' }
+        ]);
+      }, formAction.delay || 2000);
     }
   };
 
