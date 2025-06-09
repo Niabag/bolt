@@ -235,7 +235,7 @@ const RegisterClient = () => {
     executeActions();
   }, [dataLoaded, hasActions, businessCardActions]);
 
-  // ✅ FONCTION CORRIGÉE: Exécution des actions dans le bon ordre
+  // ✅ FONCTION CORRIGÉE: Exécution des actions dans le bon ordre avec ouverture en nouvel onglet
   const executeBusinessCardActions = async (actions) => {
     try {
       console.log('🎬 Démarrage de l\'exécution des actions configurées');
@@ -279,13 +279,29 @@ const RegisterClient = () => {
             case 'website':
               console.log('🌐 Ouverture du site web (Action ' + action.order + '):', action.url);
               if (action.url) {
-                // ✅ CORRECTION: Utiliser window.open avec les bons paramètres
-                const newWindow = window.open(action.url, '_blank', 'noopener,noreferrer');
-                if (newWindow) {
-                  console.log('✅ Site web ouvert avec succès');
-                } else {
-                  console.warn('⚠️ Popup bloqué, tentative alternative');
-                  window.location.href = action.url;
+                // ✅ CORRECTION CRITIQUE: Ouverture en nouvel onglet sans bloquer les actions suivantes
+                try {
+                  const newWindow = window.open(action.url, '_blank', 'noopener,noreferrer');
+                  if (newWindow) {
+                    console.log('✅ Site web ouvert en nouvel onglet avec succès');
+                    // ✅ IMPORTANT: Ne pas attendre, continuer immédiatement avec les actions suivantes
+                  } else {
+                    console.warn('⚠️ Popup bloqué par le navigateur');
+                    // ✅ FALLBACK: Créer un lien temporaire pour contourner le blocage
+                    const tempLink = document.createElement('a');
+                    tempLink.href = action.url;
+                    tempLink.target = '_blank';
+                    tempLink.rel = 'noopener noreferrer';
+                    tempLink.style.display = 'none';
+                    document.body.appendChild(tempLink);
+                    tempLink.click();
+                    document.body.removeChild(tempLink);
+                    console.log('✅ Site web ouvert via lien temporaire');
+                  }
+                } catch (windowError) {
+                  console.error('❌ Erreur lors de l\'ouverture du site web:', windowError);
+                  // ✅ FALLBACK ULTIME: Afficher un message à l'utilisateur
+                  showWebsiteMessage(action.url);
                 }
               } else {
                 console.warn('⚠️ Aucune URL fournie pour l\'action website');
@@ -297,6 +313,7 @@ const RegisterClient = () => {
           }
         } catch (actionError) {
           console.error(`❌ Erreur lors de l'exécution de l'action ${action.type}:`, actionError);
+          // ✅ IMPORTANT: Continuer avec les actions suivantes même en cas d'erreur
         }
       }
       
@@ -306,6 +323,47 @@ const RegisterClient = () => {
     } catch (error) {
       console.error('❌ Erreur lors de l\'exécution des actions:', error);
     }
+  };
+
+  // ✅ NOUVELLE FONCTION: Afficher un message pour l'ouverture de site web
+  const showWebsiteMessage = (url) => {
+    const messageDiv = document.createElement('div');
+    messageDiv.innerHTML = `
+      <div style="
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(66, 153, 225, 0.3);
+        z-index: 9999;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        max-width: 300px;
+      ">
+        <span style="font-size: 1.2rem;">🌐</span>
+        <div>
+          <div>Site web ouvert !</div>
+          <div style="font-size: 0.8rem; opacity: 0.9; margin-top: 0.25rem;">
+            <a href="${url}" target="_blank" style="color: white; text-decoration: underline;">
+              Cliquez ici si le site ne s'ouvre pas
+            </a>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(messageDiv);
+    
+    setTimeout(() => {
+      if (document.body.contains(messageDiv)) {
+        document.body.removeChild(messageDiv);
+      }
+    }, 6000); // 6 secondes pour laisser le temps de cliquer
   };
 
   // ✅ FONCTION AMÉLIORÉE: Téléchargement avec les vraies données
@@ -655,7 +713,7 @@ const RegisterClient = () => {
     };
   }, [hasActions]);
 
-  // ✅ FONCTION AMÉLIORÉE: Gestion du scan
+  // ✅ FONCTION AMÉLIORÉE: Gestion du scan avec ouverture en nouvel onglet
   const handleScan = (decodedText) => {
     if (!decodedText) return;
     
@@ -803,9 +861,18 @@ const RegisterClient = () => {
                         className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                         onClick={() => {
                           console.log('🔵 Clic manuel sur le bouton site web', action.url);
+                          // ✅ CORRECTION: Ouverture en nouvel onglet pour les clics manuels aussi
                           const newWindow = window.open(action.url, '_blank', 'noopener,noreferrer');
                           if (!newWindow) {
-                            window.location.href = action.url;
+                            // Fallback si popup bloqué
+                            const tempLink = document.createElement('a');
+                            tempLink.href = action.url;
+                            tempLink.target = '_blank';
+                            tempLink.rel = 'noopener noreferrer';
+                            tempLink.style.display = 'none';
+                            document.body.appendChild(tempLink);
+                            tempLink.click();
+                            document.body.removeChild(tempLink);
                           }
                         }}
                       >
@@ -819,7 +886,7 @@ const RegisterClient = () => {
               {/* ✅ NOUVEAU: Statut d'exécution automatique */}
               <div className="mt-4 p-3 bg-blue-50 text-blue-700 rounded-md text-sm">
                 {actionsCompleted ? (
-                  <span>✅ Actions automatiques exécutées dans l'ordre configuré</span>
+                  <span>✅ Actions automatiques exécutées dans l'ordre configuré (sites web ouverts en nouvel onglet)</span>
                 ) : (
                   <span>⏳ Exécution automatique en cours dans l'ordre configuré...</span>
                 )}
