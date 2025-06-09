@@ -54,6 +54,7 @@ const RegisterClient = () => {
   const fetchBusinessCard = async () => {
     try {
       setLoading(true);
+      // ✅ CORRECTION: Utiliser l'userId directement dans l'URL
       const response = await apiRequest(`${API_ENDPOINTS.BUSINESS_CARDS.BASE}?userId=${userId}`);
       setBusinessCard(response);
       
@@ -66,7 +67,9 @@ const RegisterClient = () => {
       }
     } catch (error) {
       console.error('Erreur lors du chargement de la carte:', error);
-      setError('Erreur lors du chargement de la configuration');
+      // ✅ En cas d'erreur, afficher le formulaire par défaut
+      console.log('Erreur chargement carte - Affichage du formulaire par défaut');
+      setShowForm(true);
       setLoading(false);
     }
   };
@@ -168,6 +171,7 @@ const RegisterClient = () => {
       }, 1500);
     } else {
       setError('URL du site web non configurée');
+      setShowForm(true);
     }
   };
 
@@ -457,7 +461,7 @@ const RegisterClient = () => {
     );
   }
 
-  if (error) {
+  if (error && !showForm) {
     return (
       <div className="professional-contact-page">
         <div className="contact-container">

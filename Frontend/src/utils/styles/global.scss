@@ -19,6 +19,19 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Layout principal de l'application */
+.app-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
 /* Reset des styles par défaut */
 h1, h2, h3, h4, h5, h6 {
   margin: 0;
@@ -213,12 +226,12 @@ input, textarea, select {
 
 /* Container pour les pages */
 .page-container {
-  min-height: calc(100vh - 70px);
+  flex: 1;
   padding: 0;
 }
 
 .align-page {
-  min-height: calc(100vh - 70px);
+  flex: 1;
   padding: 0;
 }
 
