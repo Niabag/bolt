@@ -252,17 +252,21 @@ const RegisterClient = () => {
         return;
       }
 
-      // ✅ Les actions sont déjà triées par ordre configuré
+      // ✅ CORRECTION CRITIQUE: Les actions sont déjà triées par ordre configuré
       const sortedActions = actions;
       
       console.log('📊 Actions dans l\'ordre d\'exécution:', sortedActions);
       console.log('🎯 Séquence d\'exécution:', sortedActions.map((a, i) => `${i + 1}. Action ${a.order}: ${a.type} ${a.url ? `(${a.url})` : ''}`));
       
+      // ✅ CORRECTION CRITIQUE: Exécuter TOUJOURS la première action en premier
+      const firstAction = sortedActions[0];
+      console.log(`🚀 DÉMARRAGE: Exécution immédiate de la première action (Action ${firstAction.order}: ${firstAction.type})`);
+      
       // ✅ NOUVEAU: Séparer les actions avant et après le formulaire
       const hasFormAction = sortedActions.some(a => a.type === 'form');
       
       if (hasFormAction) {
-        console.log('📝 Formulaire détecté - Exécution des actions avant le formulaire uniquement');
+        console.log('📝 Formulaire détecté dans la séquence');
         
         // Trouver l'index de l'action formulaire
         const formActionIndex = sortedActions.findIndex(a => a.type === 'form');
@@ -275,7 +279,7 @@ const RegisterClient = () => {
         // Stocker les actions à exécuter après le formulaire
         setPendingActionsAfterForm(actionsAfterForm);
         
-        // Exécuter seulement les actions avant et incluant le formulaire
+        // ✅ CORRECTION: Exécuter les actions avant le formulaire DANS L'ORDRE
         await executeActionsSequence(actionsBeforeForm);
       } else {
         // Pas de formulaire, exécuter toutes les actions normalement
@@ -289,34 +293,34 @@ const RegisterClient = () => {
     }
   };
 
-  // ✅ NOUVELLE FONCTION: Exécuter une séquence d'actions
+  // ✅ FONCTION CORRIGÉE: Exécuter une séquence d'actions DANS L'ORDRE CONFIGURÉ
   const executeActionsSequence = async (actionsToExecute) => {
     for (let i = 0; i < actionsToExecute.length; i++) {
       const action = actionsToExecute[i];
       
-      // ✅ CORRECTION: Délai basé sur l'ORDRE CONFIGURÉ de l'action (pas sur sa position dans le tableau)
-      const delayMs = action.order * 1000; // Action 1 = 1000ms, Action 2 = 2000ms, Action 3 = 3000ms
-      console.log(`⏳ Attente de ${delayMs}ms pour l'action configurée ${action.order} (${action.type})`);
+      // ✅ CORRECTION CRITIQUE: Délai basé sur la POSITION dans la séquence (pas sur l'ordre configuré)
+      const delayMs = (i + 1) * 1000; // Position 1 = 1000ms, Position 2 = 2000ms, Position 3 = 3000ms
+      console.log(`⏳ Attente de ${delayMs}ms pour l'action en position ${i + 1} (Action configurée ${action.order}: ${action.type})`);
       
       await new Promise(resolve => setTimeout(resolve, delayMs));
       
-      console.log(`🎯 Exécution de l'action configurée ${action.order} (${action.type}):`, action);
+      console.log(`🎯 Exécution de l'action en position ${i + 1} (Action configurée ${action.order}: ${action.type}):`, action);
       
       try {
         switch (action.type) {
           case 'form':
-            console.log('📝 Affichage du formulaire (Action configurée ' + action.order + ')');
+            console.log(`📝 Affichage du formulaire (Position ${i + 1}, Action configurée ${action.order})`);
             setShowForm(true);
             // ✅ IMPORTANT: Ne pas continuer avec les actions suivantes, attendre la soumission du formulaire
             return;
             
           case 'download':
-            console.log('📥 Démarrage du téléchargement (Action configurée ' + action.order + ')');
+            console.log(`📥 Démarrage du téléchargement (Position ${i + 1}, Action configurée ${action.order})`);
             await executeDownloadAction(action);
             break;
             
           case 'website':
-            console.log('🌐 Ouverture du site web (Action configurée ' + action.order + '):', action.url);
+            console.log(`🌐 Ouverture du site web (Position ${i + 1}, Action configurée ${action.order}):`, action.url);
             if (action.url) {
               // ✅ SOLUTION ANTI-POPUP: Redirection directe dans la même fenêtre
               console.log('🚀 Redirection directe vers:', action.url);
@@ -348,8 +352,40 @@ const RegisterClient = () => {
     console.log('🎬 Exécution des actions en attente après soumission du formulaire');
     console.log('📋 Actions en attente:', pendingActionsAfterForm);
     
-    // Exécuter les actions restantes
-    await executeActionsSequence(pendingActionsAfterForm);
+    // ✅ CORRECTION: Exécuter les actions restantes avec délais basés sur leur position dans la séquence restante
+    for (let i = 0; i < pendingActionsAfterForm.length; i++) {
+      const action = pendingActionsAfterForm[i];
+      
+      // Délai basé sur la position dans la séquence restante
+      const delayMs = (i + 1) * 1000;
+      console.log(`⏳ Attente de ${delayMs}ms pour l'action post-formulaire en position ${i + 1}`);
+      
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+      
+      console.log(`🎯 Exécution de l'action post-formulaire en position ${i + 1}:`, action);
+      
+      try {
+        switch (action.type) {
+          case 'download':
+            console.log('📥 Téléchargement post-formulaire');
+            await executeDownloadAction(action);
+            break;
+            
+          case 'website':
+            console.log('🌐 Redirection post-formulaire vers:', action.url);
+            if (action.url) {
+              window.location.href = action.url;
+              return; // Arrêter car on quitte la page
+            }
+            break;
+            
+          default:
+            console.warn('⚠️ Type d\'action post-formulaire non reconnu:', action.type);
+        }
+      } catch (actionError) {
+        console.error(`❌ Erreur lors de l'exécution de l'action post-formulaire ${action.type}:`, actionError);
+      }
+    }
     
     console.log('✅ Toutes les actions après formulaire ont été exécutées');
     setActionsCompleted(true);
@@ -832,7 +868,40 @@ const RegisterClient = () => {
             
             {/* Affichage des actions configurées avec boutons */}
             <div className="bg-white p-6 rounded-lg shadow-md mt-4">
-              <h3 className="text-lg font-semibold mb-4">Actions configurées :</h3>
+              <h3 className="text-lg font-semibold mb-4">
+                Schéma actuel :
+                <br />
+                <span className="text-sm font-normal text-gray-600">
+                  {sortedActionsForDisplay.map((action, index) => (
+                    <span key={action.id}>
+                      {action.type === 'form' && '📝 Formulaire'}
+                      {action.type === 'download' && '📥 Téléchargement'}
+                      {action.type === 'website' && '🌐 Site web'}
+                      {index < sortedActionsForDisplay.length - 1 && ' → '}
+                    </span>
+                  ))}
+                </span>
+              </h3>
+              
+              {/* ✅ NOUVEAU: Affichage des URLs de sites web */}
+              {sortedActionsForDisplay
+                .filter(action => action.type === 'website')
+                .map(action => (
+                  <div key={action.id} className="mb-3 p-3 bg-blue-50 rounded border-l-4 border-blue-400">
+                    <div className="text-sm text-gray-700">
+                      <strong>🌐 URL du site web :</strong>
+                      <br />
+                      <a 
+                        href={action.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 underline break-all"
+                      >
+                        {action.url}
+                      </a>
+                    </div>
+                  </div>
+                ))}
               
               {/* ✅ CORRECTION CRITIQUE: Utiliser sortedActionsForDisplay au lieu de businessCardActions */}
               <div className="space-y-3">
@@ -877,7 +946,7 @@ const RegisterClient = () => {
               {/* ✅ NOUVEAU: Statut d'exécution automatique avec gestion du formulaire */}
               <div className="mt-4 p-3 bg-blue-50 text-blue-700 rounded-md text-sm">
                 {formSubmitted && actionsCompleted ? (
-                  <span>✅ Toutes les actions ont été exécutées après soumission du formulaire</span>
+                  <span>✅ Toutes les actions ont été exécutées dans l'ordre configuré</span>
                 ) : formSubmitted ? (
                   <span>⏳ Exécution des actions en attente après soumission du formulaire...</span>
                 ) : showForm ? (
