@@ -41,6 +41,10 @@ const RegisterClient = () => {
 
   // ✅ NOUVEAU: État pour les actions triées pour l'affichage
   const [sortedActionsForDisplay, setSortedActionsForDisplay] = useState([]);
+  
+  // ✅ NOUVEAU: État pour gérer les actions en attente après le formulaire
+  const [pendingActionsAfterForm, setPendingActionsAfterForm] = useState([]);
+  const [formSubmitted, setFormSubmitted] = useState(false);
 
   // ✅ NOUVEAU: Fonction pour réinitialiser l'état
   const resetState = () => {
@@ -55,6 +59,8 @@ const RegisterClient = () => {
     setActionsCompleted(false);
     setDataLoaded(false);
     setSortedActionsForDisplay([]);
+    setPendingActionsAfterForm([]);
+    setFormSubmitted(false);
     setMessage("");
   };
 
@@ -235,7 +241,7 @@ const RegisterClient = () => {
     executeActions();
   }, [dataLoaded, hasActions, businessCardActions]);
 
-  // ✅ FONCTION CORRIGÉE: Exécution des actions dans le bon ordre avec délai basé sur l'ordre configuré
+  // ✅ FONCTION CORRIGÉE: Exécution des actions avec gestion spéciale pour le formulaire
   const executeBusinessCardActions = async (actions) => {
     try {
       console.log('🎬 Démarrage de l\'exécution des actions configurées');
@@ -252,58 +258,101 @@ const RegisterClient = () => {
       console.log('📊 Actions dans l\'ordre d\'exécution:', sortedActions);
       console.log('🎯 Séquence d\'exécution:', sortedActions.map((a, i) => `${i + 1}. Action ${a.order}: ${a.type} ${a.url ? `(${a.url})` : ''}`));
       
-      // ✅ CORRECTION CRITIQUE: Exécuter chaque action avec délai basé sur SON ORDRE CONFIGURÉ
-      for (let i = 0; i < sortedActions.length; i++) {
-        const action = sortedActions[i];
+      // ✅ NOUVEAU: Séparer les actions avant et après le formulaire
+      const hasFormAction = sortedActions.some(a => a.type === 'form');
+      
+      if (hasFormAction) {
+        console.log('📝 Formulaire détecté - Exécution des actions avant le formulaire uniquement');
         
-        // ✅ CORRECTION: Délai basé sur l'ORDRE CONFIGURÉ de l'action (pas sur sa position dans le tableau)
-        const delayMs = action.order * 1000; // Action 1 = 1000ms, Action 2 = 2000ms, Action 3 = 3000ms
-        console.log(`⏳ Attente de ${delayMs}ms pour l'action configurée ${action.order} (${action.type})`);
+        // Trouver l'index de l'action formulaire
+        const formActionIndex = sortedActions.findIndex(a => a.type === 'form');
+        const actionsBeforeForm = sortedActions.slice(0, formActionIndex + 1); // Inclure le formulaire
+        const actionsAfterForm = sortedActions.slice(formActionIndex + 1); // Actions après le formulaire
         
-        await new Promise(resolve => setTimeout(resolve, delayMs));
+        console.log('📋 Actions avant formulaire (inclus):', actionsBeforeForm);
+        console.log('📋 Actions après formulaire:', actionsAfterForm);
         
-        console.log(`🎯 Exécution de l'action configurée ${action.order} (${action.type}):`, action);
+        // Stocker les actions à exécuter après le formulaire
+        setPendingActionsAfterForm(actionsAfterForm);
         
-        try {
-          switch (action.type) {
-            case 'form':
-              console.log('📝 Affichage du formulaire (Action configurée ' + action.order + ')');
-              setShowForm(true);
-              break;
-              
-            case 'download':
-              console.log('📥 Démarrage du téléchargement (Action configurée ' + action.order + ')');
-              await executeDownloadAction(action);
-              break;
-              
-            case 'website':
-              console.log('🌐 Ouverture du site web (Action configurée ' + action.order + '):', action.url);
-              if (action.url) {
-                // ✅ SOLUTION ANTI-POPUP: Redirection directe dans la même fenêtre
-                console.log('🚀 Redirection directe vers:', action.url);
-                window.location.href = action.url;
-                // ✅ IMPORTANT: Arrêter l'exécution des actions suivantes car on quitte la page
-                return;
-              } else {
-                console.warn('⚠️ Aucune URL fournie pour l\'action website');
-              }
-              break;
-              
-            default:
-              console.warn('⚠️ Type d\'action non reconnu:', action.type);
-          }
-        } catch (actionError) {
-          console.error(`❌ Erreur lors de l'exécution de l'action ${action.type}:`, actionError);
-          // ✅ IMPORTANT: Continuer avec les actions suivantes même en cas d'erreur
-        }
+        // Exécuter seulement les actions avant et incluant le formulaire
+        await executeActionsSequence(actionsBeforeForm);
+      } else {
+        // Pas de formulaire, exécuter toutes les actions normalement
+        await executeActionsSequence(sortedActions);
       }
       
-      console.log('✅ Toutes les actions ont été exécutées dans l\'ordre configuré');
-      setActionsCompleted(true);
+      console.log('✅ Actions initiales exécutées');
       
     } catch (error) {
       console.error('❌ Erreur lors de l\'exécution des actions:', error);
     }
+  };
+
+  // ✅ NOUVELLE FONCTION: Exécuter une séquence d'actions
+  const executeActionsSequence = async (actionsToExecute) => {
+    for (let i = 0; i < actionsToExecute.length; i++) {
+      const action = actionsToExecute[i];
+      
+      // ✅ CORRECTION: Délai basé sur l'ORDRE CONFIGURÉ de l'action (pas sur sa position dans le tableau)
+      const delayMs = action.order * 1000; // Action 1 = 1000ms, Action 2 = 2000ms, Action 3 = 3000ms
+      console.log(`⏳ Attente de ${delayMs}ms pour l'action configurée ${action.order} (${action.type})`);
+      
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+      
+      console.log(`🎯 Exécution de l'action configurée ${action.order} (${action.type}):`, action);
+      
+      try {
+        switch (action.type) {
+          case 'form':
+            console.log('📝 Affichage du formulaire (Action configurée ' + action.order + ')');
+            setShowForm(true);
+            // ✅ IMPORTANT: Ne pas continuer avec les actions suivantes, attendre la soumission du formulaire
+            return;
+            
+          case 'download':
+            console.log('📥 Démarrage du téléchargement (Action configurée ' + action.order + ')');
+            await executeDownloadAction(action);
+            break;
+            
+          case 'website':
+            console.log('🌐 Ouverture du site web (Action configurée ' + action.order + '):', action.url);
+            if (action.url) {
+              // ✅ SOLUTION ANTI-POPUP: Redirection directe dans la même fenêtre
+              console.log('🚀 Redirection directe vers:', action.url);
+              window.location.href = action.url;
+              // ✅ IMPORTANT: Arrêter l'exécution des actions suivantes car on quitte la page
+              return;
+            } else {
+              console.warn('⚠️ Aucune URL fournie pour l\'action website');
+            }
+            break;
+            
+          default:
+            console.warn('⚠️ Type d\'action non reconnu:', action.type);
+        }
+      } catch (actionError) {
+        console.error(`❌ Erreur lors de l'exécution de l'action ${action.type}:`, actionError);
+        // ✅ IMPORTANT: Continuer avec les actions suivantes même en cas d'erreur
+      }
+    }
+  };
+
+  // ✅ NOUVELLE FONCTION: Exécuter les actions en attente après soumission du formulaire
+  const executeActionsAfterForm = async () => {
+    if (pendingActionsAfterForm.length === 0) {
+      console.log('✅ Aucune action en attente après le formulaire');
+      return;
+    }
+    
+    console.log('🎬 Exécution des actions en attente après soumission du formulaire');
+    console.log('📋 Actions en attente:', pendingActionsAfterForm);
+    
+    // Exécuter les actions restantes
+    await executeActionsSequence(pendingActionsAfterForm);
+    
+    console.log('✅ Toutes les actions après formulaire ont été exécutées');
+    setActionsCompleted(true);
   };
 
   // ✅ FONCTION AMÉLIORÉE: Téléchargement avec les vraies données
@@ -707,13 +756,26 @@ const RegisterClient = () => {
     }));
   };
 
+  // ✅ FONCTION CORRIGÉE: Soumission du formulaire avec exécution des actions en attente
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    
     try {
-      // Ici, vous pouvez ajouter la logique pour envoyer les données du formulaire
       console.log("📤 Envoi du formulaire:", formData);
+      
+      // Simuler l'envoi du formulaire
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       setMessage("✅ Formulaire envoyé avec succès !");
+      setFormSubmitted(true);
+      
+      // ✅ NOUVEAU: Exécuter les actions en attente après soumission du formulaire
+      console.log('🎬 Formulaire soumis, exécution des actions en attente...');
+      setTimeout(() => {
+        executeActionsAfterForm();
+      }, 1500); // Délai pour laisser le temps de voir le message de succès
+      
     } catch (error) {
       console.error("❌ Erreur lors de l'envoi du formulaire:", error);
       setMessage("❌ Erreur lors de l'envoi du formulaire");
@@ -812,68 +874,104 @@ const RegisterClient = () => {
                 ))}
               </div>
               
-              {/* ✅ NOUVEAU: Statut d'exécution automatique */}
+              {/* ✅ NOUVEAU: Statut d'exécution automatique avec gestion du formulaire */}
               <div className="mt-4 p-3 bg-blue-50 text-blue-700 rounded-md text-sm">
-                {actionsCompleted ? (
-                  <span>✅ Actions automatiques exécutées dans l'ordre configuré (redirection directe)</span>
+                {formSubmitted && actionsCompleted ? (
+                  <span>✅ Toutes les actions ont été exécutées après soumission du formulaire</span>
+                ) : formSubmitted ? (
+                  <span>⏳ Exécution des actions en attente après soumission du formulaire...</span>
+                ) : showForm ? (
+                  <span>📝 Formulaire affiché - Les actions suivantes s'exécuteront après soumission</span>
+                ) : actionsCompleted ? (
+                  <span>✅ Actions automatiques exécutées dans l'ordre configuré</span>
                 ) : (
                   <span>⏳ Exécution automatique en cours dans l'ordre configuré...</span>
                 )}
               </div>
+              
+              {/* ✅ NOUVEAU: Affichage des actions en attente */}
+              {pendingActionsAfterForm.length > 0 && showForm && !formSubmitted && (
+                <div className="mt-2 p-3 bg-yellow-50 text-yellow-700 rounded-md text-sm">
+                  <strong>Actions en attente après soumission :</strong>
+                  <ul className="mt-1 list-disc list-inside">
+                    {pendingActionsAfterForm.map(action => (
+                      <li key={action.id}>
+                        Action {action.order}: {action.type === 'website' ? `Site web (${action.url})` : action.type}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
 
             {/* Formulaire affiché automatiquement si présent */}
             {showForm && (
               <div className="bg-white p-6 rounded-lg shadow-md mt-4">
                 <h3 className="text-xl font-semibold mb-4">Formulaire de contact</h3>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">Nom</label>
-                    <input
-                      type="text"
-                      id="name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                      required
-                    />
+                
+                {/* ✅ NOUVEAU: Message de succès après soumission */}
+                {formSubmitted && (
+                  <div className="mb-4 p-4 bg-green-50 text-green-700 rounded-md">
+                    ✅ Formulaire envoyé avec succès ! 
+                    {pendingActionsAfterForm.length > 0 && (
+                      <div className="mt-2 text-sm">
+                        Exécution des actions suivantes en cours...
+                      </div>
+                    )}
                   </div>
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="message" className="block text-sm font-medium text-gray-700">Message</label>
-                    <textarea
-                      id="message"
-                      name="message"
-                      value={formData.message}
-                      onChange={handleChange}
-                      rows="4"
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                      required
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                  >
-                    Envoyer
-                  </button>
-                </form>
+                )}
+                
+                {!formSubmitted && (
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                      <label htmlFor="name" className="block text-sm font-medium text-gray-700">Nom</label>
+                      <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+                      <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="message" className="block text-sm font-medium text-gray-700">Message</label>
+                      <textarea
+                        id="message"
+                        name="message"
+                        value={formData.message}
+                        onChange={handleChange}
+                        rows="4"
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        required
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                    >
+                      {loading ? 'Envoi en cours...' : 'Envoyer'}
+                    </button>
+                  </form>
+                )}
               </div>
             )}
 
-            {message && (
+            {message && !formSubmitted && (
               <div className="mt-4 p-4 bg-blue-50 text-blue-700 rounded-md">
                 {message}
               </div>
