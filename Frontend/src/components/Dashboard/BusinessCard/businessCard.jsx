@@ -16,7 +16,7 @@ const BusinessCard = ({ userId, user }) => {
   const [loading, setLoading] = useState(false);
   const [savedCardData, setSavedCardData] = useState(null);
   
-  // ✅ NOUVEAU: États pour les schémas prédéfinis
+  // ✅ États pour les schémas prédéfinis
   const [showSchemasModal, setShowSchemasModal] = useState(false);
   
   const [stats, setStats] = useState({
@@ -37,6 +37,16 @@ const BusinessCard = ({ userId, user }) => {
       actions: [
         { type: 'website', order: 1, delay: 1000, active: true, url: 'https://www.votre-site.com' },
         { type: 'form', order: 2, delay: 2000, active: true }
+      ]
+    },
+    'website-only': {
+      name: '🌐 Site Web Direct',
+      description: 'Redirection immédiate vers votre site web principal',
+      icon: '🌐',
+      sequence: 'Site web (1s)',
+      category: 'Redirection simple',
+      actions: [
+        { type: 'website', order: 1, delay: 1000, active: true, url: 'https://www.votre-site.com' }
       ]
     },
     'contact-download': {
@@ -60,16 +70,6 @@ const BusinessCard = ({ userId, user }) => {
         { type: 'website', order: 1, delay: 1000, active: true, url: 'https://www.votre-site.com' },
         { type: 'form', order: 2, delay: 2000, active: true },
         { type: 'download', order: 3, delay: 3000, active: true, file: 'carte-visite' }
-      ]
-    },
-    'website-direct': {
-      name: '🌐 Site Web Direct',
-      description: 'Redirection immédiate vers votre site web principal',
-      icon: '🌐',
-      sequence: 'Site web (1s)',
-      category: 'Redirection simple',
-      actions: [
-        { type: 'website', order: 1, delay: 1000, active: true, url: 'https://www.votre-site.com' }
       ]
     },
     'contact-only': {
@@ -562,6 +562,37 @@ const BusinessCard = ({ userId, user }) => {
     }
   };
 
+  // Dessiner un QR code de fallback
+  const drawFallbackQR = (ctx, x, y, size) => {
+    // Fond blanc
+    ctx.fillStyle = 'white';
+    ctx.fillRect(x - 5, y - 5, size + 10, size + 10);
+    
+    // QR code simplifié
+    ctx.fillStyle = '#1f2937';
+    ctx.fillRect(x, y, size, size);
+    
+    // Motif de QR code basique
+    const cellSize = size / 21;
+    ctx.fillStyle = 'white';
+    
+    for (let i = 0; i < 21; i++) {
+      for (let j = 0; j < 21; j++) {
+        if ((i + j) % 3 === 0) {
+          ctx.fillRect(x + i * cellSize, y + j * cellSize, cellSize, cellSize);
+        }
+      }
+    }
+    
+    // Texte au centre
+    ctx.fillStyle = '#1f2937';
+    ctx.font = 'bold 14px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('QR', x + size/2, y + size/2);
+    
+    console.log('✅ QR code fallback ajouté');
+  };
+
   // ✅ FONCTION CORRIGÉE: Générer une carte par défaut professionnelle
   const generateDefaultBusinessCard = async (ctx, canvas) => {
     // Fond dégradé professionnel
@@ -618,37 +649,6 @@ const BusinessCard = ({ userId, user }) => {
     }
     
     console.log('✅ Carte par défaut générée');
-  };
-
-  // Dessiner un QR code de fallback
-  const drawFallbackQR = (ctx, x, y, size) => {
-    // Fond blanc
-    ctx.fillStyle = 'white';
-    ctx.fillRect(x - 5, y - 5, size + 10, size + 10);
-    
-    // QR code simplifié
-    ctx.fillStyle = '#1f2937';
-    ctx.fillRect(x, y, size, size);
-    
-    // Motif de QR code basique
-    const cellSize = size / 21;
-    ctx.fillStyle = 'white';
-    
-    for (let i = 0; i < 21; i++) {
-      for (let j = 0; j < 21; j++) {
-        if ((i + j) % 3 === 0) {
-          ctx.fillRect(x + i * cellSize, y + j * cellSize, cellSize, cellSize);
-        }
-      }
-    }
-    
-    // Texte au centre
-    ctx.fillStyle = '#1f2937';
-    ctx.font = 'bold 14px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('QR', x + size/2, y + size/2);
-    
-    console.log('✅ QR code fallback ajouté');
   };
 
   const downloadCardImageOnly = async () => {
