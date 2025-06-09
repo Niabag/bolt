@@ -235,7 +235,7 @@ const RegisterClient = () => {
     executeActions();
   }, [dataLoaded, hasActions, businessCardActions]);
 
-  // ✅ FONCTION CORRIGÉE: Exécution des actions dans le bon ordre avec ouverture directe (pas de popup)
+  // ✅ FONCTION CORRIGÉE: Exécution des actions dans le bon ordre avec délai basé sur l'ordre configuré
   const executeBusinessCardActions = async (actions) => {
     try {
       console.log('🎬 Démarrage de l\'exécution des actions configurées');
@@ -246,38 +246,38 @@ const RegisterClient = () => {
         return;
       }
 
-      // ✅ Les actions sont déjà triées, pas besoin de re-trier
-      const sortedActions = actions; // Déjà triées dans detectActions
+      // ✅ Les actions sont déjà triées par ordre configuré
+      const sortedActions = actions;
       
       console.log('📊 Actions dans l\'ordre d\'exécution:', sortedActions);
       console.log('🎯 Séquence d\'exécution:', sortedActions.map((a, i) => `${i + 1}. Action ${a.order}: ${a.type} ${a.url ? `(${a.url})` : ''}`));
       
-      // Exécuter chaque action avec son délai basé sur sa POSITION dans l'ordre trié
+      // ✅ CORRECTION CRITIQUE: Exécuter chaque action avec délai basé sur SON ORDRE CONFIGURÉ
       for (let i = 0; i < sortedActions.length; i++) {
         const action = sortedActions[i];
         
-        // ✅ CORRECTION: Délai basé sur la position dans l'ordre trié (pas sur l'ordre configuré)
-        const delayMs = (i + 1) * 1000;
-        console.log(`⏳ Attente de ${delayMs}ms pour l'action ${i + 1}/${sortedActions.length} (Action ${action.order}: ${action.type})`);
+        // ✅ CORRECTION: Délai basé sur l'ORDRE CONFIGURÉ de l'action (pas sur sa position dans le tableau)
+        const delayMs = action.order * 1000; // Action 1 = 1000ms, Action 2 = 2000ms, Action 3 = 3000ms
+        console.log(`⏳ Attente de ${delayMs}ms pour l'action configurée ${action.order} (${action.type})`);
         
         await new Promise(resolve => setTimeout(resolve, delayMs));
         
-        console.log(`🎯 Exécution de l'action ${i + 1} (Action ${action.order}: ${action.type}):`, action);
+        console.log(`🎯 Exécution de l'action configurée ${action.order} (${action.type}):`, action);
         
         try {
           switch (action.type) {
             case 'form':
-              console.log('📝 Affichage du formulaire (Action ' + action.order + ')');
+              console.log('📝 Affichage du formulaire (Action configurée ' + action.order + ')');
               setShowForm(true);
               break;
               
             case 'download':
-              console.log('📥 Démarrage du téléchargement (Action ' + action.order + ')');
+              console.log('📥 Démarrage du téléchargement (Action configurée ' + action.order + ')');
               await executeDownloadAction(action);
               break;
               
             case 'website':
-              console.log('🌐 Ouverture du site web (Action ' + action.order + '):', action.url);
+              console.log('🌐 Ouverture du site web (Action configurée ' + action.order + '):', action.url);
               if (action.url) {
                 // ✅ SOLUTION ANTI-POPUP: Redirection directe dans la même fenêtre
                 console.log('🚀 Redirection directe vers:', action.url);
