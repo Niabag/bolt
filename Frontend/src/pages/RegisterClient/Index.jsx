@@ -39,9 +39,8 @@ const RegisterClient = () => {
   });
   const scannerRef = useRef(null);
 
-  // Ajout d'un état pour stocker les actions à afficher
-  const [websiteAction, setWebsiteAction] = useState(null);
-  const [downloadAction, setDownloadAction] = useState(null);
+  // ✅ NOUVEAU: État pour les actions triées pour l'affichage
+  const [sortedActionsForDisplay, setSortedActionsForDisplay] = useState([]);
 
   // ✅ NOUVEAU: Fonction pour réinitialiser l'état
   const resetState = () => {
@@ -55,8 +54,7 @@ const RegisterClient = () => {
     setShowForm(false);
     setActionsCompleted(false);
     setDataLoaded(false);
-    setWebsiteAction(null);
-    setDownloadAction(null);
+    setSortedActionsForDisplay([]);
     setMessage("");
   };
 
@@ -112,7 +110,7 @@ const RegisterClient = () => {
               if (actionsHaveChanged([websiteAction])) {
                 resetState();
                 setBusinessCardActions([websiteAction]);
-                setWebsiteAction(websiteAction);
+                setSortedActionsForDisplay([websiteAction]);
                 setHasActions(true);
                 setDataLoaded(true);
                 currentActionsRef.current = [websiteAction];
@@ -160,25 +158,27 @@ const RegisterClient = () => {
               ...action,
               // ✅ IMPORTANT: Utiliser l'ordre configuré, pas l'index du tableau
               order: action.order !== undefined ? action.order : (idx + 1)
-            }))
-            // ✅ CORRECTION: Trier par l'ordre configuré (pas par l'index du tableau)
-            .sort((a, b) => (a.order || 1) - (b.order || 1));
+            }));
           
-          console.log("✅ Actions actives triées par ordre:", activeActions);
-          console.log("📊 Ordre d'exécution prévu:", activeActions.map(a => `${a.order}: ${a.type}`));
+          // ✅ CORRECTION: Trier par l'ordre configuré pour l'exécution ET l'affichage
+          const sortedActions = [...activeActions].sort((a, b) => (a.order || 1) - (b.order || 1));
+          
+          console.log("✅ Actions actives triées par ordre:", sortedActions);
+          console.log("📊 Ordre d'affichage et d'exécution:", sortedActions.map((a, i) => `Position ${i + 1}: Action ${a.order} (${a.type})`));
           
           // ✅ NOUVEAU: Vérifier si les actions ont changé
-          if (actionsHaveChanged(activeActions)) {
+          if (actionsHaveChanged(sortedActions)) {
             console.log('🔄 Actions ont changé, réinitialisation...');
             resetState();
             
-            if (activeActions.length > 0) {
-              console.log("🎯 Nouvelles actions à configurer:", activeActions);
-              setBusinessCardActions(activeActions);
+            if (sortedActions.length > 0) {
+              console.log("🎯 Nouvelles actions à configurer:", sortedActions);
+              setBusinessCardActions(sortedActions);
+              setSortedActionsForDisplay(sortedActions); // ✅ NOUVEAU: Actions triées pour l'affichage
               setBusinessCardData(businessCard);
               setHasActions(true);
-              setShowForm(activeActions.some(a => a.type === 'form'));
-              currentActionsRef.current = activeActions;
+              setShowForm(sortedActions.some(a => a.type === 'form'));
+              currentActionsRef.current = sortedActions;
             } else {
               console.log("ℹ️ Aucune action active trouvée");
               setHasActions(false);
@@ -207,17 +207,6 @@ const RegisterClient = () => {
     // ✅ NOUVEAU: Toujours exécuter la détection pour vérifier les changements
     detectActions();
   }, [userId]); // Supprimer dataLoaded de la dépendance
-
-  // ✅ NOUVEAU: Effet séparé pour mettre à jour les actions individuelles
-  useEffect(() => {
-    if (businessCardActions && businessCardActions.length > 0) {
-      setWebsiteAction(businessCardActions.find(a => a.type === 'website'));
-      setDownloadAction(businessCardActions.find(a => a.type === 'download'));
-    } else {
-      setWebsiteAction(null);
-      setDownloadAction(null);
-    }
-  }, [businessCardActions]);
 
   // ✅ NOUVEAU: Exécution des actions avec meilleure gestion
   useEffect(() => {
@@ -257,15 +246,11 @@ const RegisterClient = () => {
         return;
       }
 
-      // ✅ CORRECTION CRITIQUE: Trier les actions par ordre configuré
-      const sortedActions = [...actions].sort((a, b) => {
-        const orderA = a.order || 1;
-        const orderB = b.order || 1;
-        return orderA - orderB;
-      });
+      // ✅ Les actions sont déjà triées, pas besoin de re-trier
+      const sortedActions = actions; // Déjà triées dans detectActions
       
-      console.log('📊 Actions triées par ordre d\'exécution:', sortedActions);
-      console.log('🎯 Séquence d\'exécution:', sortedActions.map((a, i) => `${i + 1}. Ordre ${a.order}: ${a.type} ${a.url ? `(${a.url})` : ''}`));
+      console.log('📊 Actions dans l\'ordre d\'exécution:', sortedActions);
+      console.log('🎯 Séquence d\'exécution:', sortedActions.map((a, i) => `${i + 1}. Action ${a.order}: ${a.type} ${a.url ? `(${a.url})` : ''}`));
       
       // Exécuter chaque action avec son délai basé sur sa POSITION dans l'ordre trié
       for (let i = 0; i < sortedActions.length; i++) {
@@ -273,26 +258,26 @@ const RegisterClient = () => {
         
         // ✅ CORRECTION: Délai basé sur la position dans l'ordre trié (pas sur l'ordre configuré)
         const delayMs = (i + 1) * 1000;
-        console.log(`⏳ Attente de ${delayMs}ms pour l'action ${i + 1}/${sortedActions.length} (ordre configuré: ${action.order})`);
+        console.log(`⏳ Attente de ${delayMs}ms pour l'action ${i + 1}/${sortedActions.length} (Action ${action.order}: ${action.type})`);
         
         await new Promise(resolve => setTimeout(resolve, delayMs));
         
-        console.log(`🎯 Exécution de l'action ${i + 1} (ordre ${action.order}):`, action);
+        console.log(`🎯 Exécution de l'action ${i + 1} (Action ${action.order}: ${action.type}):`, action);
         
         try {
           switch (action.type) {
             case 'form':
-              console.log('📝 Affichage du formulaire (ordre ' + action.order + ')');
+              console.log('📝 Affichage du formulaire (Action ' + action.order + ')');
               setShowForm(true);
               break;
               
             case 'download':
-              console.log('📥 Démarrage du téléchargement (ordre ' + action.order + ')');
+              console.log('📥 Démarrage du téléchargement (Action ' + action.order + ')');
               await executeDownloadAction(action);
               break;
               
             case 'website':
-              console.log('🌐 Ouverture du site web (ordre ' + action.order + '):', action.url);
+              console.log('🌐 Ouverture du site web (Action ' + action.order + '):', action.url);
               if (action.url) {
                 // ✅ CORRECTION: Utiliser window.open avec les bons paramètres
                 const newWindow = window.open(action.url, '_blank', 'noopener,noreferrer');
@@ -693,11 +678,10 @@ const RegisterClient = () => {
       };
       
       setBusinessCardActions([websiteAction]);
-      setWebsiteAction(websiteAction);
+      setSortedActionsForDisplay([websiteAction]);
       setHasActions(true);
       setDataLoaded(true);
       setShowForm(false);
-      setDownloadAction(null);
       currentActionsRef.current = [websiteAction];
       
       // Nettoyer le scanner
@@ -790,11 +774,9 @@ const RegisterClient = () => {
             <div className="bg-white p-6 rounded-lg shadow-md mt-4">
               <h3 className="text-lg font-semibold mb-4">Actions configurées :</h3>
               
-              {/* ✅ NOUVEAU: Affichage de toutes les actions dans l'ordre configuré */}
+              {/* ✅ CORRECTION CRITIQUE: Utiliser sortedActionsForDisplay au lieu de businessCardActions */}
               <div className="space-y-3">
-                {businessCardActions
-                  .sort((a, b) => (a.order || 1) - (b.order || 1)) // Trier par ordre pour l'affichage
-                  .map((action, index) => (
+                {sortedActionsForDisplay.map((action, index) => (
                   <div key={action.id} className="action-item">
                     {action.type === 'form' && (
                       <div className="text-sm text-gray-600 p-3 bg-indigo-50 rounded border-l-4 border-indigo-400">
