@@ -1,9 +1,9 @@
-import { Appointment } from '../models/Appointment.js';
-import { Client } from '../models/Client.js';
-import { Service } from '../models/Service.js';
+const Appointment = require('../models/Appointment');
+const Client = require('../models/client');
+const Service = require('../models/Service');
 
 // Récupérer tous les rendez-vous
-export const getAllAppointments = async (req, res) => {
+exports.getAllAppointments = async (req, res) => {
   try {
     const appointments = await Appointment.find()
       .populate('clientId', 'name email phone')
@@ -17,7 +17,7 @@ export const getAllAppointments = async (req, res) => {
 };
 
 // Récupérer un rendez-vous par ID
-export const getAppointmentById = async (req, res) => {
+exports.getAppointmentById = async (req, res) => {
   try {
     const appointment = await Appointment.findById(req.params.id)
       .populate('clientId', 'name email phone')
@@ -34,7 +34,7 @@ export const getAppointmentById = async (req, res) => {
 };
 
 // Créer un nouveau rendez-vous
-export const createAppointment = async (req, res) => {
+exports.createAppointment = async (req, res) => {
   try {
     // Vérifier que le client et le service existent
     const [client, service] = await Promise.all([
@@ -69,7 +69,7 @@ export const createAppointment = async (req, res) => {
 };
 
 // Mettre à jour un rendez-vous
-export const updateAppointment = async (req, res) => {
+exports.updateAppointment = async (req, res) => {
   try {
     // Si clientId ou serviceId sont modifiés, vérifier qu'ils existent
     if (req.body.clientId) {
@@ -109,7 +109,7 @@ export const updateAppointment = async (req, res) => {
 };
 
 // Supprimer un rendez-vous
-export const deleteAppointment = async (req, res) => {
+exports.deleteAppointment = async (req, res) => {
   try {
     const appointment = await Appointment.findByIdAndDelete(req.params.id);
     if (!appointment) {
@@ -126,7 +126,7 @@ export const deleteAppointment = async (req, res) => {
 };
 
 // Récupérer les rendez-vous par date
-export const getAppointmentsByDate = async (req, res) => {
+exports.getAppointmentsByDate = async (req, res) => {
   try {
     const { date } = req.params;
     const startDate = new Date(date);
@@ -151,7 +151,7 @@ export const getAppointmentsByDate = async (req, res) => {
 };
 
 // Récupérer les rendez-vous par client
-export const getAppointmentsByClient = async (req, res) => {
+exports.getAppointmentsByClient = async (req, res) => {
   try {
     const appointments = await Appointment.find({ clientId: req.params.clientId })
       .populate('clientId', 'name email phone')

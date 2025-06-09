@@ -1,5 +1,5 @@
-import express from 'express';
-import {
+const express = require('express');
+const {
   getAllAppointments,
   getAppointmentById,
   createAppointment,
@@ -7,7 +7,7 @@ import {
   deleteAppointment,
   getAppointmentsByDate,
   getAppointmentsByClient
-} from '../controllers/appointmentController.js';
+} = require('../controllers/appointmentController');
 
 const router = express.Router();
 
@@ -20,4 +20,4 @@ router.post('/', createAppointment);
 router.put('/:id', updateAppointment);
 router.delete('/:id', deleteAppointment);
 
-export default router;
+module.exports = router;

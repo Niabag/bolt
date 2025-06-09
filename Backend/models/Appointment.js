@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
 const appointmentSchema = new mongoose.Schema({
   clientId: { 
@@ -94,4 +94,4 @@ appointmentSchema.virtual('formattedTime').get(function() {
   return '';
 });
 
-export const Appointment = mongoose.model('Appointment', appointmentSchema);
+module.exports = mongoose.model('Appointment', appointmentSchema);
