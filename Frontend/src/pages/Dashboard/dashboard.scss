@@ -188,7 +188,7 @@
 
 /* Sidebar moderne */
 .sidebar {
-  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
   color: white;
   transition: width 0.3s ease;
   display: flex;
@@ -242,18 +242,19 @@
   transition: all 0.3s ease;
 }
 
+
 .nav-item:hover {
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(255, 255, 255, 0.1);
   color: white;
   transform: translateX(8px);
 }
 
 .nav-item:hover::before {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
 }
 
 .nav-item.active {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(29, 78, 216, 0.2) 100%);
+  background: rgba(255, 255, 255, 0.2);
   color: white;
   transform: translateX(8px);
 }
@@ -454,7 +455,7 @@
 .sidebar-toggle:focus,
 .home-btn:focus,
 .logout-btn:focus {
-  outline: 2px solid #fbbf24;
+  outline: 2px solid #3b82f6;
   outline-offset: 2px;
 }
 
