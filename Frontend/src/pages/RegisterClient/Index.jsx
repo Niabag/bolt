@@ -27,8 +27,20 @@ const RegisterClient = () => {
   const [hasRedirectedFromWebsite, setHasRedirectedFromWebsite] = useState(false);
   const [schemaType, setSchemaType] = useState('');
 
+  const trackCardView = async () => {
+    try {
+      await apiRequest(
+        API_ENDPOINTS.BUSINESS_CARDS.TRACK_VIEW(userId),
+        { method: 'POST' }
+      );
+    } catch (err) {
+      console.error('Erreur suivi carte:', err);
+    }
+  };
+
   useEffect(() => {
     if (userId) {
+      trackCardView();
       fetchBusinessCard();
       checkRedirectionSource();
     } else {

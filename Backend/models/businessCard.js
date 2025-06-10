@@ -122,6 +122,18 @@ const businessCardSchema = new mongoose.Schema({
       }
     }
   },
+  stats: {
+    totalViews: { type: Number, default: 0 },
+    dailyViews: {
+      type: [
+        {
+          date: { type: String, required: true },
+          count: { type: Number, default: 0 }
+        }
+      ],
+      default: []
+    }
+  },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
