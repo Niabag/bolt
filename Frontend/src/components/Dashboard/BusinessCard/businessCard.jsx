@@ -28,6 +28,7 @@ const BusinessCard = ({ userId, user }) => {
 
   // ✅ SCHÉMAS CORRIGÉS: Séquences d'actions prédéfinies
   const actionSchemas = {
+
     'form-website': {
       name: '📝 Formulaire puis Site',
       description: 'Collecte des informations avant de rediriger vers votre site web',
@@ -37,6 +38,8 @@ const BusinessCard = ({ userId, user }) => {
       actions: [
         { type: 'form', order: 1, delay: 1000, active: true },
         { type: 'website', order: 2, delay: 2000, active: true, url: 'https://www.votre-site.com' }
+
+
       ]
     },
     'website-only': {
@@ -60,6 +63,20 @@ const BusinessCard = ({ userId, user }) => {
         { type: 'download', order: 2, delay: 2000, active: true, file: 'carte-visite' }
       ]
     },
+
+    'site-last-funnel': {
+      name: '🎯 Site en Dernier',
+      description: 'Formulaire puis téléchargement avant d\'ouvrir le site web',
+      icon: '📝📥🌐',
+      sequence: 'Formulaire (1s) → Carte (2s) → Site web (3s)',
+      category: 'Tunnel de conversion',
+      actions: [
+        { type: 'form', order: 1, delay: 1000, active: true },
+        { type: 'download', order: 2, delay: 2000, active: true, file: 'carte-visite' },
+        { type: 'website', order: 3, delay: 3000, active: true, url: 'https://www.votre-site.com' }
+      ]
+    },
+
     'funnel-site-last': {
       name: '🎯 Site en Dernier',
       description: 'Formulaire puis téléchargement avant d\'ouvrir le site web',
