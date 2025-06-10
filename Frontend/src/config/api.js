@@ -40,6 +40,8 @@ export const API_ENDPOINTS = {
   BUSINESS_CARDS: {
     BASE: `${API_CONFIG.BASE_URL}/business-cards`,
     CONFIG: `${API_CONFIG.BASE_URL}/business-cards/config`,
+    TRACK_VIEW: (userId) => `${API_CONFIG.BASE_URL}/business-cards/track-view/${userId}`,
+    STATS: (userId) => `${API_CONFIG.BASE_URL}/business-cards/stats/${userId}`,
   },
 };
 

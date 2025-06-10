@@ -200,14 +200,10 @@ const BusinessCard = ({ userId, user }) => {
 
   const fetchStats = async () => {
     try {
-      const mockStats = {
-        scansToday: Math.floor(Math.random() * 50) + 10,
-        scansThisMonth: Math.floor(Math.random() * 500) + 100,
-        totalScans: Math.floor(Math.random() * 2000) + 500,
-        conversions: Math.floor(Math.random() * 100) + 20
-      };
-      
-      setStats(mockStats);
+      const data = await apiRequest(
+        API_ENDPOINTS.BUSINESS_CARDS.STATS(userId)
+      );
+      setStats(data);
     } catch (error) {
       console.error('Erreur lors du chargement des statistiques:', error);
     }

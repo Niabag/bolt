@@ -3,7 +3,9 @@ const {
   saveBusinessCard,
   getBusinessCard,
   deleteBusinessCard,
-  updateCardConfig
+  updateCardConfig,
+  trackCardView,
+  getCardStats
 } = require("../controllers/businessCardController");
 const authMiddleware = require("../middleware/auth");
 
@@ -20,5 +22,11 @@ router.patch("/config", authMiddleware, updateCardConfig);
 
 // 📌 Supprimer la carte de visite
 router.delete("/", authMiddleware, deleteBusinessCard);
+
+// 📌 Incrémenter les vues de la carte (public)
+router.post("/track-view/:userId", trackCardView);
+
+// 📌 Récupérer les statistiques de la carte (public)
+router.get("/stats/:userId", getCardStats);
 
 module.exports = router;

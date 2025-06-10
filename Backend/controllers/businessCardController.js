@@ -1,4 +1,5 @@
 const BusinessCard = require("../models/businessCard");
+const Client = require("../models/client");
 
 // ✅ FONCTION CORRIGÉE: Sauvegarder ou mettre à jour la carte de visite
 exports.saveBusinessCard = async (req, res) => {
@@ -314,9 +315,71 @@ exports.updateCardConfig = async (req, res) => {
 
   } catch (error) {
     console.error("❌ Erreur mise à jour config carte de visite:", error);
-    res.status(500).json({ 
-      message: "Erreur lors de la mise à jour de la configuration", 
-      error: error.message 
+    res.status(500).json({
+      message: "Erreur lors de la mise à jour de la configuration",
+      error: error.message
     });
+  }
+};
+
+// Enregistrer une vue de la carte via le QR code
+exports.trackCardView = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const today = new Date().toISOString().slice(0, 10);
+
+    const card = await BusinessCard.findOne({ userId });
+    if (!card) {
+      return res.status(404).json({ message: "Carte de visite non trouvée" });
+    }
+
+    card.stats.totalViews += 1;
+
+    const dayEntry = card.stats.dailyViews.find(v => v.date === today);
+    if (dayEntry) {
+      dayEntry.count += 1;
+    } else {
+      card.stats.dailyViews.push({ date: today, count: 1 });
+    }
+
+    await card.save();
+
+    res.json({ totalViews: card.stats.totalViews });
+  } catch (error) {
+    console.error("❌ Erreur suivi vue carte:", error);
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+};
+
+// Obtenir les statistiques de la carte
+exports.getCardStats = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const card = await BusinessCard.findOne({ userId });
+    if (!card) {
+      return res.status(404).json({ message: "Carte de visite non trouvée" });
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+    const month = today.slice(0, 7);
+
+    const scansToday = card.stats.dailyViews.find(v => v.date === today)?.count || 0;
+    const scansThisMonth = card.stats.dailyViews.reduce(
+      (sum, v) => (v.date.startsWith(month) ? sum + v.count : sum),
+      0
+    );
+
+    const conversions = await Client.countDocuments({ userId });
+
+    res.json({
+      scansToday,
+      scansThisMonth,
+      totalScans: card.stats.totalViews,
+      conversions
+    });
+  } catch (error) {
+    console.error("❌ Erreur récupération stats carte:", error);
+    res.status(500).json({ message: "Erreur serveur" });
   }
 };
