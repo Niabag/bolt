@@ -1,7 +1,5 @@
 # CRM Application.
-t
 Une application CRM complète avec gestion des clients et génération de devis.
-
 ## 🚀 Fonctionnalités
 
 - **Authentification** : Inscription et connexion sécurisées
@@ -9,6 +7,7 @@ Une application CRM complète avec gestion des clients et génération de devis.
 - **Génération de devis** : Création et édition de devis professionnels
 - **QR Code** : Génération de liens d'inscription pour les clients
 - **Export PDF** : Téléchargement des devis en format PDF
+- **Schémas d'actions** : Plusieurs séquences pour afficher site ou formulaire selon vos besoins
 
 ## 📋 Prérequis
 
@@ -187,3 +186,10 @@ Pour partager la configuration :
 1. Utilisez les fichiers `.env.example`
 2. Documentez les variables nécessaires
 3. Chaque développeur crée son propre `.env`
+
+## ❓ Résolution des problèmes
+
+Si vous scannez le QR code depuis un appareil mobile et obtenez l'erreur
+`ERR_CONNECTION_REFUSED`, assurez‑vous que le frontend est accessible depuis ce
+réseau. Utilisez un nom de domaine public ou un tunnel (ex. `ngrok`) plutôt que
+`localhost` pour que le lien soit reachable sur votre téléphone.

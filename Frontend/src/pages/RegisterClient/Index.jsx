@@ -98,12 +98,14 @@ const RegisterClient = () => {
     const hasWebsite = sortedActions.some(a => a.type === 'website');
     const hasForm = sortedActions.some(a => a.type === 'form');
     const hasDownload = sortedActions.some(a => a.type === 'download');
+    const websiteIndex = sortedActions.findIndex(a => a.type === 'website');
+    const formIndex = sortedActions.findIndex(a => a.type === 'form');
 
     let detectedSchema = '';
     if (hasWebsite && !hasForm && !hasDownload) {
       detectedSchema = 'website-only';
     } else if (hasWebsite && hasForm && !hasDownload) {
-      detectedSchema = 'lead-generation';
+      detectedSchema = websiteIndex > formIndex ? 'form-website' : 'lead-generation';
     } else if (!hasWebsite && hasForm && hasDownload) {
       detectedSchema = 'contact-download';
     } else if (hasWebsite && hasForm && hasDownload) {
@@ -127,6 +129,10 @@ const RegisterClient = () => {
       
       case 'lead-generation':
         await executeLeadGenerationSchema(sortedActions);
+        break;
+
+      case 'form-website':
+        await executeFormWebsiteSchema(sortedActions);
         break;
       
       case 'contact-download':
@@ -210,7 +216,24 @@ const RegisterClient = () => {
     }
   };
 
-  // ✅ SCHÉMA 3: Contact → Carte (form → download)
+  // ✅ SCHÉMA 3: Formulaire puis Site Web (form → website)
+  const executeFormWebsiteSchema = async (actions) => {
+    console.log('📝🌐 Exécution: Formulaire puis Site Web');
+    setShowForm(true);
+
+    const websiteAction = actions.find(a => a.type === 'website');
+    if (websiteAction) {
+      setPendingActions([websiteAction]);
+    }
+
+    setExecutionStatus([{ 
+      action: 'form',
+      status: 'form-shown',
+      message: 'Formulaire affiché - Site web après soumission'
+    }]);
+  };
+
+  // ✅ SCHÉMA 4: Contact → Carte (form → download)
   const executeContactDownloadSchema = async (actions) => {
     console.log('📝 Exécution: Contact → Carte');
     setShowForm(true);
@@ -227,7 +250,7 @@ const RegisterClient = () => {
     }]);
   };
 
-  // ✅ SCHÉMA 4: Tunnel Complet (website → form → download)
+  // ✅ SCHÉMA 5: Tunnel Complet (website → form → download)
   const executeCompleteFunnelSchema = async (actions) => {
     console.log('🎯 Exécution: Tunnel Complet');
     
@@ -268,7 +291,7 @@ const RegisterClient = () => {
     }
   };
 
-  // ✅ SCHÉMA 5: Contact Uniquement (form seulement)
+  // ✅ SCHÉMA 6: Contact Uniquement (form seulement)
   const executeContactOnlySchema = async (actions) => {
     console.log('📝 Exécution: Contact Uniquement');
     setShowForm(true);
@@ -279,7 +302,7 @@ const RegisterClient = () => {
     }]);
   };
 
-  // ✅ SCHÉMA 6: Carte de Visite (download seulement)
+  // ✅ SCHÉMA 7: Carte de Visite (download seulement)
   const executeCardDownloadSchema = async (actions) => {
     console.log('📥 Exécution: Carte de Visite');
     const downloadAction = actions.find(a => a.type === 'download');
@@ -422,6 +445,7 @@ const RegisterClient = () => {
     switch (schemaType) {
       case 'website-only': return '🌐 Site Web Direct';
       case 'lead-generation': return '🚀 Génération de Leads';
+      case 'form-website': return '📝→🌐 Formulaire puis Site';
       case 'contact-download': return '📝 Contact → Carte';
       case 'complete-funnel': return '🎯 Tunnel Complet';
       case 'contact-only': return '📝 Contact Uniquement';
