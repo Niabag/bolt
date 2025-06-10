@@ -28,17 +28,6 @@ const BusinessCard = ({ userId, user }) => {
 
   // ✅ SCHÉMAS CORRIGÉS: Séquences d'actions prédéfinies
   const actionSchemas = {
-    'lead-generation': {
-      name: 'Génération de Leads',
-      description: 'Site web immédiat puis formulaire de contact pour maximiser les conversions',
-      icon: '🚀📝',
-      sequence: 'Site web (1s) → Formulaire (2s)',
-      category: 'Conversion maximale',
-      actions: [
-        { type: 'website', order: 1, delay: 1000, active: true, url: 'https://www.votre-site.com' },
-        { type: 'form', order: 2, delay: 2000, active: true }
-      ]
-    },
     'form-website': {
       name: '📝 Formulaire puis Site',
       description: 'Collecte des informations avant de rediriger vers votre site web',
@@ -69,18 +58,6 @@ const BusinessCard = ({ userId, user }) => {
       actions: [
         { type: 'form', order: 1, delay: 1000, active: true },
         { type: 'download', order: 2, delay: 2000, active: true, file: 'carte-visite' }
-      ]
-    },
-    'complete-funnel': {
-      name: '🎯 Tunnel Complet',
-      description: 'Site web, formulaire puis téléchargement de la carte - conversion optimale',
-      icon: '🌐📝📥',
-      sequence: 'Site web (1s) → Formulaire (2s) → Carte (3s)',
-      category: 'Tunnel de conversion',
-      actions: [
-        { type: 'website', order: 1, delay: 1000, active: true, url: 'https://www.votre-site.com' },
-        { type: 'form', order: 2, delay: 2000, active: true },
-        { type: 'download', order: 3, delay: 3000, active: true, file: 'carte-visite' }
       ]
     },
     'funnel-site-last': {
