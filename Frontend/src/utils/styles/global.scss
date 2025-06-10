@@ -1,3 +1,5 @@
+@import './colors.scss';
+
 * {
   margin: 0;
   padding: 0;
@@ -10,8 +12,8 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #ffffff;
-  color: #2d3748;
+  background-color: $background;
+  color: $text-dark;
   line-height: 1.6;
 }
 
@@ -69,7 +71,7 @@ input, textarea, select {
 
 .form-title {
   text-align: center;
-  color: #2d3748;
+  color: $text-dark;
   margin-bottom: 2rem;
   font-size: 2rem;
   font-weight: 700;
@@ -364,11 +366,11 @@ a:focus {
 
 /* Sélection de texte */
 ::selection {
-  background: rgba(102, 126, 234, 0.2);
-  color: #2d3748;
+  background: rgba($primary-start, 0.2);
+  color: $text-dark;
 }
 
 ::-moz-selection {
-  background: rgba(102, 126, 234, 0.2);
-  color: #2d3748;
+  background: rgba($primary-start, 0.2);
+  color: $text-dark;
 }
