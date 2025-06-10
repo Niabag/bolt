@@ -11,8 +11,20 @@ const Notifications = () => {
   const [selectedNotifications, setSelectedNotifications] = useState([]);
 
   useEffect(() => {
-    generateNotifications();
+    const stored = localStorage.getItem('notificationsData');
+    if (stored) {
+      setNotifications(JSON.parse(stored));
+      setLoading(false);
+    } else {
+      generateNotifications();
+    }
   }, []);
+
+  useEffect(() => {
+    if (!loading) {
+      localStorage.setItem('notificationsData', JSON.stringify(notifications));
+    }
+  }, [notifications, loading]);
 
   const generateNotifications = async () => {
     try {

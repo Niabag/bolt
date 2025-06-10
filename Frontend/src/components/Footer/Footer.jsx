@@ -40,17 +40,13 @@ const Footer = () => {
               <ul>
                 <li><Link to="/features">Fonctionnalités</Link></li>
                 <li><Link to="/pricing">Tarifs</Link></li>
-                <li><Link to="/demo">Démo</Link></li>
-                <li><Link to="/integrations">Intégrations</Link></li>
               </ul>
             </div>
 
             <div className="footer-column">
               <h4>Ressources</h4>
               <ul>
-                <li><Link to="/help">Centre d'aide</Link></li>
                 <li><Link to="/tutorials">Tutoriels</Link></li>
-                <li><Link to="/blog">Blog</Link></li>
                 <li><Link to="/api-docs">Documentation API</Link></li>
               </ul>
             </div>
@@ -59,9 +55,7 @@ const Footer = () => {
               <h4>Entreprise</h4>
               <ul>
                 <li><Link to="/about">À propos</Link></li>
-                <li><Link to="/careers">Carrières</Link></li>
                 <li><Link to="/contact">Contact</Link></li>
-                <li><Link to="/press">Presse</Link></li>
               </ul>
             </div>
 

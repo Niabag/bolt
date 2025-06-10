@@ -136,10 +136,15 @@ const RegisterClient = () => {
         await executeFormWebsiteSchema(sortedActions);
         break;
       
+
       case 'contact-download':
         await executeContactDownloadSchema(sortedActions);
         break;
-      
+
+      case 'site-last-funnel':
+        await executeSiteLastFunnelSchema(sortedActions);
+        break;
+
       case 'complete-funnel':
         await executeCompleteFunnelSchema(sortedActions);
         break;
@@ -221,6 +226,7 @@ const RegisterClient = () => {
     }
   };
 
+
   // ✅ SCHÉMA 3: Formulaire puis Site Web (form → website)
   const executeFormWebsiteSchema = async (actions) => {
     console.log('📝🌐 Exécution: Formulaire puis Site Web');
@@ -240,6 +246,7 @@ const RegisterClient = () => {
 
   // ✅ SCHÉMA 4: Contact → Carte (form → download)
   const executeContactDownloadSchema = async (actions) => {
+
     console.log('📝 Exécution: Contact → Carte');
     setShowForm(true);
     
@@ -254,6 +261,7 @@ const RegisterClient = () => {
       message: 'Formulaire affiché - Téléchargement après soumission'
     }]);
   };
+
 
   // ✅ SCHÉMA 5: Tunnel Complet (website → form → download)
   const executeCompleteFunnelSchema = async (actions) => {
@@ -473,9 +481,13 @@ const RegisterClient = () => {
   const getSchemaName = () => {
     switch (schemaType) {
       case 'website-only': return '🌐 Site Web Direct';
+
       case 'lead-generation': return 'Génération de Leads';
       case 'form-website': return '📝→🌐 Formulaire puis Site';
+
       case 'contact-download': return '📝 Contact → Carte';
+      case 'site-last-funnel': return '🎯 Site en Dernier';
+
       case 'complete-funnel': return '🎯 Tunnel Complet';
       case 'funnel-site-last': return '🎯 Site en Dernier';
       case 'contact-only': return '📝 Contact Uniquement';

@@ -3,6 +3,7 @@ const {
   createDevis,
   getUserDevis,
   getClientDevis,
+  getDevisById,
   updateDevis,
   updateDevisStatus, // ✅ NOUVEAU
   deleteDevis
@@ -19,6 +20,9 @@ router.get("/", authMiddleware, getUserDevis);
 
 // 📌 Voir les devis d'un client spécifique (GET)
 router.get("/client/:clientId", authMiddleware, getClientDevis);
+
+// 📌 Récupérer un devis par ID (GET)
+router.get("/:id", authMiddleware, getDevisById);
 
 // 📌 Modifier un devis existant (PUT)
 router.put("/:id", authMiddleware, updateDevis);
