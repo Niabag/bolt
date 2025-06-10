@@ -98,6 +98,9 @@ const RegisterClient = () => {
     const hasWebsite = sortedActions.some(a => a.type === 'website');
     const hasForm = sortedActions.some(a => a.type === 'form');
     const hasDownload = sortedActions.some(a => a.type === 'download');
+    const websiteIndex = sortedActions.findIndex(a => a.type === 'website');
+    const formIndex = sortedActions.findIndex(a => a.type === 'form');
+    const downloadIndex = sortedActions.findIndex(a => a.type === 'download');
 
     let detectedSchema = '';
     if (hasWebsite && !hasForm && !hasDownload) {
@@ -107,7 +110,13 @@ const RegisterClient = () => {
     } else if (!hasWebsite && hasForm && hasDownload) {
       detectedSchema = 'contact-download';
     } else if (hasWebsite && hasForm && hasDownload) {
-      detectedSchema = 'complete-funnel';
+      if (websiteIndex < formIndex && formIndex < downloadIndex) {
+        detectedSchema = 'complete-funnel';
+      } else if (formIndex < downloadIndex && downloadIndex < websiteIndex) {
+        detectedSchema = 'site-last-funnel';
+      } else {
+        detectedSchema = 'custom';
+      }
     } else if (!hasWebsite && hasForm && !hasDownload) {
       detectedSchema = 'contact-only';
     } else if (!hasWebsite && !hasForm && hasDownload) {
@@ -132,7 +141,11 @@ const RegisterClient = () => {
       case 'contact-download':
         await executeContactDownloadSchema(sortedActions);
         break;
-      
+
+      case 'site-last-funnel':
+        await executeSiteLastFunnelSchema(sortedActions);
+        break;
+
       case 'complete-funnel':
         await executeCompleteFunnelSchema(sortedActions);
         break;
@@ -226,7 +239,28 @@ const executeContactDownloadSchema = async (actions) => {
     }]);
   };
 
-  // ✅ SCHÉMA 4: Tunnel Complet (website → form → download)
+  // ✅ SCHÉMA 4: Site en Dernier (form → download → website)
+  const executeSiteLastFunnelSchema = async (actions) => {
+    console.log('🎯 Exécution: Site en Dernier');
+    setShowForm(true);
+
+    const downloadAction = actions.find(a => a.type === 'download');
+    const websiteAction = actions.find(a => a.type === 'website');
+    const pending = [];
+    if (downloadAction) pending.push(downloadAction);
+    if (websiteAction) pending.push(websiteAction);
+    if (pending.length > 0) {
+      setPendingActions(pending);
+    }
+
+    setExecutionStatus([{
+      action: 'form',
+      status: 'form-shown',
+      message: 'Formulaire affiché - Téléchargement puis site après soumission'
+    }]);
+  };
+
+  // ✅ SCHÉMA 5: Tunnel Complet (website → form → download)
   const executeCompleteFunnelSchema = async (actions) => {
     console.log('🎯 Exécution: Tunnel Complet');
     
@@ -267,7 +301,7 @@ const executeContactDownloadSchema = async (actions) => {
     }
   };
 
-  // ✅ SCHÉMA 5: Contact Uniquement (form seulement)
+  // ✅ SCHÉMA 6: Contact Uniquement (form seulement)
   const executeContactOnlySchema = async (actions) => {
     console.log('📝 Exécution: Contact Uniquement');
     setShowForm(true);
@@ -278,7 +312,7 @@ const executeContactDownloadSchema = async (actions) => {
     }]);
   };
 
-  // ✅ SCHÉMA 6: Carte de Visite (download seulement)
+  // ✅ SCHÉMA 7: Carte de Visite (download seulement)
   const executeCardDownloadSchema = async (actions) => {
     console.log('📥 Exécution: Carte de Visite');
     const downloadAction = actions.find(a => a.type === 'download');
@@ -420,7 +454,9 @@ const executeContactDownloadSchema = async (actions) => {
   const getSchemaName = () => {
     switch (schemaType) {
       case 'website-only': return '🌐 Site Web Direct';
-      case 'lead-generation': return '🚀 Génération de Leads';      case 'contact-download': return '📝 Contact → Carte';
+      case 'lead-generation': return '🚀 Génération de Leads';
+      case 'contact-download': return '📝 Contact → Carte';
+      case 'site-last-funnel': return '🎯 Site en Dernier';
       case 'complete-funnel': return '🎯 Tunnel Complet';
       case 'contact-only': return '📝 Contact Uniquement';
       case 'card-download': return '📥 Carte de Visite';
