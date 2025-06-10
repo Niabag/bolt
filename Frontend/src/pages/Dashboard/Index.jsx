@@ -104,7 +104,8 @@ const Dashboard = () => {
   const handleCreateNewDevis = () => {
     setEditingDevis(null);
     setSelectedClientForDevis(null);
-    setActiveTab("devis-creation");
+    // Redirect to prospects page to select a client before creating a quote
+    setActiveTab("clients");
   };
 
   const handleLogout = () => {
