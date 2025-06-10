@@ -230,6 +230,34 @@ const Billing = ({ clients = [], onRefresh }) => {
     }
   };
 
+  const handleDownloadInvoicePDF = async (invoice) => {
+    try {
+      setLoading(true);
+
+      const [{ default: jsPDF }] = await Promise.all([
+        import('jspdf')
+      ]);
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+
+      pdf.setFontSize(18);
+      pdf.text(`Facture ${invoice.invoiceNumber}`, 105, 20, { align: 'center' });
+
+      pdf.setFontSize(12);
+      pdf.text(`Client : ${invoice.clientName}`, 20, 40);
+      pdf.text(`Émise le : ${formatDate(invoice.createdAt)}`, 20, 48);
+      pdf.text(`Échéance : ${formatDate(invoice.dueDate)}`, 20, 56);
+      pdf.text(`Montant : ${invoice.amount.toFixed(2)} €`, 20, 64);
+
+      pdf.save(`${invoice.invoiceNumber}.pdf`);
+    } catch (error) {
+      console.error('Erreur téléchargement PDF:', error);
+      alert('❌ Erreur lors de la génération du PDF');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'paid': return '#10b981';
@@ -505,7 +533,11 @@ const Billing = ({ clients = [], onRefresh }) => {
                   <button className="action-btn view-btn" title="Voir la facture">
                     👁️
                   </button>
-                  <button className="action-btn download-btn" title="Télécharger PDF">
+                  <button
+                    onClick={() => handleDownloadInvoicePDF(invoice)}
+                    className="action-btn download-btn"
+                    title="Télécharger PDF"
+                  >
                     📥
                   </button>
                   <button className="action-btn send-btn" title="Envoyer par email">
