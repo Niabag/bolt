@@ -26,10 +26,10 @@ const BusinessCard = ({ userId, user }) => {
     conversions: 0
   });
 
-  // ✅ SCHÉMAS CORRIGÉS: Génération de leads avec site web EN PREMIER
+  // ✅ SCHÉMAS CORRIGÉS: Séquences d'actions prédéfinies
   const actionSchemas = {
     'lead-generation': {
-      name: '🚀 Génération de Leads',
+      name: 'Génération de Leads',
       description: 'Site web immédiat puis formulaire de contact pour maximiser les conversions',
       icon: '🚀📝',
       sequence: 'Site web (1s) → Formulaire (2s)',
@@ -37,6 +37,17 @@ const BusinessCard = ({ userId, user }) => {
       actions: [
         { type: 'website', order: 1, delay: 1000, active: true, url: 'https://www.votre-site.com' },
         { type: 'form', order: 2, delay: 2000, active: true }
+      ]
+    },
+    'form-website': {
+      name: '📝 Formulaire puis Site',
+      description: 'Collecte des informations avant de rediriger vers votre site web',
+      icon: '📝🌐',
+      sequence: 'Formulaire (1s) → Site web (2s)',
+      category: 'Engagement progressif',
+      actions: [
+        { type: 'form', order: 1, delay: 1000, active: true },
+        { type: 'website', order: 2, delay: 2000, active: true, url: 'https://www.votre-site.com' }
       ]
     },
     'website-only': {
@@ -70,6 +81,18 @@ const BusinessCard = ({ userId, user }) => {
         { type: 'website', order: 1, delay: 1000, active: true, url: 'https://www.votre-site.com' },
         { type: 'form', order: 2, delay: 2000, active: true },
         { type: 'download', order: 3, delay: 3000, active: true, file: 'carte-visite' }
+      ]
+    },
+    'funnel-site-last': {
+      name: '🎯 Site en Dernier',
+      description: 'Formulaire puis téléchargement avant d\'ouvrir le site web',
+      icon: '📝📥🌐',
+      sequence: 'Formulaire (1s) → Carte (2s) → Site web (3s)',
+      category: 'Tunnel de conversion',
+      actions: [
+        { type: 'form', order: 1, delay: 1000, active: true },
+        { type: 'download', order: 2, delay: 2000, active: true, file: 'carte-visite' },
+        { type: 'website', order: 3, delay: 3000, active: true, url: 'https://www.votre-site.com' }
       ]
     },
     'contact-only': {
