@@ -23,8 +23,11 @@ const Billing = ({ clients = [], onRefresh }) => {
   });
 
   useEffect(() => {
-    fetchDevis();
-    fetchInvoices();
+    const loadData = async () => {
+      await fetchDevis();
+      await fetchInvoices();
+    };
+    loadData();
   }, []);
 
   const fetchDevis = async () => {
@@ -47,36 +50,37 @@ const Billing = ({ clients = [], onRefresh }) => {
           id: 'INV-001',
           clientId: clients[0]?._id,
           clientName: clients[0]?.name || 'Client Test',
-          amount: 2500.00,
+          amount: 2500.0,
           status: 'paid',
           dueDate: '2024-02-15',
           createdAt: '2024-01-15',
           invoiceNumber: 'FACT-2024-001',
-          devisIds: ['DEV-001', 'DEV-002']
+          devisIds: [devisList[0]?._id, devisList[1]?._id].filter(Boolean)
         },
         {
           id: 'INV-002',
           clientId: clients[1]?._id,
           clientName: clients[1]?.name || 'Client Test 2',
-          amount: 1800.00,
+          amount: 1800.0,
           status: 'pending',
           dueDate: '2024-02-20',
           createdAt: '2024-01-20',
           invoiceNumber: 'FACT-2024-002',
-          devisIds: ['DEV-003']
+          devisIds: [devisList[2]?._id].filter(Boolean)
         },
         {
           id: 'INV-003',
           clientId: clients[2]?._id,
           clientName: clients[2]?.name || 'Client Test 3',
-          amount: 3200.00,
+          amount: 3200.0,
           status: 'overdue',
           dueDate: '2024-01-30',
           createdAt: '2024-01-01',
           invoiceNumber: 'FACT-2024-003',
-          devisIds: ['DEV-004', 'DEV-005']
+          devisIds: [devisList[3]?._id, devisList[4]?._id].filter(Boolean)
         }
       ];
+
       setInvoices(mockInvoices);
     } catch (error) {
       console.error('Erreur lors du chargement des factures:', error);
@@ -240,11 +244,22 @@ const Billing = ({ clients = [], onRefresh }) => {
 
       // Récupérer les détails des devis liés à la facture
       const devisDetails = await Promise.all(
-        invoice.devisIds.map((id) => apiRequest(API_ENDPOINTS.DEVIS.BY_ID(id)))
+
+        invoice.devisIds.map(async (id) => {
+          try {
+            return await apiRequest(API_ENDPOINTS.DEVIS.BY_ID(id));
+          } catch (err) {
+            console.error('Erreur récupération devis:', err);
+            return null;
+          }
+        })
       );
 
+      const validDevis = devisDetails.filter(Boolean);
+
       // Fusionner tous les articles
-      const articles = devisDetails.flatMap((d) => d.articles || []);
+      const articles = validDevis.flatMap((d) => d.articles || []);
+
       const client = clients.find(c => c._id === invoice.clientId) || {};
 
       const pdf = new jsPDF('p', 'mm', 'a4');
