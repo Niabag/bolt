@@ -149,18 +149,15 @@ const BusinessCard = ({ userId, user }) => {
         action.active && action.type === 'website'
       );
       
-      let targetUrl;
+      const targetUrl = `${FRONTEND_ROUTES.CLIENT_REGISTER(userId)}`;
+
       if (redirectAction && redirectAction.url) {
         try {
-          const url = new URL(redirectAction.url);
-          targetUrl = `${window.location.origin}/register-client/${encodeURIComponent(redirectAction.url)}`;
-          console.log("🌐 URL de redirection construite:", targetUrl);
+          new URL(redirectAction.url); // validation simple
+          console.log("🌐 URL de redirection détectée:", redirectAction.url);
         } catch (urlError) {
           console.error("❌ URL invalide:", redirectAction.url);
-          targetUrl = `${FRONTEND_ROUTES.CLIENT_REGISTER(userId)}`;
         }
-      } else {
-        targetUrl = `${FRONTEND_ROUTES.CLIENT_REGISTER(userId)}`;
       }
       
       setQrValue(targetUrl);
