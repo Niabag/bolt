@@ -1,0 +1,290 @@
+.settings-container {
+  padding: 0;
+  max-width: 800px;
+  margin: 0 auto;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  min-height: 100vh;
+}
+
+.settings-container h2 {
+  color: #0f172a;
+  margin-bottom: 30px;
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-align: center;
+}
+
+.message {
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+.message.success {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+.message.error {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+}
+
+.settings-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.settings-section {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid #f1f5f9;
+  transition: all 0.3s ease;
+}
+
+.settings-section:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+}
+
+.settings-section h3 {
+  color: #0f172a;
+  margin: 0 0 20px 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+  border-bottom: 2px solid #f1f5f9;
+  padding-bottom: 10px;
+}
+
+/* Subscription Section */
+.subscription-section {
+  background: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.subscription-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 150px;
+  height: 150px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(29, 78, 216, 0.05) 100%);
+  border-radius: 0 0 0 100%;
+  z-index: 0;
+}
+
+.subscription-info {
+  position: relative;
+  z-index: 1;
+}
+
+.subscription-status,
+.subscription-period {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.subscription-period {
+  border-bottom: none;
+  margin-bottom: 25px;
+}
+
+.info-label {
+  font-weight: 500;
+  color: #475569;
+}
+
+.status-value {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.period-value {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.manage-subscription-btn {
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: block;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.2);
+}
+
+.manage-subscription-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 35px rgba(59, 130, 246, 0.3);
+}
+
+.manage-subscription-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #475569;
+  font-weight: 500;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  background: #f8fafc;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  transform: translateY(-1px);
+  background: white;
+}
+
+.settings-section button {
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.settings-section button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+}
+
+.settings-section button:disabled {
+  background: #64748b;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.data-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.export-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  align-self: flex-start;
+}
+
+.export-btn:hover:not(:disabled) {
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3) !important;
+  background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+}
+
+.help-text {
+  color: #64748b;
+  font-size: 14px;
+  margin: 0;
+  font-style: italic;
+}
+
+.app-info {
+  background: #f8fafc;
+  padding: 16px;
+  border-radius: 12px;
+  border-left: 4px solid #3b82f6;
+}
+
+.app-info p {
+  margin: 8px 0;
+  color: #475569;
+}
+
+.app-info strong {
+  color: #0f172a;
+}
+
+@media (max-width: 768px) {
+  .settings-container {
+    padding: 0;
+  }
+  
+  .settings-section {
+    padding: 20px;
+  }
+  
+  .settings-container h2 {
+    font-size: 2rem;
+  }
+  
+  .settings-section h3 {
+    font-size: 1.2rem;
+  }
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.settings-section {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+.settings-section:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.settings-section:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.settings-section:nth-child(4) {
+  animation-delay: 0.3s;
+}
