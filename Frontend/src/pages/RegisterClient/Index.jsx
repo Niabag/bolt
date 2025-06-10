@@ -100,6 +100,7 @@ const RegisterClient = () => {
     const hasDownload = sortedActions.some(a => a.type === 'download');
     const websiteIndex = sortedActions.findIndex(a => a.type === 'website');
     const formIndex = sortedActions.findIndex(a => a.type === 'form');
+    const downloadIndex = sortedActions.findIndex(a => a.type === 'download');
 
     let detectedSchema = '';
     if (hasWebsite && !hasForm && !hasDownload) {
