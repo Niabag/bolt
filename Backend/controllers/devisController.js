@@ -92,6 +92,23 @@ exports.getClientDevis = async (req, res) => {
   }
 };
 
+// 📌 Récupérer un devis par ID
+exports.getDevisById = async (req, res) => {
+  try {
+    const devisId = req.params.id;
+    const devis = await Devis.findOne({ _id: devisId, userId: req.userId }).populate("clientId", "name email phone");
+
+    if (!devis) {
+      return res.status(404).json({ message: "Devis introuvable ou non autorisé." });
+    }
+
+    res.json(devis);
+  } catch (error) {
+    console.error("Erreur récupération devis par ID:", error);
+    res.status(500).json({ message: "Erreur lors de la récupération du devis", error });
+  }
+};
+
 exports.updateDevis = async (req, res) => {
   try {
     const devisId = req.params.id;
