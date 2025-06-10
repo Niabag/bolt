@@ -1,6 +1,7 @@
 // Configuration centralisée de l'API
 const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api',
+  // Use relative path by default so Vite's proxy works in development
+  BASE_URL: import.meta.env.VITE_API_BASE_URL || '/api',
   FRONTEND_URL: import.meta.env.VITE_FRONTEND_URL || 'http://localhost:5173',
   TIMEOUT: 10000, // 10 secondes
 };
@@ -29,6 +30,7 @@ export const API_ENDPOINTS = {
   DEVIS: {
     BASE: `${API_CONFIG.BASE_URL}/devis`,
     BY_CLIENT: (clientId) => `${API_CONFIG.BASE_URL}/devis/client/${clientId}`,
+    BY_ID: (devisId) => `${API_CONFIG.BASE_URL}/devis/${devisId}`,
     UPDATE: (devisId) => `${API_CONFIG.BASE_URL}/devis/${devisId}`,
     UPDATE_STATUS: (devisId) => `${API_CONFIG.BASE_URL}/devis/${devisId}/status`,
     DELETE: (devisId) => `${API_CONFIG.BASE_URL}/devis/${devisId}`,

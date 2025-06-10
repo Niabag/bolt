@@ -56,6 +56,7 @@ Les variables de couleur se trouvent dans `src/utils/styles/colors.scss` et peuv
 @import "../../utils/styles/colors.scss";
 ```
 
+
 Les principales variables sont :
 
 - `$primary-start` et `$primary-end` : couleurs du dégradé principal
@@ -66,4 +67,6 @@ Les principales variables sont :
 - `$accent` : couleur d'accent et de survol
 
 Utilisez ces variables pour garder une cohérence sur toutes les pages.
+
+
 

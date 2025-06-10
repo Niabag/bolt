@@ -1,7 +1,5 @@
 # CRM Application.
-t
 Une application CRM complète avec gestion des clients et génération de devis.
-
 ## 🚀 Fonctionnalités
 
 - **Authentification** : Inscription et connexion sécurisées
@@ -9,6 +7,7 @@ Une application CRM complète avec gestion des clients et génération de devis.
 - **Génération de devis** : Création et édition de devis professionnels
 - **QR Code** : Génération de liens d'inscription pour les clients
 - **Export PDF** : Téléchargement des devis en format PDF
+- **Schémas d'actions** : Plusieurs séquences pour afficher site ou formulaire selon vos besoins
 
 ## 📋 Prérequis
 
@@ -38,7 +37,9 @@ cp .env.example .env
 
 Modifier le fichier `.env` avec vos configurations :
 ```env
+# URL de connexion MongoDB
 MONGO_URI=mongodb://localhost:27017/crm-database
+# ou utilisez MONGODB_URI
 PORT=5000
 NODE_ENV=development
 JWT_SECRET=votre_secret_jwt_tres_securise
@@ -60,7 +61,8 @@ cp .env.example .env
 Modifier le fichier `.env` avec vos configurations :
 ```env
 VITE_API_URL=http://localhost:5000
-VITE_API_BASE_URL=http://localhost:5000/api
+# During development the frontend uses a proxy, so `/api` is sufficient
+VITE_API_BASE_URL=/api
 VITE_FRONTEND_URL=http://localhost:5173
 VITE_NODE_ENV=development
 ```
@@ -110,7 +112,7 @@ crm-application/
 ## 🔧 Configuration des variables d'environnement
 
 ### Backend (.env)
-- `MONGO_URI` : URL de connexion MongoDB
+- `MONGO_URI` / `MONGODB_URI` : URL de connexion MongoDB
 - `PORT` : Port du serveur (défaut: 5000)
 - `NODE_ENV` : Environnement (development/production)
 - `JWT_SECRET` : Clé secrète pour JWT
@@ -143,6 +145,7 @@ crm-application/
 
 ### Devis
 - `GET /api/devis` - Liste des devis
+- `GET /api/devis/:id` - Détails d'un devis
 - `POST /api/devis` - Création devis
 - `PUT /api/devis/:id` - Modification devis
 - `DELETE /api/devis/:id` - Suppression devis
@@ -184,3 +187,10 @@ Pour partager la configuration :
 1. Utilisez les fichiers `.env.example`
 2. Documentez les variables nécessaires
 3. Chaque développeur crée son propre `.env`
+
+## ❓ Résolution des problèmes
+
+Si vous scannez le QR code depuis un appareil mobile et obtenez l'erreur
+`ERR_CONNECTION_REFUSED`, assurez‑vous que le frontend est accessible depuis ce
+réseau. Utilisez un nom de domaine public ou un tunnel (ex. `ngrok`) plutôt que
+`localhost` pour que le lien soit reachable sur votre téléphone.

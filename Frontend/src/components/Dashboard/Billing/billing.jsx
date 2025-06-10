@@ -230,6 +230,80 @@ const Billing = ({ clients = [], onRefresh }) => {
     }
   };
 
+  const handleDownloadInvoicePDF = async (invoice) => {
+    try {
+      setLoading(true);
+
+      const [{ default: jsPDF }] = await Promise.all([
+        import('jspdf')
+      ]);
+
+      // Récupérer les détails des devis liés à la facture
+      const devisDetails = await Promise.all(
+        invoice.devisIds.map((id) => apiRequest(API_ENDPOINTS.DEVIS.BY_ID(id)))
+      );
+
+      // Fusionner tous les articles
+      const articles = devisDetails.flatMap((d) => d.articles || []);
+      const client = clients.find(c => c._id === invoice.clientId) || {};
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+
+      pdf.setFontSize(18);
+      pdf.text(`Facture ${invoice.invoiceNumber}`, 105, 20, { align: 'center' });
+
+      pdf.setFontSize(12);
+      pdf.text(`Client : ${client.name || invoice.clientName}`, 20, 40);
+      pdf.text(`Émise le : ${formatDate(invoice.createdAt)}`, 20, 48);
+      pdf.text(`Échéance : ${formatDate(invoice.dueDate)}`, 20, 56);
+
+      let currentY = 70;
+      pdf.text('Articles :', 20, currentY);
+      currentY += 8;
+
+      articles.forEach((article) => {
+        const price = parseFloat(article.unitPrice || 0);
+        const qty = parseFloat(article.quantity || 0);
+        const total = price * qty;
+
+        pdf.text(article.description || '', 20, currentY);
+        pdf.text(`${qty}`, 110, currentY, { align: 'right' });
+        pdf.text(`${price.toFixed(2)} €`, 130, currentY, { align: 'right' });
+        pdf.text(`${total.toFixed(2)} €`, 190, currentY, { align: 'right' });
+
+        currentY += 6;
+        if (currentY > 280) { pdf.addPage(); currentY = 20; }
+      });
+
+      const totalHT = articles.reduce(
+        (sum, a) => sum + parseFloat(a.unitPrice || 0) * parseFloat(a.quantity || 0),
+        0
+      );
+      const totalTVA = articles.reduce(
+        (sum, a) => sum + (
+          parseFloat(a.unitPrice || 0) * parseFloat(a.quantity || 0) * (parseFloat(a.tvaRate || 0) / 100)
+        ),
+        0
+      );
+      const totalTTC = totalHT + totalTVA;
+
+      currentY += 10;
+      pdf.text(`Total HT : ${totalHT.toFixed(2)} €`, 20, currentY);
+      currentY += 8;
+      pdf.text(`Total TVA : ${totalTVA.toFixed(2)} €`, 20, currentY);
+      currentY += 8;
+      pdf.setFontSize(14);
+      pdf.text(`Total TTC : ${totalTTC.toFixed(2)} €`, 20, currentY);
+
+      pdf.save(`${invoice.invoiceNumber}.pdf`);
+    } catch (error) {
+      console.error('Erreur téléchargement PDF:', error);
+      alert('❌ Erreur lors de la génération du PDF');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'paid': return '#10b981';
@@ -505,7 +579,11 @@ const Billing = ({ clients = [], onRefresh }) => {
                   <button className="action-btn view-btn" title="Voir la facture">
                     👁️
                   </button>
-                  <button className="action-btn download-btn" title="Télécharger PDF">
+                  <button
+                    onClick={() => handleDownloadInvoicePDF(invoice)}
+                    className="action-btn download-btn"
+                    title="Télécharger PDF"
+                  >
                     📥
                   </button>
                   <button className="action-btn send-btn" title="Envoyer par email">
