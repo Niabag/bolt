@@ -109,7 +109,7 @@ const RegisterClient = () => {
     } else if (!hasWebsite && hasForm && hasDownload) {
       detectedSchema = 'contact-download';
     } else if (hasWebsite && hasForm && hasDownload) {
-      detectedSchema = 'complete-funnel';
+      detectedSchema = (websiteIndex > formIndex && websiteIndex > downloadIndex) ? 'funnel-site-last' : 'complete-funnel';
     } else if (!hasWebsite && hasForm && !hasDownload) {
       detectedSchema = 'contact-only';
     } else if (!hasWebsite && !hasForm && hasDownload) {
@@ -141,6 +141,10 @@ const RegisterClient = () => {
       
       case 'complete-funnel':
         await executeCompleteFunnelSchema(sortedActions);
+        break;
+
+      case 'funnel-site-last':
+        await executeFunnelSiteLastSchema(sortedActions);
         break;
       
       case 'contact-only':
@@ -291,6 +295,28 @@ const RegisterClient = () => {
     }
   };
 
+  // ✅ SCHÉMA 5bis: Tunnel Complet, site en dernier (form → download → website)
+  const executeFunnelSiteLastSchema = async (actions) => {
+    console.log('🎯🌐 Exécution: Tunnel Complet - Site en dernier');
+    setShowForm(true);
+
+    const downloadAction = actions.find(a => a.type === 'download');
+    const websiteAction = actions.find(a => a.type === 'website');
+    const pending = [];
+    if (downloadAction) pending.push(downloadAction);
+    if (websiteAction) pending.push(websiteAction);
+
+    if (pending.length > 0) {
+      setPendingActions(pending);
+    }
+
+    setExecutionStatus([{
+      action: 'form',
+      status: 'form-shown',
+      message: 'Formulaire affiché - Actions après soumission'
+    }]);
+  };
+
   // ✅ SCHÉMA 6: Contact Uniquement (form seulement)
   const executeContactOnlySchema = async (actions) => {
     console.log('📝 Exécution: Contact Uniquement');
@@ -358,6 +384,8 @@ const RegisterClient = () => {
         }]);
       }
     }
+
+    setPendingActions([]);
   };
 
   const handleDownloadAction = async (action) => {
@@ -444,10 +472,11 @@ const RegisterClient = () => {
   const getSchemaName = () => {
     switch (schemaType) {
       case 'website-only': return '🌐 Site Web Direct';
-      case 'lead-generation': return '🚀 Génération de Leads';
+      case 'lead-generation': return 'Génération de Leads';
       case 'form-website': return '📝→🌐 Formulaire puis Site';
       case 'contact-download': return '📝 Contact → Carte';
       case 'complete-funnel': return '🎯 Tunnel Complet';
+      case 'funnel-site-last': return '🎯 Site en Dernier';
       case 'contact-only': return '📝 Contact Uniquement';
       case 'card-download': return '📥 Carte de Visite';
       case 'custom': return '🔧 Stratégie Personnalisée';
