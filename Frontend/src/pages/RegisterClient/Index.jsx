@@ -100,16 +100,25 @@ const RegisterClient = () => {
     const hasDownload = sortedActions.some(a => a.type === 'download');
     const websiteIndex = sortedActions.findIndex(a => a.type === 'website');
     const formIndex = sortedActions.findIndex(a => a.type === 'form');
+    const downloadIndex = sortedActions.findIndex(a => a.type === 'download');
 
     let detectedSchema = '';
     if (hasWebsite && !hasForm && !hasDownload) {
       detectedSchema = 'website-only';
     } else if (hasWebsite && hasForm && !hasDownload) {
-      detectedSchema = websiteIndex > formIndex ? 'form-website' : 'lead-generation';
+      detectedSchema = 'lead-generation';
     } else if (!hasWebsite && hasForm && hasDownload) {
       detectedSchema = 'contact-download';
     } else if (hasWebsite && hasForm && hasDownload) {
-      detectedSchema = (websiteIndex > formIndex && websiteIndex > downloadIndex) ? 'funnel-site-last' : 'complete-funnel';
+
+      if (websiteIndex < formIndex && formIndex < downloadIndex) {
+        detectedSchema = 'complete-funnel';
+      } else if (formIndex < downloadIndex && downloadIndex < websiteIndex) {
+        detectedSchema = 'site-last-funnel';
+      } else {
+        detectedSchema = 'custom';
+      }
+
     } else if (!hasWebsite && hasForm && !hasDownload) {
       detectedSchema = 'contact-only';
     } else if (!hasWebsite && !hasForm && hasDownload) {
@@ -131,6 +140,7 @@ const RegisterClient = () => {
         await executeLeadGenerationSchema(sortedActions);
         break;
 
+
       case 'form-website':
         await executeFormWebsiteSchema(sortedActions);
         break;
@@ -139,7 +149,11 @@ const RegisterClient = () => {
       case 'contact-download':
         await executeContactDownloadSchema(sortedActions);
         break;
-      
+
+      case 'site-last-funnel':
+        await executeSiteLastFunnelSchema(sortedActions);
+        break;
+
       case 'complete-funnel':
         await executeCompleteFunnelSchema(sortedActions);
         break;
@@ -221,27 +235,8 @@ const RegisterClient = () => {
     }
   };
 
-
-  // ✅ SCHÉMA 3: Formulaire puis Site Web (form → website)
-  const executeFormWebsiteSchema = async (actions) => {
-    console.log('📝🌐 Exécution: Formulaire puis Site Web');
-    setShowForm(true);
-
-    const websiteAction = actions.find(a => a.type === 'website');
-    if (websiteAction) {
-      setPendingActions([websiteAction]);
-    }
-
-    setExecutionStatus([{ 
-      action: 'form',
-      status: 'form-shown',
-      message: 'Formulaire affiché - Site web après soumission'
-    }]);
-  };
-
-  // ✅ SCHÉMA 4: Contact → Carte (form → download)
-  const executeContactDownloadSchema = async (actions) => {
-
+// ✅ SCHÉMA 3: Contact → Carte (form → download)
+const executeContactDownloadSchema = async (actions) => {
     console.log('📝 Exécution: Contact → Carte');
     setShowForm(true);
     
@@ -254,6 +249,28 @@ const RegisterClient = () => {
       action: 'form',
       status: 'form-shown',
       message: 'Formulaire affiché - Téléchargement après soumission'
+    }]);
+  };
+
+
+  // ✅ SCHÉMA 4: Site en Dernier (form → download → website)
+  const executeSiteLastFunnelSchema = async (actions) => {
+    console.log('🎯 Exécution: Site en Dernier');
+
+
+    const downloadAction = actions.find(a => a.type === 'download');
+    const websiteAction = actions.find(a => a.type === 'website');
+    const pending = [];
+    if (downloadAction) pending.push(downloadAction);
+    if (websiteAction) pending.push(websiteAction);
+    if (pending.length > 0) {
+      setPendingActions(pending);
+    }
+
+    setExecutionStatus([{
+      action: 'form',
+      status: 'form-shown',
+      message: 'Formulaire affiché - Téléchargement puis site après soumission'
     }]);
   };
 
@@ -476,9 +493,9 @@ const RegisterClient = () => {
     switch (schemaType) {
       case 'website-only': return '🌐 Site Web Direct';
 
-      case 'lead-generation': return 'Génération de Leads';
-      case 'form-website': return '📝→🌐 Formulaire puis Site';
+      case 'lead-generation': return '🚀 Génération de Leads';
       case 'contact-download': return '📝 Contact → Carte';
+      case 'site-last-funnel': return '🎯 Site en Dernier';
 
       case 'complete-funnel': return '🎯 Tunnel Complet';
       case 'funnel-site-last': return '🎯 Site en Dernier';
