@@ -244,6 +244,7 @@ const Billing = ({ clients = [], onRefresh }) => {
 
       // Récupérer les détails des devis liés à la facture
       const devisDetails = await Promise.all(
+
         invoice.devisIds.map(async (id) => {
           try {
             return await apiRequest(API_ENDPOINTS.DEVIS.BY_ID(id));
@@ -258,6 +259,7 @@ const Billing = ({ clients = [], onRefresh }) => {
 
       // Fusionner tous les articles
       const articles = validDevis.flatMap((d) => d.articles || []);
+
       const client = clients.find(c => c._id === invoice.clientId) || {};
 
       const pdf = new jsPDF('p', 'mm', 'a4');
