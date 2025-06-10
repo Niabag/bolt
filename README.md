@@ -145,6 +145,7 @@ crm-application/
 
 ### Devis
 - `GET /api/devis` - Liste des devis
+- `GET /api/devis/:id` - Détails d'un devis
 - `POST /api/devis` - Création devis
 - `PUT /api/devis/:id` - Modification devis
 - `DELETE /api/devis/:id` - Suppression devis

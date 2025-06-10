@@ -56,5 +56,17 @@ Les variables de couleur se trouvent dans `src/utils/styles/colors.scss` et peuv
 @import "../../utils/styles/colors.scss";
 ```
 
-Utilisez ensuite les variables (ex. `$primary`) pour garder une cohérence sur toutes les pages.
+
+Les principales variables sont :
+
+- `$primary-start` et `$primary-end` : couleurs du dégradé principal
+- `$primary-gradient` : dégradé prêt à l'emploi
+- `$secondary` : couleur secondaire
+- `$background` : couleur de fond générale
+- `$text-dark` : couleur pour les titres et le texte
+- `$accent` : couleur d'accent et de survol
+
+Utilisez ces variables pour garder une cohérence sur toutes les pages.
+
+
 

@@ -23,8 +23,11 @@ const Billing = ({ clients = [], onRefresh }) => {
   });
 
   useEffect(() => {
-    fetchDevis();
-    fetchInvoices();
+    const loadData = async () => {
+      await fetchDevis();
+      await fetchInvoices();
+    };
+    loadData();
   }, []);
 
   const fetchDevis = async () => {
@@ -47,36 +50,37 @@ const Billing = ({ clients = [], onRefresh }) => {
           id: 'INV-001',
           clientId: clients[0]?._id,
           clientName: clients[0]?.name || 'Client Test',
-          amount: 2500.00,
+          amount: 2500.0,
           status: 'paid',
           dueDate: '2024-02-15',
           createdAt: '2024-01-15',
           invoiceNumber: 'FACT-2024-001',
-          devisIds: ['DEV-001', 'DEV-002']
+          devisIds: [devisList[0]?._id, devisList[1]?._id].filter(Boolean)
         },
         {
           id: 'INV-002',
           clientId: clients[1]?._id,
           clientName: clients[1]?.name || 'Client Test 2',
-          amount: 1800.00,
+          amount: 1800.0,
           status: 'pending',
           dueDate: '2024-02-20',
           createdAt: '2024-01-20',
           invoiceNumber: 'FACT-2024-002',
-          devisIds: ['DEV-003']
+          devisIds: [devisList[2]?._id].filter(Boolean)
         },
         {
           id: 'INV-003',
           clientId: clients[2]?._id,
           clientName: clients[2]?.name || 'Client Test 3',
-          amount: 3200.00,
+          amount: 3200.0,
           status: 'overdue',
           dueDate: '2024-01-30',
           createdAt: '2024-01-01',
           invoiceNumber: 'FACT-2024-003',
-          devisIds: ['DEV-004', 'DEV-005']
+          devisIds: [devisList[3]?._id, devisList[4]?._id].filter(Boolean)
         }
       ];
+
       setInvoices(mockInvoices);
     } catch (error) {
       console.error('Erreur lors du chargement des factures:', error);
@@ -238,16 +242,73 @@ const Billing = ({ clients = [], onRefresh }) => {
         import('jspdf')
       ]);
 
+      // Récupérer les détails des devis liés à la facture
+      const devisDetails = await Promise.all(
+
+        invoice.devisIds.map(async (id) => {
+          try {
+            return await apiRequest(API_ENDPOINTS.DEVIS.BY_ID(id));
+          } catch (err) {
+            console.error('Erreur récupération devis:', err);
+            return null;
+          }
+        })
+      );
+
+      const validDevis = devisDetails.filter(Boolean);
+
+      // Fusionner tous les articles
+      const articles = validDevis.flatMap((d) => d.articles || []);
+
+      const client = clients.find(c => c._id === invoice.clientId) || {};
+
       const pdf = new jsPDF('p', 'mm', 'a4');
 
       pdf.setFontSize(18);
       pdf.text(`Facture ${invoice.invoiceNumber}`, 105, 20, { align: 'center' });
 
       pdf.setFontSize(12);
-      pdf.text(`Client : ${invoice.clientName}`, 20, 40);
+      pdf.text(`Client : ${client.name || invoice.clientName}`, 20, 40);
       pdf.text(`Émise le : ${formatDate(invoice.createdAt)}`, 20, 48);
       pdf.text(`Échéance : ${formatDate(invoice.dueDate)}`, 20, 56);
-      pdf.text(`Montant : ${invoice.amount.toFixed(2)} €`, 20, 64);
+
+      let currentY = 70;
+      pdf.text('Articles :', 20, currentY);
+      currentY += 8;
+
+      articles.forEach((article) => {
+        const price = parseFloat(article.unitPrice || 0);
+        const qty = parseFloat(article.quantity || 0);
+        const total = price * qty;
+
+        pdf.text(article.description || '', 20, currentY);
+        pdf.text(`${qty}`, 110, currentY, { align: 'right' });
+        pdf.text(`${price.toFixed(2)} €`, 130, currentY, { align: 'right' });
+        pdf.text(`${total.toFixed(2)} €`, 190, currentY, { align: 'right' });
+
+        currentY += 6;
+        if (currentY > 280) { pdf.addPage(); currentY = 20; }
+      });
+
+      const totalHT = articles.reduce(
+        (sum, a) => sum + parseFloat(a.unitPrice || 0) * parseFloat(a.quantity || 0),
+        0
+      );
+      const totalTVA = articles.reduce(
+        (sum, a) => sum + (
+          parseFloat(a.unitPrice || 0) * parseFloat(a.quantity || 0) * (parseFloat(a.tvaRate || 0) / 100)
+        ),
+        0
+      );
+      const totalTTC = totalHT + totalTVA;
+
+      currentY += 10;
+      pdf.text(`Total HT : ${totalHT.toFixed(2)} €`, 20, currentY);
+      currentY += 8;
+      pdf.text(`Total TVA : ${totalTVA.toFixed(2)} €`, 20, currentY);
+      currentY += 8;
+      pdf.setFontSize(14);
+      pdf.text(`Total TTC : ${totalTTC.toFixed(2)} €`, 20, currentY);
 
       pdf.save(`${invoice.invoiceNumber}.pdf`);
     } catch (error) {
