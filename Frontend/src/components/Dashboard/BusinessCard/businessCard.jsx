@@ -39,17 +39,6 @@ const BusinessCard = ({ userId, user }) => {
         { type: 'form', order: 2, delay: 2000, active: true }
       ]
     },
-    'form-website': {
-      name: '📝 Formulaire puis Site',
-      description: 'Collecte des informations avant de rediriger vers votre site web',
-      icon: '📝🌐',
-      sequence: 'Formulaire (1s) → Site web (2s)',
-      category: 'Engagement progressif',
-      actions: [
-        { type: 'form', order: 1, delay: 1000, active: true },
-        { type: 'website', order: 2, delay: 2000, active: true, url: 'https://www.votre-site.com' }
-      ]
-    },
     'website-only': {
       name: '🌐 Site Web Direct',
       description: 'Redirection immédiate vers votre site web principal',
