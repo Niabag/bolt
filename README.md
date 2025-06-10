@@ -159,6 +159,11 @@ crm-application/
 2. Dossier de sortie : `dist`
 3. Configurer les variables d'environnement
 
+## 🎨 Charte graphique
+
+Une description complète du design et des couleurs se trouve dans
+[docs/design-guidelines.md](docs/design-guidelines.md).
+
 ## 🤝 Contribution
 
 1. Fork le projet
