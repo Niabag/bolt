@@ -111,6 +111,15 @@ const BusinessCard = ({ userId, user }) => {
     }
   }, [cardConfig.actions, userId]);
 
+  // Rafraîchir périodiquement les statistiques pour refléter les scans récents
+  useEffect(() => {
+    if (!userId) return;
+    const intervalId = setInterval(() => {
+      fetchStats();
+    }, 5000);
+    return () => clearInterval(intervalId);
+  }, [userId]);
+
   const loadSavedBusinessCard = async () => {
     try {
       const savedCard = await apiRequest(API_ENDPOINTS.BUSINESS_CARDS.BASE);
