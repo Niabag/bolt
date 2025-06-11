@@ -18,6 +18,7 @@ const Settings = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    profileImage: '',
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
@@ -38,7 +39,8 @@ const Settings = () => {
       setFormData(prev => ({
         ...prev,
         name: userData.name || '',
-        email: userData.email || ''
+        email: userData.email || '',
+        profileImage: userData.profileImage || ''
       }));
     } catch (error) {
       console.error('Erreur lors du chargement des données utilisateur:', error);
@@ -60,6 +62,35 @@ const Settings = () => {
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleProfileImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData(prev => ({ ...prev, profileImage: reader.result }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleProfileImageUpload = async (e) => {
+    e.preventDefault();
+    if (!formData.profileImage) return;
+    setLoading(true);
+    setMessage('');
+    try {
+      await apiRequest(API_ENDPOINTS.AUTH.UPDATE_PROFILE_PICTURE, {
+        method: 'PUT',
+        body: JSON.stringify({ profileImage: formData.profileImage })
+      });
+      setMessage('✅ Photo de profil mise à jour');
+      fetchUserData();
+    } catch (error) {
+      setMessage(`❌ Erreur: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleProfileUpdate = async (e) => {
@@ -345,6 +376,26 @@ const Settings = () => {
                 onChange={handleInputChange}
                 required
               />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="profileImage">Photo de profil</label>
+              <input
+                type="file"
+                id="profileImage"
+                accept="image/*"
+                onChange={handleProfileImageChange}
+              />
+              {formData.profileImage && (
+                <img src={formData.profileImage} alt="Aperçu" className="profile-preview" />
+              )}
+              <button
+                onClick={handleProfileImageUpload}
+                disabled={loading || !formData.profileImage}
+                style={{ marginTop: '0.5rem' }}
+              >
+                {loading ? 'Envoi...' : 'Mettre à jour la photo'}
+              </button>
             </div>
             
             <button type="submit" disabled={loading}>
