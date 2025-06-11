@@ -220,6 +220,14 @@
   background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
 }
 
+.profile-preview {
+  margin-top: 0.5rem;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
 .help-text {
   color: #64748b;
   font-size: 14px;
