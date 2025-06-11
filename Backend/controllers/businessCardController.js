@@ -367,7 +367,7 @@ const trackCardView = async (req, res) => {
       await businessCard.save();
   }
 
-  const threshold = new Date(now.getTime() - 30000); // 30s
+  const threshold = new Date(now.getTime() - 5000); // 5s
 
   // Effectuer une mise à jour atomique pour éviter les doublons en cas de requêtes simultanées
   let updatedCard = await BusinessCard.findOneAndUpdate(
