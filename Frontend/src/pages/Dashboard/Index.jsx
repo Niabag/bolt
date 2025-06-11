@@ -47,6 +47,15 @@ const Dashboard = () => {
     };
   }, []);
 
+  // Mettre à jour l'utilisateur lorsque son profil change ailleurs
+  useEffect(() => {
+    const handleUserUpdated = (e) => {
+      setUser(e.detail);
+    };
+    window.addEventListener('userUpdated', handleUserUpdated);
+    return () => window.removeEventListener('userUpdated', handleUserUpdated);
+  }, []);
+
   // Extraire l'ID utilisateur du token JWT
   const decodeToken = (token) => {
     try {
