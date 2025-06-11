@@ -98,6 +98,7 @@ const RegisterUser = () => {
       // 2. Store the token
       localStorage.setItem("token", userData.token);
       localStorage.setItem("user", JSON.stringify(userData.user));
+      window.dispatchEvent(new CustomEvent('userUpdated', { detail: userData.user }));
       
       // 3. Start the free trial
       await startFreeTrial(DEFAULT_TRIAL_DAYS);

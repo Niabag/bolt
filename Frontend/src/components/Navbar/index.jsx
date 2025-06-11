@@ -7,7 +7,10 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const token = localStorage.getItem("token");
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    const stored = localStorage.getItem('user');
+    return stored ? JSON.parse(stored) : null;
+  });
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef(null);
@@ -17,6 +20,15 @@ const Navbar = () => {
       fetchUser();
     }
   }, [token]);
+
+  // Update user info when profile changes elsewhere
+  useEffect(() => {
+    const handleUserUpdated = (e) => {
+      setUser(e.detail);
+    };
+    window.addEventListener('userUpdated', handleUserUpdated);
+    return () => window.removeEventListener('userUpdated', handleUserUpdated);
+  }, []);
 
   // Fermer le menu utilisateur quand on clique ailleurs
   useEffect(() => {
@@ -36,6 +48,7 @@ const Navbar = () => {
     try {
       const userData = await apiRequest(API_ENDPOINTS.AUTH.ME);
       setUser(userData);
+      localStorage.setItem('user', JSON.stringify(userData));
     } catch (error) {
       console.error("Erreur lors du chargement de l'utilisateur:", error);
       handleLogout();
