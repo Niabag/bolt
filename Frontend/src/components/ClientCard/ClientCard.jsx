@@ -1,4 +1,5 @@
 import React from 'react';
+import './ClientCard.scss';
 
 const ClientCard = ({
   name,
@@ -37,7 +38,7 @@ const ClientCard = ({
         {onView && (
           <button
             onClick={(e) => { e.stopPropagation(); onView(); }}
-            className="bg-blue-50 text-blue-600 hover:bg-blue-100 rounded px-3 py-1 text-sm"
+            className="card-btn card-btn-pdf"
           >
             👁️ Voir
           </button>
@@ -45,7 +46,7 @@ const ClientCard = ({
         {onEdit && (
           <button
             onClick={(e) => { e.stopPropagation(); onEdit(); }}
-            className="bg-yellow-50 text-yellow-600 hover:bg-yellow-100 rounded px-3 py-1 text-sm"
+            className="card-btn card-btn-edit"
           >
             ✏️ Éditer
           </button>
@@ -53,7 +54,7 @@ const ClientCard = ({
         {onDelete && (
           <button
             onClick={(e) => { e.stopPropagation(); onDelete(); }}
-            className="bg-red-50 text-red-600 hover:bg-red-100 rounded px-3 py-1 text-sm"
+            className="card-btn card-btn-delete"
           >
             🗑️ Supprimer
           </button>
@@ -61,7 +62,7 @@ const ClientCard = ({
         {onHistory && (
           <button
             onClick={(e) => { e.stopPropagation(); onHistory(); }}
-            className="bg-gray-50 text-gray-600 hover:bg-gray-100 rounded px-3 py-1 text-sm"
+            className="card-btn card-btn-invoice"
           >
             🕑 Historique
           </button>
