@@ -163,7 +163,7 @@ exports.updateClient = async (req, res) => {
       return res.status(404).json({ message: "Client introuvable ou non autorisé" });
     }
 
-    // Vérifier si l'email est déjà utilisé par un autre client
+    // Vérifier si l'email existe déjà pour un autre client
     if (email && email !== client.email) {
       const existingClient = await Client.findOne({ 
         email, 
@@ -271,147 +271,144 @@ exports.importClients = async (req, res) => {
       return res.status(400).json({ message: 'Aucun fichier fourni' });
     }
 
-    console.log("📂 Fichier reçu pour import:", file.originalname, file.mimetype, file.size);
-    
     const userId = req.userId;
     const filePath = file.path;
     let rows = [];
-    let importedCount = 0;
-    let totalRows = 0;
-    let errors = [];
+    let created = 0;
+    let total = 0;
 
-    // Lecture du fichier selon son type
-    if (file.originalname.toLowerCase().endsWith('.csv')) {
-      console.log("🔍 Traitement du fichier CSV");
+    console.log(`📂 Importation de clients depuis ${file.originalname} (${file.mimetype})`);
+
+    // Déterminer le type de fichier par l'extension
+    const isCSV = file.originalname.toLowerCase().endsWith('.csv');
+    const isXLSX = file.originalname.toLowerCase().endsWith('.xlsx');
+
+    if (isCSV) {
+      // Détecter le séparateur (virgule ou point-virgule)
+      const fileContent = fs.readFileSync(filePath, 'utf8');
+      const firstLine = fileContent.split('\n')[0];
+      const separator = firstLine.includes(';') ? ';' : ',';
+      
+      console.log(`📊 Fichier CSV détecté avec séparateur: "${separator}"`);
+
+      // Lire le fichier CSV avec le séparateur détecté
       await new Promise((resolve, reject) => {
         fs.createReadStream(filePath)
-          .pipe(csv())
+          .pipe(csv({ separator }))
           .on('data', (data) => {
             rows.push(data);
-            totalRows++;
+            total++;
           })
           .on('end', resolve)
-          .on('error', (err) => {
-            console.error("❌ Erreur lecture CSV:", err);
-            reject(err);
-          });
+          .on('error', reject);
       });
-    } else if (file.originalname.toLowerCase().endsWith('.xlsx')) {
-      console.log("🔍 Traitement du fichier XLSX");
+    } else if (isXLSX) {
+      console.log(`📊 Fichier XLSX détecté`);
       const workbook = xlsx.readFile(filePath);
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       rows = xlsx.utils.sheet_to_json(sheet);
-      totalRows = rows.length;
+      total = rows.length;
     } else {
       fs.unlinkSync(filePath);
       return res.status(400).json({ message: 'Format de fichier non supporté. Utilisez CSV ou XLSX.' });
     }
 
-    console.log(`📊 Nombre de lignes trouvées: ${rows.length}`);
-    
-    // Vérification des en-têtes attendus
-    if (rows.length > 0) {
-      const firstRow = rows[0];
-      console.log("🔑 En-têtes trouvés:", Object.keys(firstRow));
-      
-      // Vérifier si les en-têtes essentiels sont présents (avec variations possibles)
-      const hasName = 'Nom' in firstRow || 'name' in firstRow || 'NOM' in firstRow;
-      const hasEmail = 'Email' in firstRow || 'email' in firstRow || 'EMAIL' in firstRow || 'E-mail' in firstRow;
-      const hasPhone = 'Téléphone' in firstRow || 'phone' in firstRow || 'TELEPHONE' in firstRow || 'Tel' in firstRow;
-      
-      if (!hasName || !hasEmail || !hasPhone) {
-        fs.unlinkSync(filePath);
-        return res.status(400).json({ 
-          message: 'Format de fichier incorrect. Les colonnes Nom, Email et Téléphone sont requises.',
-          headers: Object.keys(firstRow)
-        });
+    console.log(`📋 ${total} lignes trouvées dans le fichier`);
+
+    // Mapper les noms de colonnes possibles
+    const nameKeys = ['Nom', 'name', 'Prénom', 'Nom de famille', 'Nom complet', 'Full Name', 'Name'];
+    const emailKeys = ['Email', 'email', 'Adresse email', 'E-mail', 'Courriel', 'Mail'];
+    const phoneKeys = ['Téléphone', 'phone', 'Tel', 'Tél', 'Mobile', 'Numéro de téléphone', 'Numéro(s) de téléphone'];
+    const companyKeys = ['Entreprise', 'company', 'Société', 'Organisation', 'Company', 'Organization'];
+    const notesKeys = ['Notes', 'notes', 'Commentaires', 'Comments', 'Remarques'];
+    const addressKeys = ['Adresse', 'address', 'Rue', 'Street', 'Adresse postale'];
+    const postalCodeKeys = ['Code Postal', 'postalCode', 'CP', 'ZIP', 'Code postal'];
+    const cityKeys = ['Ville', 'city', 'Localité', 'City', 'Town'];
+    const statusKeys = ['Statut', 'status', 'État', 'Status', 'State'];
+
+    // Fonction pour trouver la valeur dans un objet en utilisant plusieurs clés possibles
+    const findValue = (obj, keys) => {
+      for (const key of keys) {
+        if (obj[key] !== undefined && obj[key] !== null && obj[key] !== '') {
+          return obj[key];
+        }
       }
-    }
+      return null;
+    };
 
-    // Traitement des lignes
+    // Traiter chaque ligne
     for (const data of rows) {
+      console.log(`🔍 Traitement de la ligne:`, data);
+      
+      // Extraire les données avec différentes possibilités de noms de colonnes
+      const name = findValue(data, nameKeys);
+      const email = findValue(data, emailKeys);
+      const phone = findValue(data, phoneKeys);
+      const company = findValue(data, companyKeys);
+      const notes = findValue(data, notesKeys);
+      const address = findValue(data, addressKeys);
+      const postalCode = findValue(data, postalCodeKeys);
+      const city = findValue(data, cityKeys);
+      const status = findValue(data, statusKeys);
+
+      // Vérifier les champs obligatoires
+      if (!name || !email || !phone) {
+        console.log(`⚠️ Ligne ignorée: champs obligatoires manquants`, { name, email, phone });
+        continue;
+      }
+
+      // Vérifier si le client existe déjà
+      const exists = await Client.findOne({ email, userId });
+      if (exists) {
+        console.log(`⚠️ Client déjà existant: ${email}`);
+        continue;
+      }
+
+      // Déterminer le statut
+      let clientStatus = 'nouveau';
+      if (status) {
+        const statusLower = status.toLowerCase();
+        if (statusLower.includes('actif') || statusLower.includes('active')) {
+          clientStatus = 'active';
+        } else if (statusLower.includes('inactif') || statusLower.includes('inactive')) {
+          clientStatus = 'inactive';
+        } else if (statusLower.includes('attente') || statusLower.includes('pending')) {
+          clientStatus = 'en_attente';
+        }
+      }
+
+      // Créer le client
       try {
-        // Extraire les champs avec gestion des différentes variantes de noms de colonnes
-        const name = data.Nom || data.nom || data.name || data.NAME;
-        const email = data.Email || data.email || data['E-mail'] || data.EMAIL;
-        const phone = data['Téléphone'] || data.phone || data.tel || data.TELEPHONE;
-        const company = data.Entreprise || data.entreprise || data.company || data.COMPANY || '';
-        const notes = data.Notes || data.notes || data.NOTES || '';
-        const address = data.Adresse || data.adresse || data.address || data.ADDRESS || '';
-        const postalCode = data['Code Postal'] || data.codePostal || data.postalCode || data.POSTAL_CODE || '';
-        const city = data.Ville || data.ville || data.city || data.CITY || '';
-        const status = (data.Statut || data.statut || data.status || data.STATUS || 'nouveau').toLowerCase();
-        
-        // Validation des champs obligatoires
-        if (!name || !email || !phone) {
-          console.log(`⚠️ Ligne ignorée - données incomplètes:`, data);
-          errors.push(`Ligne ignorée - Nom, Email ou Téléphone manquant: ${JSON.stringify(data)}`);
-          continue;
-        }
-        
-        // Vérifier si le client existe déjà
-        const exists = await Client.findOne({ email, userId });
-        if (exists) {
-          console.log(`⚠️ Client déjà existant: ${email}`);
-          errors.push(`Client déjà existant: ${email}`);
-          continue;
-        }
-
-        // Normaliser le statut
-        let normalizedStatus = 'nouveau';
-        if (['actif', 'active', 'activé', 'activated'].includes(status)) {
-          normalizedStatus = 'active';
-        } else if (['inactif', 'inactive', 'désactivé', 'deactivated'].includes(status)) {
-          normalizedStatus = 'inactive';
-        } else if (['en attente', 'en_attente', 'attente', 'pending', 'waiting'].includes(status)) {
-          normalizedStatus = 'en_attente';
-        }
-
-        // Créer le client
         const client = new Client({
           name,
           email,
           phone,
-          company,
-          notes,
-          address,
-          postalCode,
-          city,
-          status: normalizedStatus,
+          company: company || '',
+          notes: notes || '',
+          address: address || '',
+          postalCode: postalCode || '',
+          city: city || '',
+          status: clientStatus,
           userId,
         });
         
         await client.save();
-        importedCount++;
-        console.log(`✅ Client importé: ${name} (${email})`);
+        created++;
+        console.log(`✅ Client créé: ${name} (${email})`);
       } catch (err) {
-        console.error(`❌ Erreur import client:`, err);
-        errors.push(`Erreur: ${err.message}`);
+        console.error(`❌ Erreur création client ${name}:`, err);
       }
     }
 
-    // Nettoyage du fichier temporaire
+    // Supprimer le fichier temporaire
     fs.unlinkSync(filePath);
     
-    // Envoyer une notification pour l'import réussi
-    const io = req.app.get("io");
-    if (io && importedCount > 0) {
-      io.to(`user-${req.userId}`).emit("notification", {
-        type: "system",
-        category: "import_success",
-        title: "Import de prospects terminé",
-        message: `${importedCount} prospect${importedCount > 1 ? 's' : ''} importé${importedCount > 1 ? 's' : ''} avec succès`,
-        details: `Sur un total de ${totalRows} entrée${totalRows > 1 ? 's' : ''}${errors.length > 0 ? ` • ${errors.length} erreur${errors.length > 1 ? 's' : ''}` : ''}`,
-        date: new Date(),
-        read: false
-      });
-    }
+    console.log(`📊 Résultat de l'import: ${created} clients créés sur ${total} lignes`);
     
     res.status(201).json({ 
       message: 'Import terminé', 
-      created: importedCount,
-      total: totalRows,
-      errors: errors.length > 0 ? errors : undefined
+      created, 
+      total 
     });
   } catch (error) {
     console.error('❌ Erreur import prospects:', error);
