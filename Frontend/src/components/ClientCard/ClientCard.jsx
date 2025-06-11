@@ -9,13 +9,17 @@ const ClientCard = ({
   onView,
   onEdit,
   onDelete,
-  onHistory
+  onHistory,
+  onCardClick
 }) => {
   const badgeClass = isActive ? 'bg-green-500' : 'bg-red-500';
   const badgeText = isActive ? 'ACTIF' : 'INACTIF';
 
   return (
-    <div className="w-full max-w-sm mx-auto bg-white rounded-xl shadow-md p-6 flex flex-col items-center space-y-4">
+    <div
+      className="w-full max-w-sm mx-auto bg-white rounded-xl shadow-md p-6 flex flex-col items-center space-y-4"
+      onClick={onCardClick}
+    >
       <div className="text-center">
         <h2 className="text-xl font-semibold capitalize">{name}</h2>
         <p className="flex items-center justify-center text-gray-500">
@@ -32,7 +36,7 @@ const ClientCard = ({
       <div className="flex gap-2">
         {onView && (
           <button
-            onClick={onView}
+            onClick={(e) => { e.stopPropagation(); onView(); }}
             className="bg-blue-50 text-blue-600 hover:bg-blue-100 rounded px-3 py-1 text-sm"
           >
             👁️ Voir
@@ -40,7 +44,7 @@ const ClientCard = ({
         )}
         {onEdit && (
           <button
-            onClick={onEdit}
+            onClick={(e) => { e.stopPropagation(); onEdit(); }}
             className="bg-yellow-50 text-yellow-600 hover:bg-yellow-100 rounded px-3 py-1 text-sm"
           >
             ✏️ Éditer
@@ -48,7 +52,7 @@ const ClientCard = ({
         )}
         {onDelete && (
           <button
-            onClick={onDelete}
+            onClick={(e) => { e.stopPropagation(); onDelete(); }}
             className="bg-red-50 text-red-600 hover:bg-red-100 rounded px-3 py-1 text-sm"
           >
             🗑️ Supprimer
@@ -56,7 +60,7 @@ const ClientCard = ({
         )}
         {onHistory && (
           <button
-            onClick={onHistory}
+            onClick={(e) => { e.stopPropagation(); onHistory(); }}
             className="bg-gray-50 text-gray-600 hover:bg-gray-100 rounded px-3 py-1 text-sm"
           >
             🕑 Historique

@@ -4,7 +4,15 @@ import { API_ENDPOINTS, apiRequest } from '../../../config/api';
 import ClientCard from '../../ClientCard';
 import './prospects.scss';
 
-const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis, onEditProspect, onViewClientBilling, onCreateProspect }) => {
+const ProspectsPage = ({
+  clients = [],
+  onRefresh,
+  onViewClientDevis,
+  onEditProspect,
+  onViewClientBilling,
+  onCreateProspect,
+  onViewProspect
+}) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -470,6 +478,7 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis, onEditProsp
                 onEdit={() => onEditProspect && onEditProspect(prospect)}
                 onDelete={() => handleDeleteClient(prospect._id)}
                 onHistory={() => onViewClientBilling && onViewClientBilling(prospect)}
+                onCardClick={() => onViewProspect && onViewProspect(prospect)}
               />
             ))}
           </div>
