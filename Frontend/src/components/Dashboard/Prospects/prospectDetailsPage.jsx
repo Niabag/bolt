@@ -35,7 +35,7 @@ const ProspectDetailsPage = ({ prospect, onBack, onEdit }) => {
         </div>
 
         <div className="detail-actions">
-          <button onClick={onEdit} className="card-btn card-btn-edit">✏️ Modifier</button>
+          <button onClick={onEdit} className="card-btn card-btn-edit">✏️ Éditer</button>
           <button onClick={onBack} className="card-btn card-btn-invoice">Retour</button>
         </div>
       </div>
