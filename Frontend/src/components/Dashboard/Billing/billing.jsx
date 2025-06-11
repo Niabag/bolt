@@ -310,11 +310,8 @@ const Billing = ({ clients = [], onRefresh }) => {
     }
   };
 
-  // ✅ FONCTION AMÉLIORÉE: Changement de statut avec cycle cohérent
-  const handleInvoiceStatusClick = async (invoiceId, currentStatus) => {
+  const handleInvoiceStatusClick = (invoiceId, currentStatus) => {
     let newStatus;
-    
-    // Cycle: draft -> pending -> paid -> overdue -> draft
     switch (currentStatus) {
       case 'draft':
         newStatus = 'pending';
@@ -331,28 +328,14 @@ const Billing = ({ clients = [], onRefresh }) => {
       default:
         newStatus = 'pending';
     }
-    
-    console.log(`🔄 Changement de statut facture: ${currentStatus} → ${newStatus}`);
-    
-    try {
-      // Ici, vous pourriez appeler l'API pour mettre à jour le statut
-      // await apiRequest(API_ENDPOINTS.INVOICES.UPDATE_STATUS(invoiceId), {
-      //   method: "PATCH",
-      //   body: JSON.stringify({ status: newStatus }),
-      // });
 
-      // Pour l'instant, mise à jour locale
-      setInvoices(prev =>
-        prev.map(inv =>
-          inv.id === invoiceId ? { ...inv, status: newStatus } : inv
-        )
-      );
+    setInvoices(prev =>
+      prev.map(inv =>
+        inv.id === invoiceId ? { ...inv, status: newStatus } : inv
+      )
+    );
 
-      alert(`✅ Statut de la facture mis à jour : ${getStatusLabel(newStatus)}`);
-    } catch (error) {
-      console.error("Erreur changement statut facture:", error);
-      alert(`❌ Erreur lors du changement de statut: ${error.message}`);
-    }
+    alert(`Statut de la facture mis à jour : ${getStatusLabel(newStatus)}`);
   };
 
   const formatDate = (dateStr) => {
@@ -562,7 +545,7 @@ const Billing = ({ clients = [], onRefresh }) => {
                           // Télécharger directement le PDF
                           handleDownloadPDF(devis);
                         }}
-                        className="card-btn card-btn-pdf"
+                        className="bg-blue-50 text-blue-600 hover:bg-blue-100 rounded px-3 py-1 text-sm"
                         disabled={loading}
                       >
                         {loading ? "⏳" : "📄"} PDF

@@ -24,7 +24,7 @@ const DevisCard = ({ devis, onEdit, onPdf, onDelete, loading = false }) => {
       </div>
       <div className="devis-card-actions flex gap-2">
         <button
-          className="bg-yellow-50 text-yellow-600 hover:bg-yellow-100 rounded px-3 py-1 text-sm"
+          className="bg-green-50 text-green-600 hover:bg-green-100 rounded px-3 py-1 text-sm"
           onClick={() => onEdit && onEdit(devis)}
         >
           ✏️ Éditer

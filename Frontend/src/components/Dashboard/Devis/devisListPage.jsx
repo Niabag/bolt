@@ -1,20 +1,12 @@
-import { useEffect, useState, useRef } from "react";
-import { API_ENDPOINTS, apiRequest } from "../../../config/api";
-import DynamicInvoice from "../Billing/DynamicInvoice";
-import "./devis.scss";
-import { calculateTTC } from "../../../utils/calculateTTC";
-
-const formatDate = (dateStr) => {
-  if (!dateStr) return "";
-  try {
-    return new Date(dateStr).toLocaleDateString("fr-FR");
-  } catch (error) {
-    return "";
-  }
-};
-
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { API_ENDPOINTS, apiRequest } from '../../../config/api';
+import DynamicInvoice from '../Billing/DynamicInvoice';
+import './devis.scss';
+import { calculateTTC } from '../../../utils/calculateTTC';
 
 const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
+  const navigate = useNavigate();
   const [devisList, setDevisList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -136,7 +128,7 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
     }
   };
 
-  // ✅ FONCTION AMÉLIORÉE: Changement de statut avec cycle cohérent
+  // Changer le statut d'un devis
   const handleStatusClick = async (devisId, currentStatus) => {
     let newStatus;
     
@@ -158,8 +150,6 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
         newStatus = 'en_attente';
     }
     
-    console.log(`🔄 Changement de statut: ${currentStatus} → ${newStatus}`);
-    
     setLoading(true);
     try {
       await apiRequest(API_ENDPOINTS.DEVIS.UPDATE_STATUS(devisId), {
@@ -177,6 +167,7 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
     }
   };
 
+  // Créer une facture à partir d'un devis
   const handleCreateInvoice = (devis) => {
     const client = clients.find(c => c._id === (typeof devis.clientId === "object" ? devis.clientId?._id : devis.clientId));
     setSelectedDevisForInvoice(devis);
@@ -302,7 +293,7 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
       const margin = 10;
       let currentY = margin;
 
-      // ✅ FONCTION POUR AJOUTER UNE SECTION AU PDF
+      // Fonction pour ajouter une section au PDF
       const addSectionToPDF = async (htmlContent, isFirstPage = false) => {
         tempDiv.innerHTML = htmlContent;
         await new Promise(resolve => setTimeout(resolve, 100));
@@ -338,14 +329,14 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
               ${devis.logoUrl ? `<img src="${devis.logoUrl}" alt="Logo" style="max-width: 200px; max-height: 100px; object-fit: contain; border-radius: 8px;">` : ''}
             </div>
             <div style="flex: 1; text-align: right;">
-              <h1 style="font-size: 3rem; font-weight: 800; margin: 0; color: #0f172a; letter-spacing: 2px;">FACTURE</h1>
+              <h1 style="font-size: 3rem; font-weight: 700; margin: 0; color: #0f172a; letter-spacing: 2px;">DEVIS</h1>
             </div>
           </div>
         </div>
       `, true);
 
       // 2. INFORMATIONS PARTIES
-      const clientInfo = clients.find(c => c._id === (typeof devis.clientId === "object" ? devis.clientId?._id : devis.clientId)) || {};
+      const clientInfo = clients.find(c => c._id === devis.clientId) || {};
       
       await addSectionToPDF(`
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; margin-bottom: 30px;">
@@ -366,7 +357,7 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
               <div style="font-weight: 600; font-size: 1.1rem; color: #2d3748;">${clientInfo.name || devis.clientName || 'Nom du client'}</div>
               <div>${clientInfo.email || devis.clientEmail || 'Email du client'}</div>
               <div>${clientInfo.phone || devis.clientPhone || 'Téléphone du client'}</div>
-              <div>${devis.clientAddress || clientInfo.address || 'Adresse du client'}</div>
+              <div>${devis.clientAddress || 'Adresse du client'}</div>
               <div>${clientInfo.postalCode || ''} ${clientInfo.city || ''}</div>
             </div>
           </div>
@@ -375,23 +366,23 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
 
       // 3. MÉTADONNÉES
       await addSectionToPDF(`
-        <div style="background: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 30px; border: 1px solid #e2e8f0;">
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 30px;">
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
             <div>
-              <div style="font-weight: 600; font-size: 0.9rem; color: #64748b;">Date de la facture :</div>
-              <div style="font-weight: 600; color: #0f172a;">${new Date().toLocaleDateString('fr-FR')}</div>
+              <div style="font-weight: 600; font-size: 0.9rem; opacity: 0.9;">Date du devis :</div>
+              <div style="background: rgba(255, 255, 255, 0.2); padding: 0.5rem; border-radius: 6px; font-weight: 600;">${formatDate(devis.dateDevis)}</div>
             </div>
             <div>
-              <div style="font-weight: 600; font-size: 0.9rem; color: #64748b;">Numéro de facture :</div>
-              <div style="font-weight: 600; color: #0f172a;">FACT-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}</div>
+              <div style="font-weight: 600; font-size: 0.9rem; opacity: 0.9;">Numéro de devis :</div>
+              <div style="background: rgba(255, 255, 255, 0.2); padding: 0.5rem; border-radius: 6px; font-weight: 600;">${devis._id || 'À définir'}</div>
             </div>
             <div>
-              <div style="font-weight: 600; font-size: 0.9rem; color: #64748b;">Date d'échéance :</div>
-              <div style="font-weight: 600; color: #0f172a;">${new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('fr-FR')}</div>
+              <div style="font-weight: 600; font-size: 0.9rem; opacity: 0.9;">Date de validité :</div>
+              <div style="background: rgba(255, 255, 255, 0.2); padding: 0.5rem; border-radius: 6px; font-weight: 600;">${formatDate(devis.dateValidite)}</div>
             </div>
             <div>
-              <div style="font-weight: 600; font-size: 0.9rem; color: #64748b;">Client :</div>
-              <div style="font-weight: 600; color: #0f172a;">${clientInfo.name || devis.clientName || 'Client non défini'}</div>
+              <div style="font-weight: 600; font-size: 0.9rem; opacity: 0.9;">Client :</div>
+              <div style="background: rgba(255, 255, 255, 0.2); padding: 0.5rem; border-radius: 6px; font-weight: 600;">${clientInfo.name || 'Client non défini'}</div>
             </div>
           </div>
         </div>
@@ -495,15 +486,15 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
           </div>
 
           <div style="display: flex; flex-direction: column; gap: 0.75rem; align-self: end;">
-            <div style="display: flex; justify-content: space-between; padding: 0.75rem 1rem; background: #f8fafc; border-radius: 10px; font-weight: 500; min-width: 250px;">
+            <div style="display: flex; justify-content: space-between; padding: 0.75rem 1rem; background: #f8fafc; border-radius: 6px; font-weight: 500;">
               <span>Total HT :</span>
               <span>${totalHT.toFixed(2)} €</span>
             </div>
-            <div style="display: flex; justify-content: space-between; padding: 0.75rem 1rem; background: #f8fafc; border-radius: 10px; font-weight: 500; min-width: 250px;">
+            <div style="display: flex; justify-content: space-between; padding: 0.75rem 1rem; background: #f8fafc; border-radius: 6px; font-weight: 500;">
               <span>Total TVA :</span>
               <span>${totalTVA.toFixed(2)} €</span>
             </div>
-            <div style="display: flex; justify-content: space-between; padding: 0.75rem 1rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; font-weight: 700; font-size: 1.1rem; border-radius: 10px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); min-width: 250px;">
+            <div style="display: flex; justify-content: space-between; padding: 0.75rem 1rem; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; font-weight: 700; font-size: 1.1rem; border-radius: 6px; box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);">
               <span>Total TTC :</span>
               <span>${totalTTC.toFixed(2)} €</span>
             </div>
@@ -513,33 +504,32 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
 
       // 6. CONDITIONS
       await addSectionToPDF(`
-        <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); padding: 2rem; border-radius: 12px; border-left: 4px solid #3b82f6; margin-top: 30px;">
+        <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); padding: 2rem; border-radius: 12px; border-left: 4px solid #667eea; margin-top: 30px;">
           <div style="margin-bottom: 2rem;">
-            <h4 style="margin: 0 0 1rem 0; color: #0f172a; font-size: 1.1rem; font-weight: 600;">Conditions</h4>
-            <div style="color: #475569; line-height: 1.6; white-space: pre-line;">
-              ${devis.conditions || `• Facture valable jusqu'au ${new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('fr-FR')}\n• Règlement à 30 jours fin de mois\n• TVA non applicable, art. 293 B du CGI (si applicable)`}
-            </div>
+            <p style="margin: 0.5rem 0; color: #4a5568; line-height: 1.6;"><strong>Conditions :</strong></p>
+            <p style="margin: 0.5rem 0; color: #4a5568; line-height: 1.6;">• Devis valable jusqu'au ${formatDate(devis.dateValidite) || "date à définir"}</p>
+            <p style="margin: 0.5rem 0; color: #4a5568; line-height: 1.6;">• Règlement à 30 jours fin de mois</p>
+            <p style="margin: 0.5rem 0; color: #4a5568; line-height: 1.6;">• TVA non applicable, art. 293 B du CGI (si applicable)</p>
           </div>
           
           <div style="text-align: center;">
-            <p style="font-style: italic; color: #64748b; margin-bottom: 2rem;">
-              <em>Merci pour votre confiance</em>
+            <p style="font-style: italic; color: #718096; margin-bottom: 2rem;">
+              <em>Bon pour accord - Date et signature du client :</em>
             </p>
+            <div style="display: flex; justify-content: space-around; gap: 2rem;">
+              <div style="flex: 1; padding: 1rem; border-bottom: 2px solid #2d3748; color: #4a5568; font-weight: 500;">
+                <span>Date : _______________</span>
+              </div>
+              <div style="flex: 1; padding: 1rem; border-bottom: 2px solid #2d3748; color: #4a5568; font-weight: 500;">
+                <span>Signature :</span>
+              </div>
+            </div>
           </div>
-        </div>
-      `);
-
-      // 7. PIED DE PAGE
-      await addSectionToPDF(`
-        <div style="margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #f1f5f9; text-align: center;">
-          <p style="font-size: 0.85rem; color: #64748b; font-style: italic; margin: 0;">
-            ${devis.footerText || `${devis.entrepriseName || 'Votre entreprise'} - ${devis.entrepriseAddress || 'Adresse'} - ${devis.entrepriseCity || 'Ville'}`}
-          </p>
         </div>
       `);
 
       // Télécharger le PDF
-      const fileName = devis.title?.replace(/[^a-zA-Z0-9]/g, '-') || `facture-${devis._id}`;
+      const fileName = devis.title?.replace(/[^a-zA-Z0-9]/g, '-') || `devis-${devis._id}`;
       pdf.save(`${fileName}.pdf`);
 
       // Nettoyer
@@ -559,7 +549,7 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
     return (
       <div className="loading-state">
         <div className="loading-spinner">⏳</div>
-        <p>Chargement...</p>
+        <p>Chargement des devis...</p>
       </div>
     );
   }
@@ -717,11 +707,14 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
                   className="devis-card"
                   onClick={() => handleCreateInvoice(devisItem)}
                 >
+                  {/* Section supérieure */}
                   <div className="devis-card-top">
+                    {/* Avatar pour le devis */}
                     <div className="devis-avatar">
                       {devisItem.title ? devisItem.title.charAt(0).toUpperCase() : "D"}
                     </div>
-                    
+
+                    {/* Indicateur de statut */}
                     <div 
                       className="status-indicator clickable"
                       style={{ 
@@ -739,7 +732,8 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
                       {getStatusIcon(devisItem.status)}
                     </div>
                   </div>
-                  
+
+                  {/* Section contenu principal */}
                   <div className="devis-card-content">
                     <div className="devis-card-header">
                       <h3 className="devis-card-title">{devisItem.title || "Devis sans titre"}</h3>
@@ -755,31 +749,28 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
                         </div>
                       </div>
                     </div>
-                    
+
+                    {/* Informations client */}
                     <div className="devis-client-info">
                       <span className="devis-client-icon">👤</span>
                       <span className="devis-client-name">{client?.name || "Client inconnu"}</span>
                     </div>
-                    
-                    <div 
-                      className="devis-status-badge"
-                      style={{ 
-                        backgroundColor: getStatusColor(devisItem.status),
-                        color: 'white'
-                      }}
-                    >
+
+                    {/* Badge de statut */}
+                    <div className="devis-status-badge" style={{ backgroundColor: getStatusColor(devisItem.status), color: 'white' }}>
                       {getStatusIcon(devisItem.status)} {getStatusLabel(devisItem.status)}
                     </div>
-                    
+
+                    {/* Actions */}
                     <div className="devis-card-actions">
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
                           onEditDevis && onEditDevis(devisItem);
                         }}
-                        className="card-btn card-btn-edit"
+                        className="bg-green-50 text-green-600 hover:bg-green-100 rounded px-3 py-1 text-sm"
                       >
-                        ✏️
+                        ✏️ Éditer
                       </button>
                       
                       <button 
@@ -787,10 +778,10 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
                           e.stopPropagation();
                           handleDownloadPDF(devisItem);
                         }}
-                        className="card-btn card-btn-pdf"
+                        className="bg-blue-50 text-blue-600 hover:bg-blue-100 rounded px-3 py-1 text-sm"
                         disabled={loading}
                       >
-                        {loading ? "⏳" : "📄"}
+                        {loading ? "⏳" : "📄"} PDF
                       </button>
                       
                       <button 
@@ -798,10 +789,10 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
                           e.stopPropagation();
                           handleDelete(devisItem._id);
                         }}
-                        className="card-btn card-btn-delete"
+                        className="bg-red-50 text-red-600 hover:bg-red-100 rounded px-3 py-1 text-sm"
                         title="Supprimer"
                       >
-                        🗑️
+                        🗑️ Supprimer
                       </button>
                     </div>
                   </div>

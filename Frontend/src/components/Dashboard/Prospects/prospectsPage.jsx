@@ -100,7 +100,7 @@ const ProspectsPage = ({
     }
   };
 
-  // ✅ FONCTION AMÉLIORÉE: Changement de statut avec cycle cohérent
+  // ✅ FONCTION CORRIGÉE: Changement de statut avec cycle correct
   const handleStatusClick = async (clientId, currentStatus) => {
     let newStatus;
     
@@ -235,7 +235,7 @@ const ProspectsPage = ({
     return pages;
   };
 
-  // ✅ FONCTIONS AMÉLIORÉES: Gestion des statuts harmonisée
+  // ✅ FONCTIONS CORRIGÉES: Gestion des statuts harmonisée
   const getStatusColor = (status) => {
     switch (status) {
       case 'active': return '#48bb78';
@@ -274,13 +274,13 @@ const ProspectsPage = ({
 
   const getNextStatusLabel = (status) => {
     switch (status) {
-      case 'nouveau': return 'Passer en Attente';
-      case 'en_attente': return 'Passer en Actif'; // ✅ CORRIGÉ
-      case 'active': return 'Passer en Inactif';
-      case 'inactive': return 'Remettre en Nouveau';
+      case 'nouveau': return 'Cliquer pour passer en Attente';
+      case 'en_attente': return 'Cliquer pour passer en Actif'; // ✅ CORRIGÉ
+      case 'active': return 'Cliquer pour passer en Inactif';
+      case 'inactive': return 'Cliquer pour remettre en Nouveau';
       // ✅ GESTION DES ANCIENS STATUTS (MIGRATION)
-      case 'pending': return 'Convertir en Attente';
-      default: return 'Changer le statut';
+      case 'pending': return 'Cliquer pour convertir en Attente';
+      default: return 'Cliquer pour changer le statut';
     }
   };
 
@@ -464,39 +464,23 @@ const ProspectsPage = ({
             </div>
           )}
 
-          {/* Grille des cartes prospects */}
+          {/* ✅ NOUVEAU DESIGN: Grille des cartes prospects */}
           <div className="prospects-grid">
             {currentProspects.map((prospect) => (
               <ClientCard
                 key={prospect._id}
                 name={prospect.name || 'N/A'}
                 email={prospect.email || 'N/A'}
-                phone={prospect.phone || 'N/A'} // Ajout du téléphone
-                company={prospect.company || ''} // Ajout de l'entreprise
+                phone={prospect.phone || 'N/A'}
+                company={prospect.company || 'N/A'}
                 level={prospect.level}
                 note={prospect.notes}
                 isActive={prospect.status === 'active'}
-                status={prospect.status} // Ajout du statut
-                onStatusClick={(e) => {
-                  e.stopPropagation();
-                  handleStatusClick(prospect._id, prospect.status);
-                }}
                 onView={() => onViewClientDevis && onViewClientDevis(prospect)}
                 onEdit={() => onEditProspect && onEditProspect(prospect)}
                 onDelete={() => handleDeleteClient(prospect._id)}
                 onHistory={() => onViewClientBilling && onViewClientBilling(prospect)}
                 onCardClick={() => onViewProspect && onViewProspect(prospect)}
-                onSelect={(e) => {
-                  e.stopPropagation();
-                  handleSelectProspect(prospect._id);
-                }}
-                isSelected={selectedProspects.includes(prospect._id)}
-                getStatusColor={getStatusColor}
-                getStatusIcon={getStatusIcon}
-                getStatusLabel={getStatusLabel}
-                getNextStatusLabel={getNextStatusLabel}
-                createdAt={prospect.createdAt}
-                address={formatAddress(prospect)}
               />
             ))}
           </div>

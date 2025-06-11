@@ -167,6 +167,35 @@ const ClientBilling = ({ client, onBack }) => {
     }
   };
 
+  // Changer le statut d'une facture
+  const handleInvoiceStatusClick = (invoiceId, currentStatus) => {
+    let newStatus;
+    switch (currentStatus) {
+      case 'draft':
+        newStatus = 'pending';
+        break;
+      case 'pending':
+        newStatus = 'paid';
+        break;
+      case 'paid':
+        newStatus = 'overdue';
+        break;
+      case 'overdue':
+        newStatus = 'draft';
+        break;
+      default:
+        newStatus = 'pending';
+    }
+
+    setInvoices(prev =>
+      prev.map(inv =>
+        inv.id === invoiceId ? { ...inv, status: newStatus } : inv
+      )
+    );
+
+    alert(`Statut de la facture mis à jour : ${getStatusLabel(newStatus)}`);
+  };
+
   const handleDownloadPDF = async (devis) => {
     try {
       setLoading(true);
@@ -377,10 +406,10 @@ const ClientBilling = ({ client, onBack }) => {
                   .filter(([, { ht }]) => ht > 0)
                   .map(([rate, { ht, tva }]) => `
                     <tr>
-                      <td style="padding: 0.75rem; text-align: center; border-bottom: 1px solid #e2e8f0;">${ht.toFixed(2)} €</td>
-                      <td style="padding: 0.75rem; text-align: center; border-bottom: 1px solid #e2e8f0;">${rate}%</td>
-                      <td style="padding: 0.75rem; text-align: center; border-bottom: 1px solid #e2e8f0;">${tva.toFixed(2)} €</td>
-                      <td style="padding: 0.75rem; text-align: center; border-bottom: 1px solid #e2e8f0;">${(ht + tva).toFixed(2)} €</td>
+                      <td style="padding: 0.75rem; text-align: center; border-bottom: 1px solid #f1f5f9;">${ht.toFixed(2)} €</td>
+                      <td style="padding: 0.75rem; text-align: center; border-bottom: 1px solid #f1f5f9;">${rate}%</td>
+                      <td style="padding: 0.75rem; text-align: center; border-bottom: 1px solid #f1f5f9;">${tva.toFixed(2)} €</td>
+                      <td style="padding: 0.75rem; text-align: center; border-bottom: 1px solid #f1f5f9;">${(ht + tva).toFixed(2)} €</td>
                     </tr>
                   `).join('')}
               </tbody>
@@ -648,7 +677,7 @@ const ClientBilling = ({ client, onBack }) => {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="devis-client-info">
                       <span className="devis-client-icon">👤</span>
                       <span className="devis-client-name">{client.name}</span>
@@ -670,9 +699,10 @@ const ClientBilling = ({ client, onBack }) => {
                           e.stopPropagation();
                           // Naviguer vers la page d'édition du devis
                         }}
-                        className="card-btn card-btn-edit"
+                        className="bg-green-50 text-green-600 hover:bg-green-100 rounded px-3 py-1 text-sm"
+                        title="Éditer"
                       >
-                        ✏️
+                        ✏️ Éditer
                       </button>
                       
                       <button 
@@ -680,10 +710,11 @@ const ClientBilling = ({ client, onBack }) => {
                           e.stopPropagation();
                           handleDownloadPDF(devis);
                         }}
-                        className="card-btn card-btn-pdf"
+                        className="bg-blue-50 text-blue-600 hover:bg-blue-100 rounded px-3 py-1 text-sm"
                         disabled={loading}
+                        title="Télécharger PDF"
                       >
-                        {loading ? "⏳" : "📄"}
+                        {loading ? "⏳" : "📄"} PDF
                       </button>
                     </div>
                   </div>
@@ -716,8 +747,10 @@ const ClientBilling = ({ client, onBack }) => {
                 <div className="invoice-header">
                   <div className="invoice-number">{invoice.invoiceNumber}</div>
                   <div
-                    className="invoice-status"
+                    className="invoice-status clickable"
                     style={{ backgroundColor: getStatusColor(invoice.status) }}
+                    title="Cliquer pour changer le statut"
+                    onClick={() => handleInvoiceStatusClick(invoice.id, invoice.status)}
                   >
                     {getStatusIcon(invoice.status)} {getStatusLabel(invoice.status)}
                   </div>
