@@ -15,6 +15,10 @@ This API requires Node.js with pnpm or npm.
 The server includes Stripe support. Ensure `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` are defined in your `.env`.
 You can customize the trial duration with `TRIAL_PERIOD_DAYS`.
 
+### Import de prospects
+
+Le fichier [docs/ImportProspects.md](../docs/ImportProspects.md) décrit comment importer des prospects depuis un fichier CSV ou XLSX. Un exemple prêt à l'emploi est disponible dans `example-data/prospect-sample.csv`.
+
 ### Card view tracking
 
 The endpoint `/api/business-cards/track-view/:userId` records when a visitor scans
