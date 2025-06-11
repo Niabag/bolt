@@ -4,7 +4,7 @@ Ce dépôt inclut une API permettant d'importer des prospects depuis un fichier 
 
 ## Exemple de fichier
 
-Un exemple de fichier se trouve dans `example-data/prospect-sample.csv` :
+Un exemple de fichier se trouve dans `example-data/prospect-sample.csv` :
 
 ```
 Nom,Email,Téléphone,Entreprise,Statut,Notes,Adresse,Code Postal,Ville,Date de Création,Dernière Mise à Jour
