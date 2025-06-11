@@ -1,13 +1,15 @@
 const express = require("express");
-const { 
-  registerClient, 
-  getClients, 
-  deleteClient, 
-  updateClientStatus, 
-  updateClient 
+const {
+  registerClient,
+  getClients,
+  deleteClient,
+  updateClientStatus,
+  updateClient,
+  importClients
 } = require("../controllers/clientController");
 const authMiddleware = require("../middleware/auth");
 const { checkSubscription } = require("../middleware/subscription");
+const upload = require("../middleware/upload");
 
 const router = express.Router();
 
@@ -22,6 +24,9 @@ router.patch("/:id/status", authMiddleware, checkSubscription, updateClientStatu
 
 // 📌 ✅ NOUVEAU: Mettre à jour un client
 router.put("/:id", authMiddleware, checkSubscription, updateClient);
+
+// 📌 Importer des prospects depuis un fichier
+router.post("/import", authMiddleware, checkSubscription, upload.single("file"), importClients);
 
 // 📌 Supprimer un client
 router.delete("/:id", authMiddleware, checkSubscription, deleteClient);
