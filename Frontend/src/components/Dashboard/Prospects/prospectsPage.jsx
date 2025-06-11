@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS, apiRequest } from '../../../config/api';
+import ClientCard from '../../ClientCard';
 import './prospects.scss';
 
 const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis, onEditProspect, onViewClientBilling, onCreateProspect }) => {
@@ -458,130 +459,18 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis, onEditProsp
           {/* ✅ NOUVEAU DESIGN: Grille des cartes prospects */}
           <div className="prospects-grid">
             {currentProspects.map((prospect) => (
-              <div 
-                key={prospect._id} 
-                className={`prospect-card ${selectedProspects.includes(prospect._id) ? 'selected' : ''}`}
-              >
-                {/* ✅ NOUVEAU: Section supérieure avec design moderne */}
-                <div className="card-top-section">
-                  {/* Checkbox de sélection */}
-                  <div className="card-select">
-                    <input
-                      type="checkbox"
-                      checked={selectedProspects.includes(prospect._id)}
-                      onChange={() => handleSelectProspect(prospect._id)}
-                    />
-                  </div>
-
-                  {/* Avatar centré */}
-                  <div className="prospect-avatar">
-                    {prospect.name ? prospect.name.charAt(0).toUpperCase() : "?"}
-                  </div>
-
-                  {/* Indicateur de statut */}
-                  <div 
-                    className="status-indicator clickable"
-                    style={{ backgroundColor: getStatusColor(prospect.status) }}
-                    title={getNextStatusLabel(prospect.status)}
-                    onClick={() => handleStatusClick(prospect._id, prospect.status)}
-                  >
-                    {getStatusIcon(prospect.status)}
-                  </div>
-                </div>
-
-                {/* ✅ NOUVEAU: Section contenu principal */}
-                <div className="card-content">
-                  <h3 className="prospect-name">{prospect.name || "N/A"}</h3>
-                  
-                  <div className="contact-info">
-                    <div className="contact-item">
-                      <span className="contact-icon">📧</span>
-                      <span className="contact-text">{prospect.email || "N/A"}</span>
-                    </div>
-                    <div className="contact-item">
-                      <span className="contact-icon">📞</span>
-                      <span className="contact-text">{prospect.phone || "N/A"}</span>
-                    </div>
-                    {/* ✅ NOUVEAU: Affichage de l'adresse */}
-                    {formatAddress(prospect) && (
-                      <div className="contact-item">
-                        <span className="contact-icon">📍</span>
-                        <span className="contact-text">{formatAddress(prospect)}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {prospect.company && (
-                    <div className="company-info">
-                      <span className="company-icon">🏢</span>
-                      <span className="company-name">{prospect.company}</span>
-                    </div>
-                  )}
-
-                  {prospect.notes && (
-                    <div className="notes-preview">
-                      <span className="notes-icon">📝</span>
-                      <span className="notes-text">{prospect.notes}</span>
-                    </div>
-                  )}
-
-                  {/* ✅ NOUVEAU: Badge de statut moderne */}
-                  <div className="status-text">
-                    <span 
-                      className="status-badge"
-                      style={{ 
-                        backgroundColor: getStatusColor(prospect.status),
-                        color: 'white'
-                      }}
-                    >
-                      {getStatusIcon(prospect.status)} {getStatusLabel(prospect.status)}
-                    </span>
-                  </div>
-
-                  {/* ✅ NOUVEAU: Actions modernes */}
-                  <div className="card-actions">
-                    <button 
-                      onClick={() => onViewClientDevis && onViewClientDevis(prospect)}
-                      className="action-btn primary-action"
-                      title="Voir les devis"
-                    >
-                      📄
-                    </button>
-                    
-                    {/* NOUVEAU: Bouton pour les factures */}
-                    <button 
-                      onClick={() => onViewClientBilling && onViewClientBilling(prospect)}
-                      className="action-btn billing-action"
-                      title="Voir les factures"
-                    >
-                      💰
-                    </button>
-                    
-                    <button 
-                      onClick={() => onEditProspect && onEditProspect(prospect)}
-                      className="action-btn edit-action"
-                      title="Modifier le prospect"
-                    >
-                      ✏️
-                    </button>
-                    
-                    <button 
-                      onClick={() => handleDeleteClient(prospect._id)}
-                      className="action-btn delete-action"
-                      title="Supprimer"
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                </div>
-
-                {/* ✅ NOUVEAU: Footer avec date */}
-                <div className="card-footer">
-                  <span className="join-date">
-                    Inscrit le {new Date(prospect.createdAt || Date.now()).toLocaleDateString('fr-FR')}
-                  </span>
-                </div>
-              </div>
+              <ClientCard
+                key={prospect._id}
+                name={prospect.name || 'N/A'}
+                email={prospect.email || 'N/A'}
+                level={prospect.level}
+                note={prospect.notes}
+                isActive={prospect.status === 'active'}
+                onView={() => onViewClientDevis && onViewClientDevis(prospect)}
+                onEdit={() => onEditProspect && onEditProspect(prospect)}
+                onDelete={() => handleDeleteClient(prospect._id)}
+                onHistory={() => onViewClientBilling && onViewClientBilling(prospect)}
+              />
             ))}
           </div>
 
