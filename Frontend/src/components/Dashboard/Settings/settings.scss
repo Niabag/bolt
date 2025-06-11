@@ -90,7 +90,8 @@
 }
 
 .subscription-status,
-.subscription-period {
+.subscription-period,
+.trial-period {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -99,7 +100,8 @@
   border-bottom: 1px solid #f1f5f9;
 }
 
-.subscription-period {
+.subscription-period,
+.trial-period {
   border-bottom: none;
   margin-bottom: 25px;
 }
@@ -119,7 +121,77 @@
   color: #0f172a;
 }
 
-.manage-subscription-btn {
+/* Plan toggle */
+.plan-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin: 0 auto 1.5rem;
+  background: #f8fafc;
+  padding: 0.5rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.toggle-btn {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: transparent;
+  color: #64748b;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.toggle-btn.active {
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
+}
+
+.savings-badge {
+  background: #dcfce7;
+  color: #166534;
+  padding: 0.25rem 0.5rem;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Subscription price display */
+.subscription-price-display {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.price-label {
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 0.5rem;
+}
+
+.price-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #3b82f6;
+  margin-bottom: 1rem;
+}
+
+.manage-subscription-btn,
+.subscribe-btn,
+.trial-button {
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
   color: white;
   border: none;
@@ -135,13 +207,28 @@
   box-shadow: 0 8px 25px rgba(59, 130, 246, 0.2);
 }
 
-.manage-subscription-btn:hover:not(:disabled) {
+.trial-button {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  box-shadow: 0 8px 25px rgba(245, 158, 11, 0.2);
+  margin-bottom: 1.5rem;
+}
+
+.manage-subscription-btn:hover:not(:disabled),
+.subscribe-btn:hover:not(:disabled) {
   background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
   transform: translateY(-2px);
   box-shadow: 0 12px 35px rgba(59, 130, 246, 0.3);
 }
 
-.manage-subscription-btn:disabled {
+.trial-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 35px rgba(245, 158, 11, 0.3);
+}
+
+.manage-subscription-btn:disabled,
+.subscribe-btn:disabled,
+.trial-button:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }
@@ -218,6 +305,16 @@
 .export-btn:hover:not(:disabled) {
   box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3) !important;
   background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+}
+
+.import-btn {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+  align-self: flex-start;
+}
+
+.import-btn:hover:not(:disabled) {
+  box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3) !important;
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
 }
 
 /* Style commun pour les imports de fichiers */
@@ -299,6 +396,15 @@
   
   .settings-section h3 {
     font-size: 1.2rem;
+  }
+  
+  .plan-toggle {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .toggle-btn {
+    width: 100%;
   }
 }
 

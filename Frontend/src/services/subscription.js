@@ -5,9 +5,14 @@ import { API_ENDPOINTS, apiRequest } from "../config/api";
 export const DEFAULT_TRIAL_DAYS =
   parseInt(import.meta.env.VITE_TRIAL_PERIOD_DAYS, 10) || 14;
 
-// Subscription price in euros
-export const SUBSCRIPTION_PRICE =
-  parseFloat(import.meta.env.VITE_SUBSCRIPTION_PRICE) || 13;
+// Subscription prices
+export const SUBSCRIPTION_PRICES = {
+  MONTHLY: 30,
+  ANNUAL: 100
+};
+
+// Subscription price in euros (for backward compatibility)
+export const SUBSCRIPTION_PRICE = SUBSCRIPTION_PRICES.MONTHLY;
 
 // Constants
 export const SUBSCRIPTION_STATUS = {
@@ -44,11 +49,14 @@ export const startFreeTrial = async (trialDays = DEFAULT_TRIAL_DAYS) => {
 };
 
 // Create a checkout session for subscription
-export const createCheckoutSession = async (priceId) => {
+export const createCheckoutSession = async (priceId, billingInterval = 'month') => {
   try {
     const response = await apiRequest(API_ENDPOINTS.SUBSCRIPTION.CREATE_CHECKOUT, {
       method: 'POST',
-      body: JSON.stringify({ priceId })
+      body: JSON.stringify({ 
+        priceId,
+        billingInterval 
+      })
     });
     return response;
   } catch (error) {

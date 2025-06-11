@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { getSubscriptionStatus, createCheckoutSession, startFreeTrial, SUBSCRIPTION_STATUS, DEFAULT_TRIAL_DAYS, SUBSCRIPTION_PRICE } from '../../services/subscription';
+import { getSubscriptionStatus, createCheckoutSession, startFreeTrial, SUBSCRIPTION_STATUS, DEFAULT_TRIAL_DAYS, SUBSCRIPTION_PRICES } from '../../services/subscription';
 import Navbar from '../../components/Navbar';
 import './SubscriptionRequired.scss';
 
@@ -11,6 +11,7 @@ const SubscriptionRequired = () => {
   const [processingCheckout, setProcessingCheckout] = useState(false);
   const [processingTrial, setProcessingTrial] = useState(false);
   const [error, setError] = useState('');
+  const [selectedPlan, setSelectedPlan] = useState('monthly'); // 'monthly' ou 'annual'
 
   useEffect(() => {
     const fetchSubscriptionStatus = async () => {
@@ -54,10 +55,16 @@ const SubscriptionRequired = () => {
     setError('');
     
     try {
-      // Price ID for the monthly subscription plan
-      const priceId = 'price_1OqXYZHGJMCmVBnT8YgYbL3M';
+      // Price IDs for the subscription plans
+      const priceIds = {
+        monthly: 'price_monthly', // Remplacer par le vrai ID Stripe
+        annual: 'price_annual'    // Remplacer par le vrai ID Stripe
+      };
       
-      const { url } = await createCheckoutSession(priceId);
+      const billingInterval = selectedPlan === 'monthly' ? 'month' : 'year';
+      const priceId = priceIds[selectedPlan];
+      
+      const { url } = await createCheckoutSession(priceId, billingInterval);
       
       if (url) {
         window.location.href = url;
@@ -127,14 +134,36 @@ const SubscriptionRequired = () => {
             {getStatusMessage()}
           </div>
 
+          <div className="plan-toggle">
+            <button 
+              className={`toggle-btn ${selectedPlan === 'monthly' ? 'active' : ''}`}
+              onClick={() => setSelectedPlan('monthly')}
+            >
+              Mensuel
+            </button>
+            <button 
+              className={`toggle-btn ${selectedPlan === 'annual' ? 'active' : ''}`}
+              onClick={() => setSelectedPlan('annual')}
+            >
+              Annuel <span className="savings-badge">Économisez 16%</span>
+            </button>
+          </div>
+
           <div className="subscription-options">
             <div className="subscription-card">
-              <div className="subscription-badge">Offre Unique</div>
+              <div className="subscription-badge">Offre Complète</div>
               <h2 className="subscription-title">Abonnement Pro</h2>
               <div className="subscription-price">
-                <span className="price-amount">{SUBSCRIPTION_PRICE}€</span>
-                <span className="price-period">/mois</span>
+                <span className="price-amount">
+                  {selectedPlan === 'monthly' ? SUBSCRIPTION_PRICES.MONTHLY : SUBSCRIPTION_PRICES.ANNUAL}€
+                </span>
+                <span className="price-period">
+                  /{selectedPlan === 'monthly' ? 'mois' : 'an'}
+                </span>
               </div>
+              <p className="subscription-billing">
+                {selectedPlan === 'monthly' ? 'Facturation mensuelle' : 'Facturation annuelle'}
+              </p>
               <p className="subscription-description">
                 Accès complet à toutes les fonctionnalités pour développer votre activité
               </p>
