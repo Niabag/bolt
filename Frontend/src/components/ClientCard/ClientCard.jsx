@@ -17,7 +17,7 @@ const ClientCard = ({
 
   return (
     <div
-      className="w-full max-w-sm mx-auto bg-white rounded-xl shadow-md p-6 flex flex-col items-center space-y-4"
+      className="w-full max-w-sm mx-auto bg-white rounded-xl shadow-md p-6 flex flex-col items-center space-y-4 cursor-pointer"
       onClick={onCardClick}
     >
       <div className="text-center">
