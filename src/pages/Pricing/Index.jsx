@@ -1,5 +1,5 @@
 import './pricing.scss';
-import { SUBSCRIPTION_PRICE, SUBSCRIPTION_PRICE_QUARTERLY, SUBSCRIPTION_PRICE_ANNUAL, SUBSCRIPTION_PLANS } from '../../services/subscription';
+import { SUBSCRIPTION_PLANS } from '../../services/subscription';
 
 const Pricing = () => (
   <div className="pricing-page">
@@ -109,8 +109,8 @@ const Pricing = () => (
       <div className="faq-item">
         <h3>Comment fonctionne la facturation ?</h3>
         <p>
-          La facturation dépend du plan choisi : mensuelle à {SUBSCRIPTION_PRICE}€/mois, trimestrielle à {SUBSCRIPTION_PRICE_QUARTERLY}€/3 mois, 
-          ou annuelle à {SUBSCRIPTION_PRICE_ANNUAL}€/an. Vous pouvez annuler à tout moment sans frais supplémentaires.
+          La facturation dépend du plan choisi : mensuelle à {SUBSCRIPTION_PLANS.MONTHLY.price}€/mois, trimestrielle à {SUBSCRIPTION_PLANS.QUARTERLY.price}€/3 mois, 
+          ou annuelle à {SUBSCRIPTION_PLANS.ANNUAL.price}€/an. Vous pouvez annuler à tout moment sans frais supplémentaires.
         </p>
       </div>
       
