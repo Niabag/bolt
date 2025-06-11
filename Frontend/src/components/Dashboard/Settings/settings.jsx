@@ -493,12 +493,18 @@ const importData = async () => {
             <p className="help-text">
               Téléchargez toutes vos données (clients, devis) au format JSON
             </p>
-            <input
-              type="file"
-              ref={fileInputRef}
-              accept=".csv,.xlsx"
-              style={{ marginTop: '0.5rem' }}
-            />
+            <div className="file-upload" style={{ marginTop: '0.5rem' }}>
+              <input
+                type="file"
+                id="prospects-file"
+                ref={fileInputRef}
+                accept=".csv,.xlsx"
+                disabled={loading}
+              />
+              <label htmlFor="prospects-file" className="upload-btn">
+                📂 Choisir un fichier
+              </label>
+            </div>
             <button onClick={importData} disabled={loading} className="import-btn" style={{ marginTop: '0.5rem' }}>
               📤 Importer des prospects
             </button>
