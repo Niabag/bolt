@@ -25,6 +25,7 @@ export const API_ENDPOINTS = {
     DELETE: (clientId) => `${API_CONFIG.BASE_URL}/clients/${clientId}`,
     UPDATE: (clientId) => `${API_CONFIG.BASE_URL}/clients/${clientId}`,
     UPDATE_STATUS: (clientId) => `${API_CONFIG.BASE_URL}/clients/${clientId}/status`,
+    IMPORT: `${API_CONFIG.BASE_URL}/clients/import`,
   },
   
   // Devis

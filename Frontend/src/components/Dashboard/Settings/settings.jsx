@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { API_ENDPOINTS, apiRequest } from '../../../config/api';
 import {
   getSubscriptionStatus,
@@ -26,6 +26,7 @@ const Settings = () => {
   const [subscription, setSubscription] = useState(null);
   const [processingSubscription, setProcessingSubscription] = useState(false);
   const [processingCheckout, setProcessingCheckout] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     fetchUserData();
@@ -234,6 +235,31 @@ const Settings = () => {
       setMessage(`❌ Erreur lors de l'export: ${error.message}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const importData = async () => {
+    const file = fileInputRef.current?.files[0];
+    if (!file) {
+      setMessage('❌ Sélectionnez un fichier à importer');
+      return;
+    }
+    setLoading(true);
+    setMessage('');
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      await apiRequest(API_ENDPOINTS.CLIENTS.IMPORT, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        body: form,
+      });
+      setMessage('✅ Prospects importés avec succès');
+    } catch (error) {
+      setMessage(`❌ Erreur lors de l'import: ${error.message}`);
+    } finally {
+      setLoading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -460,6 +486,15 @@ const Settings = () => {
             <p className="help-text">
               Téléchargez toutes vos données (clients, devis) au format JSON
             </p>
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept=".csv,.xlsx"
+              style={{ marginTop: '0.5rem' }}
+            />
+            <button onClick={importData} disabled={loading} className="import-btn" style={{ marginTop: '0.5rem' }}>
+              📤 Importer des prospects
+            </button>
           </div>
         </section>
 

@@ -1,6 +1,9 @@
 const Client = require("../models/client");
 const mongoose = require("mongoose");
 const Devis = require("../models/devis");
+const fs = require("fs");
+const csv = require("csv-parser");
+const xlsx = require("xlsx");
 
 exports.registerClient = async (req, res) => {
   try {
@@ -258,5 +261,67 @@ exports.deleteClient = async (req, res) => {
   } catch (err) {
     console.error("❌ Erreur suppression client :", err);
     res.status(500).json({ message: "Erreur serveur lors de la suppression" });
+  }
+};
+
+exports.importClients = async (req, res) => {
+  try {
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ message: 'Aucun fichier fourni' });
+    }
+
+    const userId = req.userId;
+    const filePath = file.path;
+    let rows = [];
+
+    if (file.originalname.endsWith('.csv')) {
+      await new Promise((resolve, reject) => {
+        fs.createReadStream(filePath)
+          .pipe(csv())
+          .on('data', (data) => rows.push(data))
+          .on('end', resolve)
+          .on('error', reject);
+      });
+    } else if (file.originalname.endsWith('.xlsx')) {
+      const workbook = xlsx.readFile(filePath);
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      rows = xlsx.utils.sheet_to_json(sheet);
+    } else {
+      fs.unlinkSync(filePath);
+      return res.status(400).json({ message: 'Format de fichier non supporté' });
+    }
+
+    const created = [];
+    for (const data of rows) {
+      const name = data.Nom || data.name;
+      const email = data.Email || data.email;
+      const phone = data['Téléphone'] || data.phone;
+      if (!name || !email || !phone) continue;
+
+      const exists = await Client.findOne({ email, userId });
+      if (exists) continue;
+
+      const client = new Client({
+        name,
+        email,
+        phone,
+        company: data.Entreprise || data.company,
+        notes: data.Notes || data.notes,
+        address: data.Adresse || data.address,
+        postalCode: data['Code Postal'] || data.postalCode,
+        city: data.Ville || data.city,
+        status: (data.Statut || 'nouveau').toLowerCase(),
+        userId,
+      });
+      await client.save();
+      created.push(client);
+    }
+
+    fs.unlinkSync(filePath);
+    res.status(201).json({ message: 'Import terminé', created: created.length });
+  } catch (error) {
+    console.error('❌ Erreur import prospects:', error);
+    res.status(500).json({ message: "Erreur lors de l'import" });
   }
 };
