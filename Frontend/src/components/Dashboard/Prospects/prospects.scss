@@ -378,7 +378,8 @@
   padding: 0.25rem 0.5rem;
   background: #f8fafc;
   border-radius: 6px;
-  width: 100%;
+  width: auto;
+  flex: 1 1 auto;
 }
 
 .contact-icon {
@@ -939,5 +940,8 @@
   .contact-info {
     flex-direction: column;
     align-items: flex-start;
+  }
+  .contact-item {
+    width: 100%;
   }
 }
