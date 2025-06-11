@@ -11,7 +11,8 @@ import {
 } from '../../../services/subscription';
 import './settings.scss';
 
-const Settings = () => {
+// Ajout d'une prop onDataImported pour informer le parent après import
+const Settings = ({ onDataImported }) => {
   const [user, setUser] = useState({});
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -241,7 +242,7 @@ const Settings = () => {
     }
   };
 
-  const importData = async () => {
+const importData = async () => {
     const file = fileInputRef.current?.files[0];
     if (!file) {
       setMessage('❌ Sélectionnez un fichier à importer');
@@ -258,6 +259,9 @@ const Settings = () => {
         body: form,
       });
       setMessage('✅ Prospects importés avec succès');
+      if (typeof onDataImported === 'function') {
+        onDataImported();
+      }
     } catch (error) {
       setMessage(`❌ Erreur lors de l'import: ${error.message}`);
     } finally {

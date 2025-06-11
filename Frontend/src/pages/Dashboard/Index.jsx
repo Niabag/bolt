@@ -507,7 +507,14 @@ const Dashboard = () => {
               />
             )}
             
-            {activeTab === "settings" && <Settings />}
+            {activeTab === "settings" && (
+              <Settings
+                onDataImported={() => {
+                  fetchClients();
+                  setActiveTab("clients");
+                }}
+              />
+            )}
             
             {activeTab === "carte" && (
               <BusinessCard 
