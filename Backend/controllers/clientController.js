@@ -271,87 +271,147 @@ exports.importClients = async (req, res) => {
       return res.status(400).json({ message: 'Aucun fichier fourni' });
     }
 
+    console.log("📂 Fichier reçu pour import:", file.originalname, file.mimetype, file.size);
+    
     const userId = req.userId;
     const filePath = file.path;
     let rows = [];
+    let importedCount = 0;
+    let totalRows = 0;
+    let errors = [];
 
-    // Déterminer le type de fichier et le parser en conséquence
-    if (file.originalname.endsWith('.csv')) {
-      // Parser le CSV
+    // Lecture du fichier selon son type
+    if (file.originalname.toLowerCase().endsWith('.csv')) {
+      console.log("🔍 Traitement du fichier CSV");
       await new Promise((resolve, reject) => {
         fs.createReadStream(filePath)
           .pipe(csv())
-          .on('data', (data) => rows.push(data))
+          .on('data', (data) => {
+            rows.push(data);
+            totalRows++;
+          })
           .on('end', resolve)
-          .on('error', reject);
+          .on('error', (err) => {
+            console.error("❌ Erreur lecture CSV:", err);
+            reject(err);
+          });
       });
-    } else if (file.originalname.endsWith('.xlsx')) {
-      // Parser le XLSX
+    } else if (file.originalname.toLowerCase().endsWith('.xlsx')) {
+      console.log("🔍 Traitement du fichier XLSX");
       const workbook = xlsx.readFile(filePath);
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       rows = xlsx.utils.sheet_to_json(sheet);
+      totalRows = rows.length;
     } else {
-      // Nettoyer le fichier temporaire
       fs.unlinkSync(filePath);
-      return res.status(400).json({ message: 'Format de fichier non supporté' });
+      return res.status(400).json({ message: 'Format de fichier non supporté. Utilisez CSV ou XLSX.' });
     }
 
-    console.log("Lignes importées:", rows.length);
-    console.log("Exemple de données:", rows.length > 0 ? rows[0] : "Aucune donnée");
-
-    // Créer les clients
-    const created = [];
-    for (const data of rows) {
-      // Mapper les champs (prend en charge différentes conventions de nommage)
-      const name = data.Nom || data.nom || data.Name || data.name;
-      const email = data.Email || data.email;
-      const phone = data.Téléphone || data.téléphone || data.Phone || data.phone;
+    console.log(`📊 Nombre de lignes trouvées: ${rows.length}`);
+    
+    // Vérification des en-têtes attendus
+    if (rows.length > 0) {
+      const firstRow = rows[0];
+      console.log("🔑 En-têtes trouvés:", Object.keys(firstRow));
       
-      // Vérifier les champs obligatoires
-      if (!name || !email || !phone) {
-        console.log("❌ Ligne ignorée - champs obligatoires manquants:", data);
-        continue;
+      // Vérifier si les en-têtes essentiels sont présents (avec variations possibles)
+      const hasName = 'Nom' in firstRow || 'name' in firstRow || 'NOM' in firstRow;
+      const hasEmail = 'Email' in firstRow || 'email' in firstRow || 'EMAIL' in firstRow || 'E-mail' in firstRow;
+      const hasPhone = 'Téléphone' in firstRow || 'phone' in firstRow || 'TELEPHONE' in firstRow || 'Tel' in firstRow;
+      
+      if (!hasName || !hasEmail || !hasPhone) {
+        fs.unlinkSync(filePath);
+        return res.status(400).json({ 
+          message: 'Format de fichier incorrect. Les colonnes Nom, Email et Téléphone sont requises.',
+          headers: Object.keys(firstRow)
+        });
       }
-
-      // Vérifier si le client existe déjà
-      const exists = await Client.findOne({ email, userId });
-      if (exists) {
-        console.log(`❌ Client ignoré - existe déjà: ${email}`);
-        continue;
-      }
-
-      // Créer le client
-      const client = new Client({
-        name,
-        email,
-        phone,
-        company: data.Entreprise || data.entreprise || data.Company || data.company || '',
-        notes: data.Notes || data.notes || '',
-        address: data.Adresse || data.adresse || data.Address || data.address || '',
-        postalCode: data['Code Postal'] || data['code postal'] || data.PostalCode || data.postalCode || '',
-        city: data.Ville || data.ville || data.City || data.city || '',
-        status: (data.Statut || data.statut || data.Status || data.status || 'nouveau').toLowerCase(),
-        userId,
-      });
-
-      // Normaliser le statut
-      if (!['nouveau', 'en_attente', 'active', 'inactive'].includes(client.status)) {
-        client.status = 'nouveau';
-      }
-
-      await client.save();
-      created.push(client);
-      console.log(`✅ Client importé: ${name} (${email})`);
     }
 
-    // Nettoyer le fichier temporaire
+    // Traitement des lignes
+    for (const data of rows) {
+      try {
+        // Extraire les champs avec gestion des différentes variantes de noms de colonnes
+        const name = data.Nom || data.nom || data.name || data.NAME;
+        const email = data.Email || data.email || data['E-mail'] || data.EMAIL;
+        const phone = data['Téléphone'] || data.phone || data.tel || data.TELEPHONE;
+        const company = data.Entreprise || data.entreprise || data.company || data.COMPANY || '';
+        const notes = data.Notes || data.notes || data.NOTES || '';
+        const address = data.Adresse || data.adresse || data.address || data.ADDRESS || '';
+        const postalCode = data['Code Postal'] || data.codePostal || data.postalCode || data.POSTAL_CODE || '';
+        const city = data.Ville || data.ville || data.city || data.CITY || '';
+        const status = (data.Statut || data.statut || data.status || data.STATUS || 'nouveau').toLowerCase();
+        
+        // Validation des champs obligatoires
+        if (!name || !email || !phone) {
+          console.log(`⚠️ Ligne ignorée - données incomplètes:`, data);
+          errors.push(`Ligne ignorée - Nom, Email ou Téléphone manquant: ${JSON.stringify(data)}`);
+          continue;
+        }
+        
+        // Vérifier si le client existe déjà
+        const exists = await Client.findOne({ email, userId });
+        if (exists) {
+          console.log(`⚠️ Client déjà existant: ${email}`);
+          errors.push(`Client déjà existant: ${email}`);
+          continue;
+        }
+
+        // Normaliser le statut
+        let normalizedStatus = 'nouveau';
+        if (['actif', 'active', 'activé', 'activated'].includes(status)) {
+          normalizedStatus = 'active';
+        } else if (['inactif', 'inactive', 'désactivé', 'deactivated'].includes(status)) {
+          normalizedStatus = 'inactive';
+        } else if (['en attente', 'en_attente', 'attente', 'pending', 'waiting'].includes(status)) {
+          normalizedStatus = 'en_attente';
+        }
+
+        // Créer le client
+        const client = new Client({
+          name,
+          email,
+          phone,
+          company,
+          notes,
+          address,
+          postalCode,
+          city,
+          status: normalizedStatus,
+          userId,
+        });
+        
+        await client.save();
+        importedCount++;
+        console.log(`✅ Client importé: ${name} (${email})`);
+      } catch (err) {
+        console.error(`❌ Erreur import client:`, err);
+        errors.push(`Erreur: ${err.message}`);
+      }
+    }
+
+    // Nettoyage du fichier temporaire
     fs.unlinkSync(filePath);
     
-    console.log(`✅ Import terminé: ${created.length} clients créés sur ${rows.length} lignes`);
+    // Envoyer une notification pour l'import réussi
+    const io = req.app.get("io");
+    if (io && importedCount > 0) {
+      io.to(`user-${req.userId}`).emit("notification", {
+        type: "system",
+        category: "import_success",
+        title: "Import de prospects terminé",
+        message: `${importedCount} prospect${importedCount > 1 ? 's' : ''} importé${importedCount > 1 ? 's' : ''} avec succès`,
+        details: `Sur un total de ${totalRows} entrée${totalRows > 1 ? 's' : ''}${errors.length > 0 ? ` • ${errors.length} erreur${errors.length > 1 ? 's' : ''}` : ''}`,
+        date: new Date(),
+        read: false
+      });
+    }
+    
     res.status(201).json({ 
       message: 'Import terminé', 
-      created: created.length, 
-      total: rows.length 
+      created: importedCount,
+      total: totalRows,
+      errors: errors.length > 0 ? errors : undefined
     });
   } catch (error) {
     console.error('❌ Erreur import prospects:', error);
