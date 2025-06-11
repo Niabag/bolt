@@ -31,7 +31,7 @@ const ProspectEditPage = ({ prospect, onBack, onSave }) => {
     }));
   };
 
-  // ✅ FONCTION CORRIGÉE: Changement de statut avec cycle harmonisé
+  // ✅ FONCTION AMÉLIORÉE: Changement de statut avec cycle harmonisé
   const handleStatusClick = async () => {
     if (!prospectData) return;
     
@@ -143,7 +143,7 @@ const ProspectEditPage = ({ prospect, onBack, onSave }) => {
     }
   };
 
-  // ✅ FONCTIONS CORRIGÉES: Gestion des statuts harmonisée
+  // ✅ FONCTIONS AMÉLIORÉES: Gestion des statuts harmonisée
   const getStatusColor = (status) => {
     switch (status) {
       case 'active': return '#48bb78';

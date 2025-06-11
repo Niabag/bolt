@@ -310,8 +310,11 @@ const Billing = ({ clients = [], onRefresh }) => {
     }
   };
 
-  const handleInvoiceStatusClick = (invoiceId, currentStatus) => {
+  // ✅ FONCTION AMÉLIORÉE: Changement de statut avec cycle cohérent
+  const handleInvoiceStatusClick = async (invoiceId, currentStatus) => {
     let newStatus;
+    
+    // Cycle: draft -> pending -> paid -> overdue -> draft
     switch (currentStatus) {
       case 'draft':
         newStatus = 'pending';
@@ -328,14 +331,28 @@ const Billing = ({ clients = [], onRefresh }) => {
       default:
         newStatus = 'pending';
     }
+    
+    console.log(`🔄 Changement de statut facture: ${currentStatus} → ${newStatus}`);
+    
+    try {
+      // Ici, vous pourriez appeler l'API pour mettre à jour le statut
+      // await apiRequest(API_ENDPOINTS.INVOICES.UPDATE_STATUS(invoiceId), {
+      //   method: "PATCH",
+      //   body: JSON.stringify({ status: newStatus }),
+      // });
 
-    setInvoices(prev =>
-      prev.map(inv =>
-        inv.id === invoiceId ? { ...inv, status: newStatus } : inv
-      )
-    );
+      // Pour l'instant, mise à jour locale
+      setInvoices(prev =>
+        prev.map(inv =>
+          inv.id === invoiceId ? { ...inv, status: newStatus } : inv
+        )
+      );
 
-    alert(`Statut de la facture mis à jour : ${getStatusLabel(newStatus)}`);
+      alert(`✅ Statut de la facture mis à jour : ${getStatusLabel(newStatus)}`);
+    } catch (error) {
+      console.error("Erreur changement statut facture:", error);
+      alert(`❌ Erreur lors du changement de statut: ${error.message}`);
+    }
   };
 
   const formatDate = (dateStr) => {

@@ -100,7 +100,7 @@ const ProspectsPage = ({
     }
   };
 
-  // ✅ FONCTION CORRIGÉE: Changement de statut avec cycle correct
+  // ✅ FONCTION AMÉLIORÉE: Changement de statut avec cycle cohérent
   const handleStatusClick = async (clientId, currentStatus) => {
     let newStatus;
     
@@ -235,7 +235,7 @@ const ProspectsPage = ({
     return pages;
   };
 
-  // ✅ FONCTIONS CORRIGÉES: Gestion des statuts harmonisée
+  // ✅ FONCTIONS AMÉLIORÉES: Gestion des statuts harmonisée
   const getStatusColor = (status) => {
     switch (status) {
       case 'active': return '#48bb78';
@@ -274,13 +274,13 @@ const ProspectsPage = ({
 
   const getNextStatusLabel = (status) => {
     switch (status) {
-      case 'nouveau': return 'Cliquer pour passer en Attente';
-      case 'en_attente': return 'Cliquer pour passer en Actif'; // ✅ CORRIGÉ
-      case 'active': return 'Cliquer pour passer en Inactif';
-      case 'inactive': return 'Cliquer pour remettre en Nouveau';
+      case 'nouveau': return 'Passer en Attente';
+      case 'en_attente': return 'Passer en Actif'; // ✅ CORRIGÉ
+      case 'active': return 'Passer en Inactif';
+      case 'inactive': return 'Remettre en Nouveau';
       // ✅ GESTION DES ANCIENS STATUTS (MIGRATION)
-      case 'pending': return 'Cliquer pour convertir en Attente';
-      default: return 'Cliquer pour changer le statut';
+      case 'pending': return 'Convertir en Attente';
+      default: return 'Changer le statut';
     }
   };
 
@@ -467,19 +467,149 @@ const ProspectsPage = ({
           {/* ✅ NOUVEAU DESIGN: Grille des cartes prospects */}
           <div className="prospects-grid">
             {currentProspects.map((prospect) => (
-              <ClientCard
-                key={prospect._id}
-                name={prospect.name || 'N/A'}
-                email={prospect.email || 'N/A'}
-                level={prospect.level}
-                note={prospect.notes}
-                isActive={prospect.status === 'active'}
-                onView={() => onViewClientDevis && onViewClientDevis(prospect)}
-                onEdit={() => onEditProspect && onEditProspect(prospect)}
-                onDelete={() => handleDeleteClient(prospect._id)}
-                onHistory={() => onViewClientBilling && onViewClientBilling(prospect)}
-                onCardClick={() => onViewProspect && onViewProspect(prospect)}
-              />
+              <div 
+                key={prospect._id} 
+                className={`prospect-card ${selectedProspects.includes(prospect._id) ? 'selected' : ''}`}
+                onClick={() => onViewProspect && onViewProspect(prospect)}
+              >
+                {/* Checkbox de sélection */}
+                <div className="card-select">
+                  <input
+                    type="checkbox"
+                    checked={selectedProspects.includes(prospect._id)}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      handleSelectProspect(prospect._id);
+                    }}
+                  />
+                </div>
+
+                {/* Section supérieure */}
+                <div className="card-top-section">
+                  {/* Avatar */}
+                  <div className="prospect-avatar">
+                    {prospect.name ? prospect.name.charAt(0).toUpperCase() : "?"}
+                  </div>
+
+                  {/* ✅ NOUVEAU: Indicateur de statut cliquable */}
+                  <div 
+                    className="status-indicator clickable"
+                    style={{ backgroundColor: getStatusColor(prospect.status) }}
+                    title={getNextStatusLabel(prospect.status)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleStatusClick(prospect._id, prospect.status);
+                    }}
+                  >
+                    {getStatusIcon(prospect.status)}
+                  </div>
+                </div>
+
+                {/* Contenu principal */}
+                <div className="card-content">
+                  <h3 className="prospect-name">{prospect.name}</h3>
+
+                  <div className="contact-info">
+                    <div className="contact-item">
+                      <span className="contact-icon">📧</span>
+                      <span className="contact-text">{prospect.email}</span>
+                    </div>
+                    <div className="contact-item">
+                      <span className="contact-icon">📞</span>
+                      <span className="contact-text">{prospect.phone}</span>
+                    </div>
+                    
+                    {/* ✅ NOUVEAU: Affichage de l'adresse si disponible */}
+                    {(prospect.address || prospect.city) && (
+                      <div className="contact-item">
+                        <span className="contact-icon">📍</span>
+                        <span className="contact-text">{formatAddress(prospect)}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {prospect.company && (
+                    <div className="company-info">
+                      <span className="company-icon">🏢</span>
+                      <span className="company-name">{prospect.company}</span>
+                    </div>
+                  )}
+
+                  {prospect.notes && (
+                    <div className="notes-preview">
+                      <span className="notes-icon">📝</span>
+                      <span className="notes-text">{prospect.notes}</span>
+                    </div>
+                  )}
+
+                  {/* Badge de statut */}
+                  <div className="status-text">
+                    <span 
+                      className="status-badge"
+                      style={{ 
+                        backgroundColor: getStatusColor(prospect.status),
+                        color: 'white'
+                      }}
+                    >
+                      {getStatusIcon(prospect.status)} {getStatusLabel(prospect.status)}
+                    </span>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="card-actions">
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onViewClientDevis && onViewClientDevis(prospect);
+                      }}
+                      className="action-btn primary-action"
+                      title="Créer un devis"
+                    >
+                      📄
+                    </button>
+                    
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEditProspect && onEditProspect(prospect);
+                      }}
+                      className="action-btn edit-action"
+                      title="Modifier"
+                    >
+                      ✏️
+                    </button>
+                    
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onViewClientBilling && onViewClientBilling(prospect);
+                      }}
+                      className="action-btn billing-action"
+                      title="Facturation"
+                    >
+                      💰
+                    </button>
+                    
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteClient(prospect._id);
+                      }}
+                      className="action-btn delete-action"
+                      title="Supprimer"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+
+                {/* Pied de carte */}
+                <div className="card-footer">
+                  <span className="join-date">
+                    Inscrit le {new Date(prospect.createdAt).toLocaleDateString('fr-FR')}
+                  </span>
+                </div>
+              </div>
             ))}
           </div>
 

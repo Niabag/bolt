@@ -136,7 +136,7 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
     }
   };
 
-  // Changer le statut d'un devis
+  // ✅ FONCTION AMÉLIORÉE: Changement de statut avec cycle cohérent
   const handleStatusClick = async (devisId, currentStatus) => {
     let newStatus;
     
@@ -158,6 +158,8 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
         newStatus = 'en_attente';
     }
     
+    console.log(`🔄 Changement de statut: ${currentStatus} → ${newStatus}`);
+    
     setLoading(true);
     try {
       await apiRequest(API_ENDPOINTS.DEVIS.UPDATE_STATUS(devisId), {
@@ -175,7 +177,6 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
     }
   };
 
-  // Créer une facture à partir d'un devis
   const handleCreateInvoice = (devis) => {
     const client = clients.find(c => c._id === (typeof devis.clientId === "object" ? devis.clientId?._id : devis.clientId));
     setSelectedDevisForInvoice(devis);
@@ -329,7 +330,7 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
         return imgHeight;
       };
 
-      // ✅ 1. EN-TÊTE
+      // 1. EN-TÊTE
       await addSectionToPDF(`
         <div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid #e2e8f0;">
           <div style="display: flex; justify-content: space-between; align-items: flex-start;">
@@ -343,7 +344,7 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
         </div>
       `, true);
 
-      // ✅ 2. INFORMATIONS PARTIES
+      // 2. INFORMATIONS PARTIES
       const clientInfo = clients.find(c => c._id === (typeof devis.clientId === "object" ? devis.clientId?._id : devis.clientId)) || {};
       
       await addSectionToPDF(`
@@ -372,13 +373,13 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
         </div>
       `);
 
-      // ✅ 3. MÉTADONNÉES
+      // 3. MÉTADONNÉES
       await addSectionToPDF(`
         <div style="background: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 30px; border: 1px solid #e2e8f0;">
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
             <div>
               <div style="font-weight: 600; font-size: 0.9rem; color: #64748b;">Date de la facture :</div>
-              <div style="font-weight: 600; color: #0f172a;">${formatDate(new Date())}</div>
+              <div style="font-weight: 600; color: #0f172a;">${new Date().toLocaleDateString('fr-FR')}</div>
             </div>
             <div>
               <div style="font-weight: 600; font-size: 0.9rem; color: #64748b;">Numéro de facture :</div>
@@ -386,7 +387,7 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
             </div>
             <div>
               <div style="font-weight: 600; font-size: 0.9rem; color: #64748b;">Date d'échéance :</div>
-              <div style="font-weight: 600; color: #0f172a;">${formatDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000))}</div>
+              <div style="font-weight: 600; color: #0f172a;">${new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('fr-FR')}</div>
             </div>
             <div>
               <div style="font-weight: 600; font-size: 0.9rem; color: #64748b;">Client :</div>
@@ -396,7 +397,7 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
         </div>
       `);
 
-      // ✅ 4. TABLEAU - TRAITEMENT LIGNE PAR LIGNE
+      // 4. TABLEAU - TRAITEMENT LIGNE PAR LIGNE
       // En-tête du tableau
       await addSectionToPDF(`
         <div style="margin-bottom: 10px;">
@@ -442,7 +443,7 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
         await addSectionToPDF(rowHTML);
       }
 
-      // ✅ 5. TOTAUX
+      // 5. TOTAUX
       const tauxTVA = {
         "20": { ht: 0, tva: 0 },
         "10": { ht: 0, tva: 0 },
@@ -510,7 +511,7 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
         </div>
       `);
 
-      // ✅ 6. CONDITIONS
+      // 6. CONDITIONS
       await addSectionToPDF(`
         <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); padding: 2rem; border-radius: 12px; border-left: 4px solid #3b82f6; margin-top: 30px;">
           <div style="margin-bottom: 2rem;">
@@ -528,7 +529,7 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
         </div>
       `);
 
-      // ✅ 7. PIED DE PAGE
+      // 7. PIED DE PAGE
       await addSectionToPDF(`
         <div style="margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #f1f5f9; text-align: center;">
           <p style="font-size: 0.85rem; color: #64748b; font-style: italic; margin: 0;">
@@ -554,11 +555,11 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
     }
   };
 
-  if (loading && devisList.length === 0) {
+  if (loading && !devisList.length) {
     return (
       <div className="loading-state">
         <div className="loading-spinner">⏳</div>
-        <p>Chargement des devis...</p>
+        <p>Chargement...</p>
       </div>
     );
   }
@@ -716,14 +717,11 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
                   className="devis-card"
                   onClick={() => handleCreateInvoice(devisItem)}
                 >
-                  {/* Section supérieure */}
                   <div className="devis-card-top">
-                    {/* Avatar pour le devis */}
                     <div className="devis-avatar">
                       {devisItem.title ? devisItem.title.charAt(0).toUpperCase() : "D"}
                     </div>
-
-                    {/* Indicateur de statut */}
+                    
                     <div 
                       className="status-indicator clickable"
                       style={{ 
@@ -741,8 +739,7 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
                       {getStatusIcon(devisItem.status)}
                     </div>
                   </div>
-
-                  {/* Section contenu principal */}
+                  
                   <div className="devis-card-content">
                     <div className="devis-card-header">
                       <h3 className="devis-card-title">{devisItem.title || "Devis sans titre"}</h3>
@@ -758,19 +755,22 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
                         </div>
                       </div>
                     </div>
-
-                    {/* Informations client */}
+                    
                     <div className="devis-client-info">
                       <span className="devis-client-icon">👤</span>
                       <span className="devis-client-name">{client?.name || "Client inconnu"}</span>
                     </div>
-
-                    {/* Badge de statut */}
-                    <div className="devis-status-badge" style={{ backgroundColor: getStatusColor(devisItem.status), color: 'white' }}>
+                    
+                    <div 
+                      className="devis-status-badge"
+                      style={{ 
+                        backgroundColor: getStatusColor(devisItem.status),
+                        color: 'white'
+                      }}
+                    >
                       {getStatusIcon(devisItem.status)} {getStatusLabel(devisItem.status)}
                     </div>
-
-                    {/* Actions */}
+                    
                     <div className="devis-card-actions">
                       <button 
                         onClick={(e) => {
