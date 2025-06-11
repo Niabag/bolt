@@ -274,27 +274,25 @@ exports.importClients = async (req, res) => {
     const userId = req.userId;
     const filePath = file.path;
     let rows = [];
-    let created = 0;
     let total = 0;
+    let created = 0;
 
-    console.log(`📂 Importation de clients depuis ${file.originalname} (${file.mimetype})`);
+    console.log(`📂 Importation de prospects depuis ${file.originalname} (${file.mimetype})`);
 
-    // Déterminer le type de fichier par l'extension
-    const isCSV = file.originalname.toLowerCase().endsWith('.csv');
-    const isXLSX = file.originalname.toLowerCase().endsWith('.xlsx');
-
-    if (isCSV) {
-      // Détecter le séparateur (virgule ou point-virgule)
+    if (file.originalname.endsWith('.csv')) {
+      // Déterminer le séparateur (virgule ou point-virgule)
       const fileContent = fs.readFileSync(filePath, 'utf8');
       const firstLine = fileContent.split('\n')[0];
       const separator = firstLine.includes(';') ? ';' : ',';
       
-      console.log(`📊 Fichier CSV détecté avec séparateur: "${separator}"`);
-
-      // Lire le fichier CSV avec le séparateur détecté
+      console.log(`🔍 Séparateur CSV détecté: "${separator}"`);
+      
       await new Promise((resolve, reject) => {
         fs.createReadStream(filePath)
-          .pipe(csv({ separator }))
+          .pipe(csv({ 
+            separator: separator,
+            mapHeaders: ({ header }) => header.trim()
+          }))
           .on('data', (data) => {
             rows.push(data);
             total++;
@@ -302,109 +300,158 @@ exports.importClients = async (req, res) => {
           .on('end', resolve)
           .on('error', reject);
       });
-    } else if (isXLSX) {
-      console.log(`📊 Fichier XLSX détecté`);
+    } else if (file.originalname.endsWith('.xlsx')) {
       const workbook = xlsx.readFile(filePath);
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       rows = xlsx.utils.sheet_to_json(sheet);
       total = rows.length;
     } else {
       fs.unlinkSync(filePath);
-      return res.status(400).json({ message: 'Format de fichier non supporté. Utilisez CSV ou XLSX.' });
+      return res.status(400).json({ message: 'Format de fichier non supporté' });
     }
 
-    console.log(`📋 ${total} lignes trouvées dans le fichier`);
-
-    // Mapper les noms de colonnes possibles
-    const nameKeys = ['Nom', 'name', 'Prénom', 'Nom de famille', 'Nom complet', 'Full Name', 'Name'];
-    const emailKeys = ['Email', 'email', 'Adresse email', 'E-mail', 'Courriel', 'Mail'];
-    const phoneKeys = ['Téléphone', 'phone', 'Tel', 'Tél', 'Mobile', 'Numéro de téléphone', 'Numéro(s) de téléphone'];
-    const companyKeys = ['Entreprise', 'company', 'Société', 'Organisation', 'Company', 'Organization'];
-    const notesKeys = ['Notes', 'notes', 'Commentaires', 'Comments', 'Remarques'];
-    const addressKeys = ['Adresse', 'address', 'Rue', 'Street', 'Adresse postale'];
-    const postalCodeKeys = ['Code Postal', 'postalCode', 'CP', 'ZIP', 'Code postal'];
-    const cityKeys = ['Ville', 'city', 'Localité', 'City', 'Town'];
-    const statusKeys = ['Statut', 'status', 'État', 'Status', 'State'];
-
-    // Fonction pour trouver la valeur dans un objet en utilisant plusieurs clés possibles
-    const findValue = (obj, keys) => {
-      for (const key of keys) {
-        if (obj[key] !== undefined && obj[key] !== null && obj[key] !== '') {
-          return obj[key];
-        }
-      }
-      return null;
+    console.log(`📊 ${total} lignes trouvées dans le fichier`);
+    
+    // Mappage des en-têtes français vers les noms de champs anglais
+    const headerMappings = {
+      // Mappages standards
+      'nom': 'name',
+      'name': 'name',
+      'email': 'email',
+      'courriel': 'email',
+      'e-mail': 'email',
+      'adresse email': 'email',
+      'adresse e-mail': 'email',
+      'téléphone': 'phone',
+      'telephone': 'phone',
+      'tel': 'phone',
+      'tél': 'phone',
+      'phone': 'phone',
+      'numéro de téléphone': 'phone',
+      'entreprise': 'company',
+      'société': 'company',
+      'company': 'company',
+      'notes': 'notes',
+      'commentaires': 'notes',
+      'adresse': 'address',
+      'address': 'address',
+      'code postal': 'postalCode',
+      'cp': 'postalCode',
+      'postal code': 'postalCode',
+      'postalcode': 'postalCode',
+      'ville': 'city',
+      'city': 'city',
+      'statut': 'status',
+      'status': 'status',
+      'état': 'status',
+      
+      // Mappages spécifiques pour les formats d'export Google/Outlook
+      'prénom': 'firstName',
+      'prenom': 'firstName',
+      'first name': 'firstName',
+      'firstname': 'firstName',
+      'given name': 'firstName',
+      'nom de famille': 'lastName',
+      'last name': 'lastName',
+      'lastname': 'lastName',
+      'family name': 'lastName',
+      'numéro(s) de téléphone': 'phone',
+      'numéros de téléphone': 'phone',
+      'phone numbers': 'phone',
+      'fonction': 'jobTitle',
+      'poste': 'jobTitle',
+      'job title': 'jobTitle',
+      'titre': 'jobTitle',
+      'complément d\'adresse': 'addressComplement',
+      'address 2': 'addressComplement',
+      'pays': 'country',
+      'country': 'country',
+      'date de création': 'createdAt',
+      'date creation': 'createdAt',
+      'created': 'createdAt',
+      'created at': 'createdAt',
+      'langue': 'language',
+      'language': 'language'
     };
 
-    // Traiter chaque ligne
     for (const data of rows) {
-      console.log(`🔍 Traitement de la ligne:`, data);
-      
-      // Extraire les données avec différentes possibilités de noms de colonnes
-      const name = findValue(data, nameKeys);
-      const email = findValue(data, emailKeys);
-      const phone = findValue(data, phoneKeys);
-      const company = findValue(data, companyKeys);
-      const notes = findValue(data, notesKeys);
-      const address = findValue(data, addressKeys);
-      const postalCode = findValue(data, postalCodeKeys);
-      const city = findValue(data, cityKeys);
-      const status = findValue(data, statusKeys);
-
-      // Vérifier les champs obligatoires
-      if (!name || !email || !phone) {
-        console.log(`⚠️ Ligne ignorée: champs obligatoires manquants`, { name, email, phone });
-        continue;
-      }
-
-      // Vérifier si le client existe déjà
-      const exists = await Client.findOne({ email, userId });
-      if (exists) {
-        console.log(`⚠️ Client déjà existant: ${email}`);
-        continue;
-      }
-
-      // Déterminer le statut
-      let clientStatus = 'nouveau';
-      if (status) {
-        const statusLower = status.toLowerCase();
-        if (statusLower.includes('actif') || statusLower.includes('active')) {
-          clientStatus = 'active';
-        } else if (statusLower.includes('inactif') || statusLower.includes('inactive')) {
-          clientStatus = 'inactive';
-        } else if (statusLower.includes('attente') || statusLower.includes('pending')) {
-          clientStatus = 'en_attente';
-        }
-      }
-
-      // Créer le client
       try {
+        // Normaliser les clés du fichier importé
+        const normalizedData = {};
+        
+        // Convertir toutes les clés en minuscules pour la comparaison
+        Object.keys(data).forEach(key => {
+          const lowerKey = key.toLowerCase().trim();
+          const mappedKey = headerMappings[lowerKey] || lowerKey;
+          normalizedData[mappedKey] = data[key];
+        });
+        
+        console.log(`🔄 Traitement de la ligne:`, normalizedData);
+        
+        // Construire le nom complet si séparé en prénom/nom
+        let fullName = normalizedData.name;
+        if (!fullName && (normalizedData.firstName || normalizedData.lastName)) {
+          fullName = [normalizedData.firstName, normalizedData.lastName]
+            .filter(Boolean)
+            .join(' ');
+        }
+        
+        // Vérifier les champs obligatoires
+        if (!fullName || !normalizedData.email || !normalizedData.phone) {
+          console.log(`⚠️ Ligne ignorée: champs obligatoires manquants`);
+          continue;
+        }
+        
+        // Vérifier si le client existe déjà
+        const existingClient = await Client.findOne({ 
+          email: normalizedData.email, 
+          userId 
+        });
+        
+        if (existingClient) {
+          console.log(`⚠️ Client existant: ${normalizedData.email}`);
+          continue;
+        }
+        
+        // Normaliser le statut
+        let status = 'nouveau';
+        if (normalizedData.status) {
+          const statusLower = normalizedData.status.toLowerCase();
+          if (statusLower.includes('actif') || statusLower.includes('active')) {
+            status = 'active';
+          } else if (statusLower.includes('inactif') || statusLower.includes('inactive')) {
+            status = 'inactive';
+          } else if (statusLower.includes('attente') || statusLower.includes('pending')) {
+            status = 'en_attente';
+          }
+        }
+        
+        // Créer le client
         const client = new Client({
-          name,
-          email,
-          phone,
-          company: company || '',
-          notes: notes || '',
-          address: address || '',
-          postalCode: postalCode || '',
-          city: city || '',
-          status: clientStatus,
+          name: fullName,
+          email: normalizedData.email,
+          phone: normalizedData.phone,
+          company: normalizedData.company || '',
+          notes: normalizedData.notes || '',
+          address: normalizedData.address || '',
+          postalCode: normalizedData.postalCode || '',
+          city: normalizedData.city || '',
+          status: status,
           userId,
         });
         
         await client.save();
         created++;
-        console.log(`✅ Client créé: ${name} (${email})`);
+        console.log(`✅ Client créé: ${fullName} (${normalizedData.email})`);
       } catch (err) {
-        console.error(`❌ Erreur création client ${name}:`, err);
+        console.error(`❌ Erreur lors du traitement d'une ligne:`, err);
       }
     }
 
-    // Supprimer le fichier temporaire
+    // Nettoyer le fichier temporaire
     fs.unlinkSync(filePath);
     
-    console.log(`📊 Résultat de l'import: ${created} clients créés sur ${total} lignes`);
-    
+    console.log(`📊 Résumé de l'import: ${created} clients créés sur ${total} lignes`);
     res.status(201).json({ 
       message: 'Import terminé', 
       created, 
