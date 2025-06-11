@@ -275,7 +275,9 @@ exports.importClients = async (req, res) => {
     const filePath = file.path;
     let rows = [];
 
+    // Déterminer le type de fichier et le parser en conséquence
     if (file.originalname.endsWith('.csv')) {
+      // Parser le CSV
       await new Promise((resolve, reject) => {
         fs.createReadStream(filePath)
           .pipe(csv())
@@ -284,44 +286,75 @@ exports.importClients = async (req, res) => {
           .on('error', reject);
       });
     } else if (file.originalname.endsWith('.xlsx')) {
+      // Parser le XLSX
       const workbook = xlsx.readFile(filePath);
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       rows = xlsx.utils.sheet_to_json(sheet);
     } else {
+      // Nettoyer le fichier temporaire
       fs.unlinkSync(filePath);
       return res.status(400).json({ message: 'Format de fichier non supporté' });
     }
 
+    console.log("Lignes importées:", rows.length);
+    console.log("Exemple de données:", rows.length > 0 ? rows[0] : "Aucune donnée");
+
+    // Créer les clients
     const created = [];
     for (const data of rows) {
-      const name = data.Nom || data.name;
+      // Mapper les champs (prend en charge différentes conventions de nommage)
+      const name = data.Nom || data.nom || data.Name || data.name;
       const email = data.Email || data.email;
-      const phone = data['Téléphone'] || data.phone;
-      if (!name || !email || !phone) continue;
+      const phone = data.Téléphone || data.téléphone || data.Phone || data.phone;
+      
+      // Vérifier les champs obligatoires
+      if (!name || !email || !phone) {
+        console.log("❌ Ligne ignorée - champs obligatoires manquants:", data);
+        continue;
+      }
 
+      // Vérifier si le client existe déjà
       const exists = await Client.findOne({ email, userId });
-      if (exists) continue;
+      if (exists) {
+        console.log(`❌ Client ignoré - existe déjà: ${email}`);
+        continue;
+      }
 
+      // Créer le client
       const client = new Client({
         name,
         email,
         phone,
-        company: data.Entreprise || data.company,
-        notes: data.Notes || data.notes,
-        address: data.Adresse || data.address,
-        postalCode: data['Code Postal'] || data.postalCode,
-        city: data.Ville || data.city,
-        status: (data.Statut || 'nouveau').toLowerCase(),
+        company: data.Entreprise || data.entreprise || data.Company || data.company || '',
+        notes: data.Notes || data.notes || '',
+        address: data.Adresse || data.adresse || data.Address || data.address || '',
+        postalCode: data['Code Postal'] || data['code postal'] || data.PostalCode || data.postalCode || '',
+        city: data.Ville || data.ville || data.City || data.city || '',
+        status: (data.Statut || data.statut || data.Status || data.status || 'nouveau').toLowerCase(),
         userId,
       });
+
+      // Normaliser le statut
+      if (!['nouveau', 'en_attente', 'active', 'inactive'].includes(client.status)) {
+        client.status = 'nouveau';
+      }
+
       await client.save();
       created.push(client);
+      console.log(`✅ Client importé: ${name} (${email})`);
     }
 
+    // Nettoyer le fichier temporaire
     fs.unlinkSync(filePath);
-    res.status(201).json({ message: 'Import terminé', created: created.length });
+    
+    console.log(`✅ Import terminé: ${created.length} clients créés sur ${rows.length} lignes`);
+    res.status(201).json({ 
+      message: 'Import terminé', 
+      created: created.length, 
+      total: rows.length 
+    });
   } catch (error) {
     console.error('❌ Erreur import prospects:', error);
-    res.status(500).json({ message: "Erreur lors de l'import" });
+    res.status(500).json({ message: "Erreur lors de l'import", error: error.message });
   }
 };
