@@ -5,6 +5,7 @@ import DevisListPage from "../../components/Dashboard/Devis/devisListPage";
 import ProspectsPage from "../../components/Dashboard/Prospects/prospectsPage";
 import ProspectEditPage from "../../components/Dashboard/Prospects/prospectEditPage";
 import ProspectCreatePage from "../../components/Dashboard/Prospects/prospectCreatePage";
+import ProspectDetailsPage from "../../components/Dashboard/Prospects/prospectDetailsPage";
 import ClientBilling from "../../components/Dashboard/ClientBilling/clientBilling";
 import Analytics from "../../components/Dashboard/Analytics/analytics";
 import Settings from "../../components/Dashboard/Settings/settings";
@@ -229,6 +230,11 @@ const Dashboard = () => {
     setActiveTab("prospect-edit");
   };
 
+  const handleViewProspect = (prospect) => {
+    setSelectedProspect(prospect);
+    setActiveTab("prospect-view");
+  };
+
   // Définition des sections de navigation
   const navSections = [
     {
@@ -266,6 +272,7 @@ const Dashboard = () => {
       case "settings": return "Paramètres";
       case "prospect-edit": return "Modification Prospect";
       case "prospect-create": return "Nouveau Prospect";
+      case "prospect-view": return "Détails Prospect";
       default: return "CRM Pro";
     }
   };
@@ -282,6 +289,7 @@ const Dashboard = () => {
       case "settings": return "⚙️";
       case "prospect-edit": return "✏️";
       case "prospect-create": return "➕";
+      case "prospect-view": return "👁️";
       default: return "📊";
     }
   };
@@ -311,6 +319,7 @@ const Dashboard = () => {
                     (activeTab === "devis-creation" && item.id === "devis") ||
                     (activeTab === "prospect-edit" && item.id === "clients") ||
                     (activeTab === "prospect-create" && item.id === "clients") ||
+                    (activeTab === "prospect-view" && item.id === "clients") ||
                     (activeTab === "client-billing" && item.id === "devis")
                       ? "active"
                       : ""
@@ -323,7 +332,7 @@ const Dashboard = () => {
                       setSelectedClientForDevis(null);
                       setEditingDevis(null);
                     }
-                    if (item.id !== "clients" && item.id !== "prospect-edit" && item.id !== "prospect-create") {
+                    if (item.id !== "clients" && item.id !== "prospect-edit" && item.id !== "prospect-create" && item.id !== "prospect-view") {
                       setSelectedProspect(null);
                     }
                     if (item.id !== "client-billing") {
@@ -447,6 +456,7 @@ const Dashboard = () => {
                 onViewClientBilling={handleViewClientBilling}
                 onEditProspect={handleEditProspect}
                 onCreateProspect={handleCreateProspect}
+                onViewProspect={handleViewProspect}
               />
             )}
 
@@ -461,6 +471,19 @@ const Dashboard = () => {
                   fetchClients();
                   setSelectedProspect(null);
                   setActiveTab("clients");
+                }}
+              />
+            )}
+
+            {activeTab === "prospect-view" && selectedProspect && (
+              <ProspectDetailsPage
+                prospect={selectedProspect}
+                onBack={() => {
+                  setSelectedProspect(null);
+                  setActiveTab("clients");
+                }}
+                onEdit={() => {
+                  setActiveTab("prospect-edit");
                 }}
               />
             )}
