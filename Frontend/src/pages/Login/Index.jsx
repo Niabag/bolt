@@ -63,6 +63,7 @@ const Login = () => {
       // Stocker les données d'authentification
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
+      window.dispatchEvent(new CustomEvent('userUpdated', { detail: data.user }));
       
       console.log("✅ Connexion réussie");
       

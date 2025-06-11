@@ -42,6 +42,9 @@ const Settings = () => {
         email: userData.email || '',
         profileImage: userData.profileImage || ''
       }));
+      // Update localStorage and notify other components about the change
+      localStorage.setItem('user', JSON.stringify(userData));
+      window.dispatchEvent(new CustomEvent('userUpdated', { detail: userData }));
     } catch (error) {
       console.error('Erreur lors du chargement des données utilisateur:', error);
     }
