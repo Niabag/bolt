@@ -739,33 +739,33 @@ const ClientBilling = ({ client, onBack }) => {
                   </div>
                 </div>
                 
-                <div className="invoice-actions">
+                <div className="invoice-actions flex gap-2">
                   <button
-                    className="action-btn view-btn"
+                    className="bg-blue-50 text-blue-600 hover:bg-blue-100 rounded px-3 py-1 text-sm"
                     title="Voir la facture"
                   >
-                    👁️
+                    👁️ Voir
                   </button>
-                  
+
                   <button
-                    className="action-btn download-btn"
+                    className="bg-green-50 text-green-600 hover:bg-green-100 rounded px-3 py-1 text-sm"
                     title="Télécharger PDF"
                   >
-                    📥
+                    📥 PDF
                   </button>
-                  
+
                   <button
-                    className="action-btn send-btn"
+                    className="bg-yellow-50 text-yellow-600 hover:bg-yellow-100 rounded px-3 py-1 text-sm"
                     title="Envoyer par email"
                   >
-                    📧
+                    📧 Envoyer
                   </button>
-                  
+
                   <button
-                    className="action-btn delete-btn"
+                    className="bg-red-50 text-red-600 hover:bg-red-100 rounded px-3 py-1 text-sm"
                     title="Supprimer"
                   >
-                    🗑️
+                    🗑️ Supprimer
                   </button>
                 </div>
               </div>

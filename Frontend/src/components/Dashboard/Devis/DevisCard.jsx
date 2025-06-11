@@ -22,23 +22,26 @@ const DevisCard = ({ devis, onEdit, onPdf, onDelete, loading = false }) => {
           <span className="devis-card-amount">💰 {ttc.toFixed(2)} € TTC</span>
         </div>
       </div>
-      <div className="devis-card-actions">
-        <button className="card-btn card-btn-edit" onClick={() => onEdit && onEdit(devis)}>
-          ✏️ Modifier
+      <div className="devis-card-actions flex gap-2">
+        <button
+          className="bg-yellow-50 text-yellow-600 hover:bg-yellow-100 rounded px-3 py-1 text-sm"
+          onClick={() => onEdit && onEdit(devis)}
+        >
+          ✏️ Éditer
         </button>
         <button
-          className="card-btn card-btn-pdf"
+          className="bg-blue-50 text-blue-600 hover:bg-blue-100 rounded px-3 py-1 text-sm"
           onClick={() => onPdf && onPdf(devis)}
           disabled={loading}
         >
           {loading ? '⏳' : '📄'} PDF
         </button>
         <button
-          className="card-btn card-btn-delete"
+          className="bg-red-50 text-red-600 hover:bg-red-100 rounded px-3 py-1 text-sm"
           onClick={() => onDelete && onDelete(devis._id)}
           title="Supprimer"
         >
-          🗑️
+          🗑️ Supprimer
         </button>
       </div>
     </div>

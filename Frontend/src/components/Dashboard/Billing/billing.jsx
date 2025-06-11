@@ -642,23 +642,26 @@ const Billing = ({ clients = [], onRefresh }) => {
                   </div>
                 </div>
 
-                <div className="invoice-actions">
+                <div className="invoice-actions flex gap-2">
                   <button
                     onClick={() => handleDownloadInvoicePDF(invoice)}
-                    className="action-btn download-btn"
+                    className="bg-green-50 text-green-600 hover:bg-green-100 rounded px-3 py-1 text-sm"
                     title="Télécharger PDF"
                   >
-                    📥
+                    📥 PDF
                   </button>
-                  <button className="action-btn send-btn" title="Envoyer par email">
-                    📧
+                  <button
+                    className="bg-yellow-50 text-yellow-600 hover:bg-yellow-100 rounded px-3 py-1 text-sm"
+                    title="Envoyer par email"
+                  >
+                    📧 Envoyer
                   </button>
                   <button
                     onClick={() => handleDeleteInvoice(invoice.id)}
-                    className="action-btn delete-btn"
+                    className="bg-red-50 text-red-600 hover:bg-red-100 rounded px-3 py-1 text-sm"
                     title="Supprimer la facture"
                   >
-                    🗑️
+                    🗑️ Supprimer
                   </button>
                 </div>
               </div>
