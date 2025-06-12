@@ -228,15 +228,17 @@ const Settings = ({ onDataImported }) => {
   const exportData = async () => {
     try {
       setLoading(true);
-      const [clients, devis] = await Promise.all([
+      const [clients, devis, invoices] = await Promise.all([
         apiRequest(API_ENDPOINTS.CLIENTS.BASE),
-        apiRequest(API_ENDPOINTS.DEVIS.BASE)
+        apiRequest(API_ENDPOINTS.DEVIS.BASE),
+        apiRequest(API_ENDPOINTS.INVOICES.BASE)
       ]);
 
       const exportData = {
         user: user,
         clients: clients,
         devis: devis,
+        invoices: invoices,
         exportDate: new Date().toISOString()
       };
 
@@ -251,6 +253,8 @@ const Settings = ({ onDataImported }) => {
         XLSX.utils.book_append_sheet(wb, wsClients, 'Clients');
         const wsDevis = XLSX.utils.json_to_sheet(devis);
         XLSX.utils.book_append_sheet(wb, wsDevis, 'Devis');
+        const wsInvoices = XLSX.utils.json_to_sheet(invoices);
+        XLSX.utils.book_append_sheet(wb, wsInvoices, 'Factures');
         XLSX.writeFile(wb, `crm-export-${dateStr}.xlsx`);
       } else if (exportFormat === 'vcf') {
         const vcardStr = clients.map(c => `BEGIN:VCARD\nVERSION:3.0\nFN:${c.name}\nEMAIL:${c.email}\nTEL:${c.phone}\nORG:${c.company || ''}\nEND:VCARD`).join('\n');
