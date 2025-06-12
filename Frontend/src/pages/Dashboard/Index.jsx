@@ -121,7 +121,8 @@ const Dashboard = () => {
 
   const handleViewClientDevis = (client) => {
     setSelectedClientForDevis(client);
-    setActiveTab("devis-creation");
+    // Ouvrir la liste des devis pour pouvoir générer une facture
+    setActiveTab("devis");
   };
 
   const handleViewClientBilling = (client) => {
