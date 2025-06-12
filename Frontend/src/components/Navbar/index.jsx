@@ -1,5 +1,6 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
+import { clearNotificationsStorage } from "../../utils/notifications";
 import { API_ENDPOINTS, apiRequest } from "../../config/api";
 import "./navbar.scss";
 
@@ -58,6 +59,7 @@ const Navbar = () => {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    clearNotificationsStorage();
     setUser(null);
     navigate("/");
   };

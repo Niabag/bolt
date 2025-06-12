@@ -13,6 +13,7 @@ import Notifications from "../../components/Dashboard/Notifications/notification
 import BusinessCard from "../../components/Dashboard/BusinessCard/businessCard";
 import Billing from "../../components/Dashboard/Billing/billing";
 import { API_ENDPOINTS, apiRequest } from "../../config/api";
+import { clearNotificationsStorage } from "../../utils/notifications";
 import "./dashboard.scss";
 
 const Dashboard = () => {
@@ -148,6 +149,7 @@ const Dashboard = () => {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    clearNotificationsStorage();
     navigate("/");
   };
 

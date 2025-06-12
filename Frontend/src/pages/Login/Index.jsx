@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { API_ENDPOINTS, apiRequest } from "../../config/api";
+import { clearNotificationsStorage } from "../../utils/notifications";
 import "./login.scss";
 
 const Login = () => {
@@ -60,7 +61,8 @@ const Login = () => {
         }),
       });
 
-      // Stocker les données d'authentification
+      // Nettoyer les anciennes notifications puis stocker les données d'authentification
+      clearNotificationsStorage();
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       window.dispatchEvent(new CustomEvent('userUpdated', { detail: data.user }));
