@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { getSubscriptionStatus, createCheckoutSession, startFreeTrial, SUBSCRIPTION_STATUS, DEFAULT_TRIAL_DAYS, SUBSCRIPTION_PRICE } from '../../services/subscription';
+import { getSubscriptionStatus, createCheckoutSession, startFreeTrial, SUBSCRIPTION_STATUS, DEFAULT_TRIAL_DAYS, SUBSCRIPTION_PLANS } from '../../services/subscription';
 import Navbar from '../Navbar';
 import './SubscriptionRequired.scss';
 
@@ -11,6 +11,7 @@ const SubscriptionRequired = () => {
   const [processingCheckout, setProcessingCheckout] = useState(false);
   const [processingTrial, setProcessingTrial] = useState(false);
   const [error, setError] = useState('');
+  const [selectedPlan, setSelectedPlan] = useState(SUBSCRIPTION_PLANS.MONTHLY.id);
 
   useEffect(() => {
     const fetchSubscriptionStatus = async () => {
@@ -54,10 +55,7 @@ const SubscriptionRequired = () => {
     setError('');
     
     try {
-      // Price ID for the monthly subscription plan
-      const priceId = 'price_1OqXYZHGJMCmVBnT8YgYbL3M';
-      
-      const { url } = await createCheckoutSession(priceId);
+      const { url } = await createCheckoutSession(selectedPlan);
       
       if (url) {
         window.location.href = url;
@@ -127,13 +125,61 @@ const SubscriptionRequired = () => {
             {getStatusMessage()}
           </div>
 
+          <div className="plan-selector">
+            <h3>Choisissez votre plan</h3>
+            <div className="plan-options">
+              <div 
+                className={`plan-option ${selectedPlan === SUBSCRIPTION_PLANS.MONTHLY.id ? 'selected' : ''}`}
+                onClick={() => setSelectedPlan(SUBSCRIPTION_PLANS.MONTHLY.id)}
+              >
+                <div className="plan-name">{SUBSCRIPTION_PLANS.MONTHLY.name}</div>
+                <div className="plan-price">{SUBSCRIPTION_PLANS.MONTHLY.price}€/{SUBSCRIPTION_PLANS.MONTHLY.period}</div>
+                <div className="plan-savings">&nbsp;</div>
+              </div>
+              
+              <div 
+                className={`plan-option ${selectedPlan === SUBSCRIPTION_PLANS.QUARTERLY.id ? 'selected' : ''}`}
+                onClick={() => setSelectedPlan(SUBSCRIPTION_PLANS.QUARTERLY.id)}
+              >
+                <div className="plan-name">{SUBSCRIPTION_PLANS.QUARTERLY.name}</div>
+                <div className="plan-price">{SUBSCRIPTION_PLANS.QUARTERLY.price}€/{SUBSCRIPTION_PLANS.QUARTERLY.period}</div>
+                <div className="plan-savings">Économisez {SUBSCRIPTION_PLANS.QUARTERLY.savings}</div>
+              </div>
+              
+              <div 
+                className={`plan-option ${selectedPlan === SUBSCRIPTION_PLANS.ANNUAL.id ? 'selected' : ''}`}
+                onClick={() => setSelectedPlan(SUBSCRIPTION_PLANS.ANNUAL.id)}
+              >
+                <div className="plan-name">{SUBSCRIPTION_PLANS.ANNUAL.name}</div>
+                <div className="plan-price">{SUBSCRIPTION_PLANS.ANNUAL.price}€/{SUBSCRIPTION_PLANS.ANNUAL.period}</div>
+                <div className="plan-savings">Économisez {SUBSCRIPTION_PLANS.ANNUAL.savings}</div>
+              </div>
+            </div>
+          </div>
+
           <div className="subscription-options">
             <div className="subscription-card">
-              <div className="subscription-badge">Offre Unique</div>
+              <div className="subscription-badge">Offre Complète</div>
               <h2 className="subscription-title">Abonnement Pro</h2>
               <div className="subscription-price">
-                <span className="price-amount">{SUBSCRIPTION_PRICE}€</span>
-                <span className="price-period">/mois</span>
+                {selectedPlan === SUBSCRIPTION_PLANS.MONTHLY.id && (
+                  <>
+                    <span className="price-amount">{SUBSCRIPTION_PLANS.MONTHLY.price}€</span>
+                    <span className="price-period">/{SUBSCRIPTION_PLANS.MONTHLY.period}</span>
+                  </>
+                )}
+                {selectedPlan === SUBSCRIPTION_PLANS.QUARTERLY.id && (
+                  <>
+                    <span className="price-amount">{SUBSCRIPTION_PLANS.QUARTERLY.price}€</span>
+                    <span className="price-period">/{SUBSCRIPTION_PLANS.QUARTERLY.period}</span>
+                  </>
+                )}
+                {selectedPlan === SUBSCRIPTION_PLANS.ANNUAL.id && (
+                  <>
+                    <span className="price-amount">{SUBSCRIPTION_PLANS.ANNUAL.price}€</span>
+                    <span className="price-period">/{SUBSCRIPTION_PLANS.ANNUAL.period}</span>
+                  </>
+                )}
               </div>
               <p className="subscription-description">
                 Accès complet à toutes les fonctionnalités pour développer votre activité

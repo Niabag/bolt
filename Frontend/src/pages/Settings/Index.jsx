@@ -1,7 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS, apiRequest } from '../../config/api';
-import { getSubscriptionStatus, createPortalSession, createCheckoutSession, startFreeTrial, SUBSCRIPTION_STATUS, getTrialDaysRemaining, DEFAULT_TRIAL_DAYS } from '../../services/subscription';
+import {
+  getSubscriptionStatus,
+  createPortalSession,
+  createCheckoutSession,
+  startFreeTrial,
+  SUBSCRIPTION_STATUS,
+  getTrialDaysRemaining,
+  DEFAULT_TRIAL_DAYS,
+  SUBSCRIPTION_PLANS
+} from '../../services/subscription';
 
 import './settings.scss';
 
@@ -172,8 +181,7 @@ const Settings = () => {
     setProcessingCheckout(true);
     setMessage('');
     try {
-      const priceId = 'price_1OqXYZHGJMCmVBnT8YgYbL3M';
-      const { url } = await createCheckoutSession(priceId);
+      const { url } = await createCheckoutSession(SUBSCRIPTION_PLANS.MONTHLY.id);
       if (url) {
         window.location.href = url;
       } else {
