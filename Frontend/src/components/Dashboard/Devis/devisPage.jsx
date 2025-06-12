@@ -735,6 +735,27 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
 
         </div>
       )}
+
+      {/* Prévisualisation dynamique de la facture */}
+      {selectedDevisForInvoice && (
+        <div className="invoice-preview-section" ref={invoicePreviewRef}>
+          <DynamicInvoice
+            invoice={{
+              invoiceNumber: `FACT-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
+              dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+              createdAt: new Date().toISOString().split('T')[0],
+              devisIds: [selectedDevisForInvoice._id]
+            }}
+            client={selectedClientForInvoice}
+            devisDetails={[selectedDevisForInvoice]}
+            onSave={handleSaveInvoice}
+            onCancel={() => {
+              setSelectedDevisForInvoice(null);
+              setSelectedClientForInvoice(null);
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 };
