@@ -85,7 +85,7 @@
   padding: 3rem;
   box-shadow: 0 25px 50px rgba(0, 0, 0, 0.1);
   position: relative;
-  overflow: hidden;
+  overflow: visible; /* allow badge to overflow */
   border: 1px solid #f1f5f9;
   transition: all 0.3s ease;
   animation: fadeInUp 0.6s ease-out 0.2s both;
