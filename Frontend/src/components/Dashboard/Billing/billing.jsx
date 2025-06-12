@@ -61,7 +61,13 @@ const Billing = ({ clients = [], onRefresh }) => {
 
   const fetchInvoices = async () => {
     try {
-      // Simulation des factures - à remplacer par un vrai endpoint
+      setLoading(true);
+      // Récupérer les factures depuis l'API
+      const data = await apiRequest(API_ENDPOINTS.INVOICES.BASE);
+      setInvoices(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Erreur lors du chargement des factures:', error);
+      // En cas d'erreur, utiliser des données simulées
       const mockInvoices = [
         {
           id: 'INV-001',
@@ -99,8 +105,8 @@ const Billing = ({ clients = [], onRefresh }) => {
       ];
 
       setInvoices(mockInvoices);
-    } catch (error) {
-      console.error('Erreur lors du chargement des factures:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -180,24 +186,34 @@ const Billing = ({ clients = [], onRefresh }) => {
       const selectedDevisData = devisList.filter(d => invoiceToSave.devisIds.includes(d._id));
       const total = updatedInvoice ? updatedInvoice.amount : calculateInvoiceTotal();
 
-      const invoice = {
-        id: `INV-${Date.now()}`,
-        clientId: invoiceToSave.clientId,
-        clientName: client?.name || 'Client inconnu',
-        amount: total,
-        status: invoiceToSave.status || 'pending',
-        dueDate: invoiceToSave.dueDate,
-        createdAt: invoiceToSave.createdAt || new Date().toISOString(),
+      // Préparer les données de la facture
+      const invoiceData = {
         invoiceNumber: invoiceToSave.invoiceNumber,
+        clientId: invoiceToSave.clientId,
         devisIds: invoiceToSave.devisIds,
+        amount: total,
+        status: invoiceToSave.status || 'draft',
+        dueDate: invoiceToSave.dueDate,
         notes: invoiceToSave.notes,
         paymentTerms: invoiceToSave.paymentTerms,
         discount: invoiceToSave.discount,
-        taxRate: invoiceToSave.taxRate
+        taxRate: invoiceToSave.taxRate,
+        entrepriseName: invoiceToSave.entrepriseName,
+        entrepriseAddress: invoiceToSave.entrepriseAddress,
+        entrepriseCity: invoiceToSave.entrepriseCity,
+        entreprisePhone: invoiceToSave.entreprisePhone,
+        entrepriseEmail: invoiceToSave.entrepriseEmail,
+        logoUrl: invoiceToSave.logoUrl
       };
 
-      // Ajouter à la liste locale (en attendant l'API)
-      setInvoices(prev => [invoice, ...prev]);
+      // Envoyer la requête à l'API
+      const response = await apiRequest(API_ENDPOINTS.INVOICES.BASE, {
+        method: 'POST',
+        body: JSON.stringify(invoiceData)
+      });
+
+      // Ajouter la nouvelle facture à la liste
+      setInvoices(prev => [response.invoice, ...prev]);
       
       // Réinitialiser
       setSelectedDevis([]);
@@ -304,13 +320,26 @@ const Billing = ({ clients = [], onRefresh }) => {
     }
   };
 
-  const handleDeleteInvoice = (invoiceId) => {
+  const handleDeleteInvoice = async (invoiceId) => {
     if (window.confirm("Supprimer cette facture ?")) {
-      setInvoices(prev => prev.filter(inv => inv.id !== invoiceId));
+      try {
+        setLoading(true);
+        await apiRequest(API_ENDPOINTS.INVOICES.DELETE(invoiceId), {
+          method: 'DELETE'
+        });
+        
+        setInvoices(prev => prev.filter(inv => inv.id !== invoiceId));
+        alert('✅ Facture supprimée avec succès');
+      } catch (error) {
+        console.error('Erreur lors de la suppression:', error);
+        alert('❌ Erreur lors de la suppression de la facture');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
-  const handleInvoiceStatusClick = (invoiceId, currentStatus) => {
+  const handleInvoiceStatusClick = async (invoiceId, currentStatus) => {
     let newStatus;
     switch (currentStatus) {
       case 'draft':
@@ -329,13 +358,26 @@ const Billing = ({ clients = [], onRefresh }) => {
         newStatus = 'pending';
     }
 
-    setInvoices(prev =>
-      prev.map(inv =>
-        inv.id === invoiceId ? { ...inv, status: newStatus } : inv
-      )
-    );
+    try {
+      setLoading(true);
+      await apiRequest(API_ENDPOINTS.INVOICES.UPDATE_STATUS(invoiceId), {
+        method: 'PATCH',
+        body: JSON.stringify({ status: newStatus })
+      });
+      
+      setInvoices(prev =>
+        prev.map(inv =>
+          inv.id === invoiceId ? { ...inv, status: newStatus } : inv
+        )
+      );
 
-    alert(`Statut de la facture mis à jour : ${getStatusLabel(newStatus)}`);
+      alert(`Statut de la facture mis à jour : ${getStatusLabel(newStatus)}`);
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour du statut:', error);
+      alert('❌ Erreur lors de la mise à jour du statut');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const formatDate = (dateStr) => {
@@ -519,7 +561,7 @@ const Billing = ({ clients = [], onRefresh }) => {
                   onClick={() => handleSelectDevis(devis._id)}
                 >
                   <div className="devis-card-content">
-                    <h3 className="devis-card-title">Devis {formatDate(devis.dateDevis)}</h3>
+                    <h3 className="devis-card-title">{devis.title || "Devis sans titre"}</h3>
                     
                     <div className="devis-meta">
                       <div className="devis-client">
@@ -604,14 +646,14 @@ const Billing = ({ clients = [], onRefresh }) => {
         ) : (
           <div className="invoices-grid">
             {invoices.map((invoice) => (
-              <div key={invoice.id} className="invoice-card">
+              <div key={invoice.id || invoice._id} className="invoice-card">
                 <div className="invoice-header">
                   <div className="invoice-number">{invoice.invoiceNumber}</div>
                   <div
                     className="invoice-status clickable"
                     style={{ backgroundColor: getStatusColor(invoice.status), color: 'white' }}
                     title={getNextStatusLabel(invoice.status)}
-                    onClick={() => handleInvoiceStatusClick(invoice.id, invoice.status)}
+                    onClick={() => handleInvoiceStatusClick(invoice.id || invoice._id, invoice.status)}
                   >
                     {getStatusIcon(invoice.status)} {getStatusLabel(invoice.status)}
                   </div>
@@ -638,7 +680,7 @@ const Billing = ({ clients = [], onRefresh }) => {
                   </div>
 
                   <div className="invoice-devis">
-                    <span>📄 Devis inclus : {invoice.devisIds.length}</span>
+                    <span>📄 Devis inclus : {invoice.devisIds?.length || 0}</span>
                   </div>
                 </div>
 
@@ -657,7 +699,7 @@ const Billing = ({ clients = [], onRefresh }) => {
                     📧 Envoyer
                   </button>
                   <button
-                    onClick={() => handleDeleteInvoice(invoice.id)}
+                    onClick={() => handleDeleteInvoice(invoice.id || invoice._id)}
                     className="bg-red-50 text-red-600 hover:bg-red-100 rounded px-3 py-1 text-sm"
                     title="Supprimer la facture"
                   >
