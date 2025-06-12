@@ -35,6 +35,7 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [clientInvoices, setClientInvoices] = useState([]);
 
   useEffect(() => {
     const fetchDevis = async () => {
@@ -61,6 +62,22 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
     };
     
     fetchDevis();
+  }, [filterClientId]);
+
+  useEffect(() => {
+    const fetchInvoices = async () => {
+      if (!filterClientId) {
+        setClientInvoices([]);
+        return;
+      }
+      try {
+        const data = await apiRequest(API_ENDPOINTS.INVOICES.BY_CLIENT(filterClientId));
+        setClientInvoices(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Erreur récupération factures client:", err);
+      }
+    };
+    fetchInvoices();
   }, [filterClientId]);
 
   useEffect(() => {
@@ -514,9 +531,39 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
       })
     : devisList;
 
-  const selectedClient = filterClientId 
+  const selectedClient = filterClientId
     ? clients.find(c => c._id === filterClientId)
     : null;
+
+  const getInvoiceStatusColor = (status) => {
+    switch (status) {
+      case 'paid': return '#10b981';
+      case 'pending': return '#f59e0b';
+      case 'overdue': return '#ef4444';
+      case 'draft': return '#6b7280';
+      default: return '#6b7280';
+    }
+  };
+
+  const getInvoiceStatusLabel = (status) => {
+    switch (status) {
+      case 'paid': return 'Payée';
+      case 'pending': return 'En attente';
+      case 'overdue': return 'En retard';
+      case 'draft': return 'Brouillon';
+      default: return 'Inconnu';
+    }
+  };
+
+  const getInvoiceStatusIcon = (status) => {
+    switch (status) {
+      case 'paid': return '✅';
+      case 'pending': return '⏳';
+      case 'overdue': return '⚠️';
+      case 'draft': return '📝';
+      default: return '❓';
+    }
+  };
 
   if (loading && devisList.length === 0) {
     return (
@@ -624,6 +671,41 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
           />
         )}
       </div>
+
+      {selectedClient && (
+        <div className="invoices-section">
+          <h3>Factures de {selectedClient.name}</h3>
+          {clientInvoices.length === 0 ? (
+            <p className="empty-message">Aucune facture pour ce client</p>
+          ) : (
+            <div className="invoices-grid">
+              {clientInvoices.map(inv => (
+                <div key={inv._id} className="invoice-card">
+                  <div className="invoice-header">
+                    <div className="invoice-number">{inv.invoiceNumber}</div>
+                    <div
+                      className="invoice-status"
+                      style={{ backgroundColor: getInvoiceStatusColor(inv.status), color: 'white' }}
+                    >
+                      {getInvoiceStatusIcon(inv.status)} {getInvoiceStatusLabel(inv.status)}
+                    </div>
+                  </div>
+                  <div className="invoice-content">
+                    <div className="invoice-amount">
+                      <span className="amount-label">Montant :</span>
+                      <span className="amount-value">{inv.amount.toFixed(2)} €</span>
+                    </div>
+                    <div className="invoice-dates">
+                      <div className="invoice-date">📅 Émise le : {formatDate(inv.createdAt)}</div>
+                      <div className="invoice-due">⏰ Échéance : {formatDate(inv.dueDate)}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

@@ -603,6 +603,99 @@
   scroll-margin-top: 20px;
 }
 
+/* Section liste des factures */
+.invoices-section {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f1f5f9;
+  margin-top: 3rem;
+}
+
+.invoices-section h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: #0f172a;
+}
+
+.invoices-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.5rem;
+}
+
+.invoice-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  border: 2px solid #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.invoice-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  border-color: #3b82f6;
+}
+
+.invoice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.invoice-number {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+  font-family: 'Courier New', monospace;
+}
+
+.invoice-status {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.invoice-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.invoice-amount {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.amount-label {
+  font-weight: 600;
+  color: #334155;
+}
+
+.amount-value {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.invoice-dates {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
 /* Responsive */
 @media (max-width: 1200px) {
   .devis-page {
