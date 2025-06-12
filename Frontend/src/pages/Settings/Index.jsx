@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS, apiRequest } from '../../config/api';
 import { getSubscriptionStatus, createPortalSession, createCheckoutSession, startFreeTrial, SUBSCRIPTION_STATUS, getTrialDaysRemaining, DEFAULT_TRIAL_DAYS } from '../../services/subscription';
@@ -203,6 +203,8 @@ const Settings = () => {
   };
 
   const [exportFormat, setExportFormat] = useState('json');
+  const [importFormat, setImportFormat] = useState('csv');
+  const fileInputRef = useRef(null);
 
   const exportData = async () => {
     try {
@@ -256,6 +258,32 @@ const Settings = () => {
       setMessage(`❌ Erreur lors de l'export: ${error.message}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const importData = async () => {
+    const file = fileInputRef.current?.files[0];
+    if (!file) {
+      setMessage('❌ Sélectionnez un fichier à importer');
+      return;
+    }
+    setLoading(true);
+    setMessage('');
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      form.append('format', importFormat);
+      await apiRequest(API_ENDPOINTS.CLIENTS.IMPORT, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        body: form,
+      });
+      setMessage('✅ Prospects importés avec succès');
+    } catch (error) {
+      setMessage(`❌ Erreur lors de l'import: ${error.message}`);
+    } finally {
+      setLoading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -484,11 +512,35 @@ const Settings = () => {
                 📥 Exporter mes données
               </button>
             </div>
-            <p className="help-text">
-              Téléchargez toutes vos données (clients, devis) dans le format sélectionné
-            </p>
-          </div>
-        </section>
+              <p className="help-text">
+                Téléchargez toutes vos données (clients, devis) dans le format sélectionné
+              </p>
+              <div className="import-options" style={{ marginTop: '0.5rem' }}>
+                <select value={importFormat} onChange={e => setImportFormat(e.target.value)}>
+                  <option value="csv">CSV</option>
+                  <option value="xlsx">Excel</option>
+                  <option value="json">JSON</option>
+                  <option value="pdf">PDF</option>
+                  <option value="vcf">vCard</option>
+                </select>
+              </div>
+              <div className="file-upload" style={{ marginTop: '0.5rem' }}>
+                <input
+                  type="file"
+                  id="prospects-file"
+                  ref={fileInputRef}
+                  accept={importFormat === 'vcf' ? '.vcf,.vcard' : `.${importFormat}`}
+                  disabled={loading}
+                />
+                <label htmlFor="prospects-file" className="upload-btn">
+                  📂 Choisir un fichier
+                </label>
+              </div>
+              <button onClick={importData} disabled={loading} className="import-btn" style={{ marginTop: '0.5rem' }}>
+                📤 Importer des prospects
+              </button>
+            </div>
+          </section>
 
         <section className="settings-section">
           <h3>ℹ️ Informations de l'application</h3>
