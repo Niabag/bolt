@@ -104,8 +104,7 @@
 }
 
 .subscription-status,
-.subscription-period,
-.trial-period {
+.subscription-period {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -276,7 +275,6 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  width: 210px;
 }
 
 .settings-section button:hover:not(:disabled) {
@@ -296,29 +294,6 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-}
-
-.export-options, .import-options {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-
-.data-select {
-  padding: 10px 12px;
-  border: 2px solid #e2e8f0;
-  border-radius: 10px;
-  background: #f8fafc;
-  font-size: 0.95rem;
-  min-width: 120px;
-  transition: all 0.3s ease;
-}
-
-.data-select:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .export-btn {
@@ -540,6 +515,70 @@
   color: #0f172a;
 }
 
+/* Notification pour fonctionnalité premium */
+.subscription-required-notice {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border: 2px solid #3b82f6;
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.notice-icon {
+  font-size: 2.5rem;
+  color: #1e40af;
+  flex-shrink: 0;
+}
+
+.notice-content {
+  flex: 1;
+}
+
+.notice-content h5 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e40af;
+  margin: 0 0 0.5rem 0;
+}
+
+.notice-content p {
+  color: #1e40af;
+  font-size: 0.9rem;
+  margin: 0 0 1rem 0;
+}
+
+.upgrade-btn {
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%) !important;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
+}
+
+.upgrade-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+}
+
+.upgrade-btn:disabled {
+  background: #94a3b8 !important;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 @media (max-width: 768px) {
   .settings-container {
     padding: 0;
@@ -557,25 +596,26 @@
     font-size: 1.2rem;
   }
   
-  .export-options, .import-options {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .data-select {
-    width: 100%;
-  }
-  
-  .export-btn, .import-btn {
-    width: 100%;
-  }
-  
   .import-controls {
     flex-direction: column;
   }
   
   .format-selector, 
   .file-upload-container {
+    width: 100%;
+  }
+  
+  .subscription-required-notice {
+    flex-direction: column;
+    text-align: center;
+    padding: 1.25rem;
+  }
+  
+  .notice-content {
+    text-align: center;
+  }
+  
+  .upgrade-btn {
     width: 100%;
   }
 }

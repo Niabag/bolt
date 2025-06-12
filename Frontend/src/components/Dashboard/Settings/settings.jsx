@@ -302,6 +302,13 @@ const Settings = ({ onDataImported }) => {
       return;
     }
     
+    // Vérifier si l'utilisateur a un abonnement actif ou est en période d'essai
+    if (!hasValidSubscription()) {
+      setMessage('❌ L\'importation de prospects est réservée aux utilisateurs avec un abonnement actif');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+    
     setLoading(true);
     setMessage('');
     
@@ -347,6 +354,14 @@ const Settings = ({ onDataImported }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Vérifier si l'utilisateur a un abonnement valide
+  const hasValidSubscription = () => {
+    if (!subscription) return false;
+    
+    return subscription.status === SUBSCRIPTION_STATUS.ACTIVE || 
+           subscription.status === SUBSCRIPTION_STATUS.TRIAL;
   };
 
   const getSubscriptionStatusText = () => {
@@ -616,47 +631,74 @@ const Settings = ({ onDataImported }) => {
             <div className="import-actions">
               <div className="import-header">
                 <h4>Importer des prospects</h4>
-                <p className="import-description">Importez vos prospects depuis un fichier CSV ou Excel</p>
+                <p className="import-description">
+                  {hasValidSubscription() 
+                    ? "Importez vos prospects depuis un fichier CSV ou Excel" 
+                    : "⚠️ Fonctionnalité réservée aux abonnés"}
+                </p>
               </div>
               
-              <div className="import-controls">
-                <div className="format-selector">
-                  <label htmlFor="importFormat">Format du fichier :</label>
-                  <select
-                    id="importFormat"
-                    value={importFormat}
-                    onChange={(e) => setImportFormat(e.target.value)}
-                    className="format-select"
-                  >
-                    <option value="csv">CSV</option>
-                    <option value="xlsx">Excel (XLSX)</option>
-                  </select>
+              {hasValidSubscription() ? (
+                <>
+                  <div className="import-controls">
+                    <div className="format-selector">
+                      <label htmlFor="importFormat">Format du fichier :</label>
+                      <select
+                        id="importFormat"
+                        value={importFormat}
+                        onChange={(e) => setImportFormat(e.target.value)}
+                        className="format-select"
+                      >
+                        <option value="csv">CSV</option>
+                        <option value="xlsx">Excel (XLSX)</option>
+                      </select>
+                    </div>
+                    
+                    <div className="file-upload-container">
+                      <input
+                        type="file"
+                        id="prospects-file"
+                        ref={fileInputRef}
+                        accept={importFormat === 'xlsx' ? '.xlsx' : '.csv'}
+                        onChange={handleProspectsFileChange}
+                        className="file-input"
+                        disabled={loading}
+                      />
+                      <label htmlFor="prospects-file" className="file-upload-btn">
+                        {loading ? '⏳ Chargement...' : '📂 Sélectionner un fichier'}
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <div className="import-help">
+                    <p>Formats supportés :</p>
+                    <ul className="format-list">
+                      <li><strong>CSV</strong> - Fichier texte avec valeurs séparées par des virgules ou points-virgules</li>
+                      <li><strong>XLSX</strong> - Fichier Excel</li>
+                    </ul>
+                    <a href="/docs/ImportProspects.md" target="_blank" className="help-link">Voir la documentation d'import</a>
+                  </div>
+                </>
+              ) : (
+                <div className="subscription-required-notice">
+                  <div className="notice-icon">🔒</div>
+                  <div className="notice-content">
+                    <h5>Fonctionnalité Premium</h5>
+                    <p>L'importation de prospects est disponible uniquement avec un abonnement actif ou pendant la période d'essai.</p>
+                    <button 
+                      onClick={subscription && !subscription.hasHadTrial ? handleStartTrial : handleSubscribe}
+                      className="upgrade-btn"
+                      disabled={processingCheckout}
+                    >
+                      {processingCheckout 
+                        ? 'Chargement...' 
+                        : subscription && !subscription.hasHadTrial 
+                          ? `Commencer l'essai gratuit (${DEFAULT_TRIAL_DAYS} jours)` 
+                          : "S'abonner maintenant"}
+                    </button>
+                  </div>
                 </div>
-                
-                <div className="file-upload-container">
-                  <input
-                    type="file"
-                    id="prospects-file"
-                    ref={fileInputRef}
-                    accept={importFormat === 'xlsx' ? '.xlsx' : '.csv'}
-                    onChange={handleProspectsFileChange}
-                    className="file-input"
-                    disabled={loading}
-                  />
-                  <label htmlFor="prospects-file" className="file-upload-btn">
-                    {loading ? '⏳ Chargement...' : '📂 Sélectionner un fichier'}
-                  </label>
-                </div>
-              </div>
-              
-              <div className="import-help">
-                <p>Formats supportés :</p>
-                <ul className="format-list">
-                  <li><strong>CSV</strong> - Fichier texte avec valeurs séparées par des virgules ou points-virgules</li>
-                  <li><strong>XLSX</strong> - Fichier Excel</li>
-                </ul>
-                <a href="/docs/ImportProspects.md" target="_blank" className="help-link">Voir la documentation d'import</a>
-              </div>
+              )}
             </div>
           </div>
         </section>
