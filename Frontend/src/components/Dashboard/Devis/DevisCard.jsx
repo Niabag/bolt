@@ -23,7 +23,7 @@ const DevisCard = ({
   return (
     <div className="devis-card">
       <div className="devis-card-header">
-        <h3 className="devis-card-title">{devis.title}</h3>
+        <h3 className="devis-card-title">Devis {formatDate(devis.dateDevis)}</h3>
         <div className="devis-card-meta">
           <span>📅 {formatDate(devis.dateDevis)}</span>
           <span className="devis-card-amount">💰 {ttc.toFixed(2)} € TTC</span>
