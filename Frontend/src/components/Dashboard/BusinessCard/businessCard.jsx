@@ -18,6 +18,7 @@ const BusinessCard = ({ userId, user }) => {
   
   // États pour les schémas prédéfinis
   const [showSchemasModal, setShowSchemasModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
   
   const [stats, setStats] = useState({
     scansToday: 0,
@@ -360,7 +361,7 @@ const BusinessCard = ({ userId, user }) => {
   };
 
   // Téléchargement de la vraie carte de visite
-  const downloadBusinessCard = async () => {
+  const downloadBusinessCard = async (format = 'png') => {
     try {
       setLoading(true);
       console.log('📥 Génération de la carte de visite personnalisée avec QR code...');
@@ -379,13 +380,22 @@ const BusinessCard = ({ userId, user }) => {
         
         // Convertir le canvas en image
         const imageData = canvas.toDataURL('image/png');
-        
-        // Télécharger l'image
-        const link = document.createElement('a');
-        link.download = `carte-visite-${user?.name || 'numerique'}.png`;
-        link.href = imageData;
-        link.click();
-        
+
+        if (format === 'pdf') {
+          const { default: jsPDF } = await import('jspdf');
+          const pdf = new jsPDF();
+          const imgProps = pdf.getImageProperties(imageData);
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+          pdf.addImage(imageData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+          pdf.save(`carte-visite-${user?.name || 'numerique'}.pdf`);
+        } else {
+          const link = document.createElement('a');
+          link.download = `carte-visite-${user?.name || 'numerique'}.png`;
+          link.href = imageData;
+          link.click();
+        }
+
         showSuccessMessage('✅ Votre carte de visite a été téléchargée !');
       } else {
         showErrorMessage('❌ Erreur: Impossible de générer l\'aperçu');
@@ -665,7 +675,7 @@ const BusinessCard = ({ userId, user }) => {
             </div>
 
             <div className="preview-actions">
-              <button onClick={downloadBusinessCard} className="btn-download" disabled={loading}>
+              <button onClick={() => setShowExportModal(true)} className="btn-download" disabled={loading}>
                 {loading ? '⏳ Génération...' : '💾 Télécharger la carte complète'}
               </button>
             </div>
@@ -740,6 +750,28 @@ const BusinessCard = ({ userId, user }) => {
           </div>
         </div>
       </div>
+
+      {/* MODAL: Choix du format d'export */}
+      {showExportModal && (
+        <div className="modal-overlay" onClick={() => setShowExportModal(false)}>
+          <div className="modal-content export-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-body export-options">
+              <button
+                onClick={() => { setShowExportModal(false); downloadBusinessCard('png'); }}
+                className="btn-download"
+              >
+                📷 PNG
+              </button>
+              <button
+                onClick={() => { setShowExportModal(false); downloadBusinessCard('pdf'); }}
+                className="btn-download"
+              >
+                📄 PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL: Sélection de schémas professionnels */}
       {showSchemasModal && (
