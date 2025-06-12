@@ -33,6 +33,11 @@ const Pricing = () => {
         </button>
       </div>
 
+      <div className="selected-plan-price">
+        {SUBSCRIPTION_PLANS[selectedPlan.toUpperCase()].price}€/
+        {SUBSCRIPTION_PLANS[selectedPlan.toUpperCase()].period}
+      </div>
+
       <div className="pricing-plans">
         {/* Plan Mensuel */}
         {selectedPlan === 'monthly' && (
