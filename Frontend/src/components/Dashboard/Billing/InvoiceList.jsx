@@ -126,7 +126,7 @@ const InvoiceList = ({ clients = [] }) => {
 
   const handleStatusChange = async (invoiceId, currentStatus) => {
     let newStatus;
-    
+
     switch (currentStatus) {
       case 'draft':
         newStatus = 'pending';
@@ -138,6 +138,9 @@ const InvoiceList = ({ clients = [] }) => {
         newStatus = 'overdue';
         break;
       case 'overdue':
+        newStatus = 'canceled';
+        break;
+      case 'canceled':
         newStatus = 'draft';
         break;
       default:
@@ -176,8 +179,10 @@ const InvoiceList = ({ clients = [] }) => {
       case 'paid': return '#10b981';
       case 'pending': return '#f59e0b';
       case 'overdue': return '#ef4444';
-      case 'draft': return '#6b7280';
-      default: return '#6b7280';
+      case 'canceled': return '#9ca3af';
+      case 'draft':
+      default:
+        return '#6b7280';
     }
   };
 
@@ -186,8 +191,10 @@ const InvoiceList = ({ clients = [] }) => {
       case 'paid': return 'Payée';
       case 'pending': return 'En attente';
       case 'overdue': return 'En retard';
-      case 'draft': return 'Brouillon';
-      default: return 'Inconnu';
+      case 'canceled': return 'Annulée';
+      case 'draft':
+      default:
+        return 'Brouillon';
     }
   };
 
@@ -196,8 +203,10 @@ const InvoiceList = ({ clients = [] }) => {
       case 'paid': return '✅';
       case 'pending': return '⏳';
       case 'overdue': return '⚠️';
-      case 'draft': return '📝';
-      default: return '❓';
+      case 'canceled': return '❌';
+      case 'draft':
+      default:
+        return '📝';
     }
   };
 
@@ -210,6 +219,8 @@ const InvoiceList = ({ clients = [] }) => {
       case 'paid':
         return 'Marquer En retard';
       case 'overdue':
+        return 'Annuler la facture';
+      case 'canceled':
         return 'Repasser en Brouillon';
       default:
         return 'Changer le statut';
@@ -325,10 +336,11 @@ const InvoiceList = ({ clients = [] }) => {
     const matchesSearch = invoice.invoiceNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          clientName.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = statusFilter === 'all' || 
+    const matchesStatus = statusFilter === 'all' ||
                          (statusFilter === 'paid' && invoice.status === 'paid') ||
                          (statusFilter === 'pending' && invoice.status === 'pending') ||
                          (statusFilter === 'overdue' && invoice.status === 'overdue') ||
+                         (statusFilter === 'canceled' && invoice.status === 'canceled') ||
                          (statusFilter === 'draft' && invoice.status === 'draft');
     
     return matchesSearch && matchesStatus;
@@ -423,6 +435,10 @@ const InvoiceList = ({ clients = [] }) => {
             <span className="stat-number">{invoices.filter(i => i.status === 'overdue').length}</span>
             <span className="stat-label">⚠️ En retard</span>
           </div>
+          <div className="stat-item">
+            <span className="stat-number">{invoices.filter(i => i.status === 'canceled').length}</span>
+            <span className="stat-label">❌ Annulées</span>
+          </div>
         </div>
       </div>
 
@@ -462,6 +478,7 @@ const InvoiceList = ({ clients = [] }) => {
               <option value="pending">⏳ En attente</option>
               <option value="paid">✅ Payées</option>
               <option value="overdue">⚠️ En retard</option>
+              <option value="canceled">❌ Annulées</option>
             </select>
           </div>
 
