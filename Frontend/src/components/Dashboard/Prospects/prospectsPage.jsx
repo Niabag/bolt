@@ -19,7 +19,7 @@ const ProspectsPage = ({
   const [sortBy, setSortBy] = useState('name');
   const [loading, setLoading] = useState(false);
   const [selectedProspects, setSelectedProspects] = useState([]);
-  const [importFormat, setImportFormat] = useState('csv');
+  
   const fileInputRef = useRef(null);
   
   // ✅ NOUVEAU: États pour la pagination
@@ -286,31 +286,7 @@ const ProspectsPage = ({
     }
   };
 
-  const importData = async () => {
-    const file = fileInputRef.current?.files[0];
-    if (!file) {
-      alert('❌ Sélectionnez un fichier à importer');
-      return;
-    }
-    setLoading(true);
-    try {
-      const form = new FormData();
-      form.append('file', file);
-      form.append('format', importFormat);
-      await apiRequest(API_ENDPOINTS.CLIENTS.IMPORT, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        body: form,
-      });
-      alert('✅ Prospects importés avec succès');
-      onRefresh && onRefresh();
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    } catch (error) {
-      alert(`❌ Erreur lors de l'import: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
+
 
   // ✅ NOUVELLE FONCTION: Formater l'adresse complète
   const formatAddress = (prospect) => {
@@ -432,32 +408,7 @@ const ProspectsPage = ({
             >
               ✨ Créer un prospect
             </button>
-            <div className="import-actions">
-              <select
-                value={importFormat}
-                onChange={(e) => setImportFormat(e.target.value)}
-                className="filter-select"
-              >
-                <option value="csv">CSV</option>
-                <option value="xlsx">Excel</option>
-                <option value="json">JSON</option>
-                <option value="pdf">PDF</option>
-                <option value="vcf">vCard</option>
-              </select>
-              <input
-                type="file"
-                ref={fileInputRef}
-                accept={importFormat === 'vcf' ? '.vcf,.vcard' : `.${importFormat}`}
-                disabled={loading}
-              />
-              <button
-                onClick={importData}
-                disabled={loading}
-                className="import-btn"
-              >
-                📤 Importer
-              </button>
-            </div>
+            
           </div>
         </div>
 

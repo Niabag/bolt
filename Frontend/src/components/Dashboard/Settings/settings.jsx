@@ -33,7 +33,8 @@ const Settings = ({ onDataImported }) => {
   const currentPlan = Object.values(SUBSCRIPTION_PLANS).find(p => p.id === selectedPlan);
   const fileInputRef = useRef(null);
   const profileImageInputRef = useRef(null);
-
+  const [importFormat, setImportFormat] = useState('csv');
+  
   useEffect(() => {
     fetchUserData();
     fetchSubscriptionData();
@@ -585,20 +586,27 @@ const Settings = ({ onDataImported }) => {
             <p className="help-text">
               Téléchargez toutes vos données (clients, devis) dans le format sélectionné
             </p>
-            <div className="file-upload" style={{ marginTop: '0.5rem' }}>
-              <input
-                type="file"
-                id="prospects-file"
-                ref={fileInputRef}
-                accept=".csv,.xlsx"
+            <p></p>
+      <div className="import-actions">
+              <select
+                value={importFormat}
+                onChange={(e) => setImportFormat(e.target.value)}
+                className="filter-select"
+              >
+                <option value="csv">CSV</option>
+                <option value="xlsx">Excel</option>
+                <option value="json">JSON</option>
+                <option value="pdf">PDF</option>
+                <option value="vcf">vCard</option>
+              </select>
+              <button
+                onClick={importData}
                 disabled={loading}
-                onChange={handleProspectsFileChange}
-                style={{ display: 'none' }}
-              />
+                className="import-btn"
+              >
+                📤 Importer
+              </button>
             </div>
-            <button onClick={handleImportButtonClick} disabled={loading} className="import-btn" style={{ marginTop: '0.5rem' }}>
-              📤 Importer des prospects
-            </button>
           </div>
         </section>
 
