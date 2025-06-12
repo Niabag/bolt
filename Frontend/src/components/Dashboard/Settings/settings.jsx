@@ -220,6 +220,8 @@ const Settings = ({ onDataImported }) => {
     }
   };
 
+  const [exportFormat, setExportFormat] = useState('json');
+
   const exportData = async () => {
     try {
       setLoading(true);
@@ -235,16 +237,43 @@ const Settings = ({ onDataImported }) => {
         exportDate: new Date().toISOString()
       };
 
-      const dataStr = JSON.stringify(exportData, null, 2);
-      const dataBlob = new Blob([dataStr], { type: 'application/json' });
-      const url = URL.createObjectURL(dataBlob);
-      
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `crm-export-${new Date().toISOString().split('T')[0]}.json`;
-      link.click();
-      
-      URL.revokeObjectURL(url);
+      const dateStr = new Date().toISOString().split('T')[0];
+
+      if (exportFormat === 'pdf') {
+        const { default: jsPDF } = await import('jspdf');
+        const pdf = new jsPDF();
+        const text = JSON.stringify(exportData, null, 2);
+        const lines = pdf.splitTextToSize(text, 180);
+        pdf.text(lines, 10, 10);
+        pdf.save(`crm-export-${dateStr}.pdf`);
+      } else if (exportFormat === 'xlsx') {
+        const XLSX = await import('xlsx');
+        const wb = XLSX.utils.book_new();
+        const wsClients = XLSX.utils.json_to_sheet(clients);
+        XLSX.utils.book_append_sheet(wb, wsClients, 'Clients');
+        const wsDevis = XLSX.utils.json_to_sheet(devis);
+        XLSX.utils.book_append_sheet(wb, wsDevis, 'Devis');
+        XLSX.writeFile(wb, `crm-export-${dateStr}.xlsx`);
+      } else if (exportFormat === 'vcf') {
+        const vcardStr = clients.map(c => `BEGIN:VCARD\nVERSION:3.0\nFN:${c.name}\nEMAIL:${c.email}\nTEL:${c.phone}\nORG:${c.company || ''}\nEND:VCARD`).join('\n');
+        const blob = new Blob([vcardStr], { type: 'text/vcard' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `crm-export-${dateStr}.vcf`;
+        link.click();
+        URL.revokeObjectURL(url);
+      } else {
+        const dataStr = JSON.stringify(exportData, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `crm-export-${dateStr}.json`;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+
       setMessage('✅ Données exportées avec succès');
     } catch (error) {
       setMessage(`❌ Erreur lors de l'export: ${error.message}`);
@@ -549,11 +578,19 @@ const Settings = ({ onDataImported }) => {
         <section className="settings-section">
           <h3>📊 Gestion des données</h3>
           <div className="data-actions">
-            <button onClick={exportData} disabled={loading} className="export-btn">
-              📥 Exporter mes données
-            </button>
+            <div className="export-options">
+              <select value={exportFormat} onChange={e => setExportFormat(e.target.value)}>
+                <option value="json">JSON</option>
+                <option value="pdf">PDF</option>
+                <option value="xlsx">Excel</option>
+                <option value="vcf">vCard</option>
+              </select>
+              <button onClick={exportData} disabled={loading} className="export-btn">
+                📥 Exporter mes données
+              </button>
+            </div>
             <p className="help-text">
-              Téléchargez toutes vos données (clients, devis) au format JSON
+              Téléchargez toutes vos données (clients, devis) dans le format sélectionné
             </p>
             <div className="file-upload" style={{ marginTop: '0.5rem' }}>
               <input
