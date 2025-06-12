@@ -7,16 +7,6 @@ import { DEFAULT_DEVIS } from "./constants";
 import "./devis.scss";
 import { calculateTTC } from "../../../utils/calculateTTC";
 
-const formatDate = (dateStr) => {
-  if (!dateStr) return "";
-  try {
-    return new Date(dateStr).toLocaleDateString("fr-FR");
-  } catch (error) {
-    return "";
-  }
-};
-
-
 const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedClientId = null }) => {
   const normalizeClientId = (c) => {
     if (!c) return null;
@@ -36,7 +26,6 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [clientInvoices, setClientInvoices] = useState([]);
 
   // Prévisualisation de facture
   const [selectedDevisForInvoice, setSelectedDevisForInvoice] = useState(null);
@@ -68,23 +57,6 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
     };
     
     fetchDevis();
-  }, [filterClientId]);
-
-  const fetchInvoices = async (clientId = filterClientId) => {
-    if (!clientId) {
-      setClientInvoices([]);
-      return;
-    }
-    try {
-      const data = await apiRequest(API_ENDPOINTS.INVOICES.BY_CLIENT(clientId));
-      setClientInvoices(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("Erreur récupération factures client:", err);
-    }
-  };
-
-  useEffect(() => {
-    fetchInvoices();
   }, [filterClientId]);
 
   useEffect(() => {
@@ -557,7 +529,6 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
       alert('✅ Facture créée avec succès !');
       setSelectedDevisForInvoice(null);
       setSelectedClientForInvoice(null);
-      await fetchInvoices(selectedClientForInvoice._id);
     } catch (err) {
       console.error('Erreur création facture:', err);
       alert(`❌ Erreur lors de la création de la facture: ${err.message}`);
@@ -576,36 +547,6 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
   const selectedClient = filterClientId
     ? clients.find(c => c._id === filterClientId)
     : null;
-
-  const getInvoiceStatusColor = (status) => {
-    switch (status) {
-      case 'paid': return '#10b981';
-      case 'pending': return '#f59e0b';
-      case 'overdue': return '#ef4444';
-      case 'draft': return '#6b7280';
-      default: return '#6b7280';
-    }
-  };
-
-  const getInvoiceStatusLabel = (status) => {
-    switch (status) {
-      case 'paid': return 'Payée';
-      case 'pending': return 'En attente';
-      case 'overdue': return 'En retard';
-      case 'draft': return 'Brouillon';
-      default: return 'Inconnu';
-    }
-  };
-
-  const getInvoiceStatusIcon = (status) => {
-    switch (status) {
-      case 'paid': return '✅';
-      case 'pending': return '⏳';
-      case 'overdue': return '⚠️';
-      case 'draft': return '📝';
-      default: return '❓';
-    }
-  };
 
   if (loading && devisList.length === 0) {
     return (
@@ -714,42 +655,6 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
           />
         )}
       </div>
-
-      {selectedClient && (
-        <div className="invoices-section">
-          <h3>Factures de {selectedClient.name}</h3>
-          {clientInvoices.length === 0 ? (
-            <p className="empty-message">Aucune facture pour ce client</p>
-          ) : (
-            <div className="invoices-grid">
-              {clientInvoices.map(inv => (
-                <div key={inv._id} className="invoice-card">
-                  <div className="invoice-header">
-                    <div className="invoice-number">{inv.invoiceNumber}</div>
-                    <div
-                      className="invoice-status"
-                      style={{ backgroundColor: getInvoiceStatusColor(inv.status), color: 'white' }}
-                    >
-                      {getInvoiceStatusIcon(inv.status)} {getInvoiceStatusLabel(inv.status)}
-                    </div>
-                  </div>
-                  <div className="invoice-content">
-                    <div className="invoice-amount">
-                      <span className="amount-label">Montant :</span>
-                      <span className="amount-value">{inv.amount.toFixed(2)} €</span>
-                    </div>
-                    <div className="invoice-dates">
-                      <div className="invoice-date">📅 Émise le : {formatDate(inv.createdAt)}</div>
-                      <div className="invoice-due">⏰ Échéance : {formatDate(inv.dueDate)}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-        </div>
-      )}
 
       {/* Prévisualisation dynamique de la facture */}
       {selectedDevisForInvoice && (
