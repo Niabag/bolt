@@ -379,32 +379,25 @@ const Settings = ({ onDataImported }) => {
             {subscription && subscription.status !== SUBSCRIPTION_STATUS.ACTIVE && (
               <div className="plan-selector">
                 <h4>Choisissez votre plan</h4>
-                <div className="plan-options">
-                  <div 
-                    className={`plan-option ${selectedPlan === SUBSCRIPTION_PLANS.MONTHLY.id ? 'selected' : ''}`}
+                <div className="plan-toggle">
+                  <button
+                    className={`toggle-btn ${selectedPlan === SUBSCRIPTION_PLANS.MONTHLY.id ? 'active' : ''}`}
                     onClick={() => setSelectedPlan(SUBSCRIPTION_PLANS.MONTHLY.id)}
                   >
-                    <div className="plan-name">{SUBSCRIPTION_PLANS.MONTHLY.name}</div>
-                    <div className="plan-price">{SUBSCRIPTION_PLANS.MONTHLY.price}€/{SUBSCRIPTION_PLANS.MONTHLY.period}</div>
-                  </div>
-                  
-                  <div 
-                    className={`plan-option ${selectedPlan === SUBSCRIPTION_PLANS.QUARTERLY.id ? 'selected' : ''}`}
+                    Mensuel
+                  </button>
+                  <button
+                    className={`toggle-btn ${selectedPlan === SUBSCRIPTION_PLANS.QUARTERLY.id ? 'active' : ''}`}
                     onClick={() => setSelectedPlan(SUBSCRIPTION_PLANS.QUARTERLY.id)}
                   >
-                    <div className="plan-name">{SUBSCRIPTION_PLANS.QUARTERLY.name}</div>
-                    <div className="plan-price">{SUBSCRIPTION_PLANS.QUARTERLY.price}€/{SUBSCRIPTION_PLANS.QUARTERLY.period}</div>
-                    <div className="plan-savings">Économisez {SUBSCRIPTION_PLANS.QUARTERLY.savings}</div>
-                  </div>
-                  
-                  <div 
-                    className={`plan-option ${selectedPlan === SUBSCRIPTION_PLANS.ANNUAL.id ? 'selected' : ''}`}
+                    Trimestriel <span className="savings-badge">Économisez {SUBSCRIPTION_PLANS.QUARTERLY.savings}</span>
+                  </button>
+                  <button
+                    className={`toggle-btn ${selectedPlan === SUBSCRIPTION_PLANS.ANNUAL.id ? 'active' : ''}`}
                     onClick={() => setSelectedPlan(SUBSCRIPTION_PLANS.ANNUAL.id)}
                   >
-                    <div className="plan-name">{SUBSCRIPTION_PLANS.ANNUAL.name}</div>
-                    <div className="plan-price">{SUBSCRIPTION_PLANS.ANNUAL.price}€/{SUBSCRIPTION_PLANS.ANNUAL.period}</div>
-                    <div className="plan-savings">Économisez {SUBSCRIPTION_PLANS.ANNUAL.savings}</div>
-                  </div>
+                    Annuel <span className="savings-badge">Économisez {SUBSCRIPTION_PLANS.ANNUAL.savings}</span>
+                  </button>
                 </div>
               </div>
             )}
