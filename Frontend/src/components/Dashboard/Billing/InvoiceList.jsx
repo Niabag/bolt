@@ -539,11 +539,27 @@ const InvoiceList = ({ clients = [] }) => {
         <>
           <div className="invoices-grid">
             {currentInvoices.map((invoice) => (
-              <div 
-                key={invoice._id || invoice.id} 
+              <div
+                key={invoice._id || invoice.id}
                 className="invoice-card"
                 onClick={() => handleViewInvoice(invoice)}
               >
+                <div
+                  className="status-indicator clickable"
+                  style={{
+                    backgroundColor: getStatusColor(invoice.status),
+                    position: 'absolute',
+                    top: '1rem',
+                    right: '1rem'
+                  }}
+                  title={getNextStatusLabel(invoice.status)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleStatusChange(invoice._id || invoice.id, invoice.status);
+                  }}
+                >
+                  {getStatusIcon(invoice.status)}
+                </div>
                 <div className="invoice-header">
                   <div className="invoice-number">{invoice.invoiceNumber}</div>
                   <div

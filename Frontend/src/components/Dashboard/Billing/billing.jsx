@@ -848,11 +848,27 @@ const Billing = ({ clients = [], onRefresh }) => {
         ) : (
           <div className="invoices-grid">
             {filteredInvoices.map((invoice) => (
-              <div 
-                key={invoice.id || invoice._id} 
+              <div
+                key={invoice.id || invoice._id}
                 className="invoice-card"
                 onClick={() => handleSelectInvoice(invoice)}
               >
+                <div
+                  className="status-indicator clickable"
+                  style={{
+                    backgroundColor: getStatusColor(invoice.status),
+                    position: 'absolute',
+                    top: '1rem',
+                    right: '1rem'
+                  }}
+                  title={getNextStatusLabel(invoice.status)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleInvoiceStatusClick(invoice.id || invoice._id, invoice.status);
+                  }}
+                >
+                  {getStatusIcon(invoice.status)}
+                </div>
                 <div className="invoice-header">
                   <div className="invoice-number">{invoice.invoiceNumber}</div>
                   <div
