@@ -280,100 +280,127 @@ const Settings = ({ onDataImported }) => {
   const handleProspectsFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Vérifier que le format du fichier correspond au format sélectionné
+      const fileExtension = file.name.split('.').pop().toLowerCase();
+      const expectedExtension = importFormat === 'xlsx' ? 'xlsx' : 'csv';
+      
+      if (fileExtension !== expectedExtension) {
+        setMessage(`❌ Format de fichier incorrect. Vous avez sélectionné un fichier .${fileExtension} mais le format choisi est ${importFormat}`);
+        // Réinitialiser le champ de fichier
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
+      
+      // Tout est bon, procéder à l'import
       importData(file);
     }
   };
 
   const importData = async (selectedFile) => {
-    // Vérifier si l'utilisateur a un abonnement actif
-    const hasValidSubscription = subscription && 
-                               (subscription.status === SUBSCRIPTION_STATUS.ACTIVE);
-    
-    // Si l'utilisateur n'a pas d'abonnement actif, rediriger vers la section abonnement
-    if (!hasValidSubscription) {
-      setMessage('❌ L\'importation de prospects nécessite un abonnement actif');
-      if (subscriptionSectionRef.current) {
-        subscriptionSectionRef.current.scrollIntoView({ behavior: 'smooth' });
-      }
-      return;
-    }
-    
     const file = selectedFile || fileInputRef.current?.files[0];
     if (!file) {
       setMessage('❌ Sélectionnez un fichier à importer');
       return;
     }
+    
+    // Vérifier si l'utilisateur a un abonnement actif
+    if (!hasValidSubscription()) {
+      setMessage('❌ L\'importation de prospects est réservée aux utilisateurs avec un abonnement actif');
+      if (subscriptionSectionRef.current) {
+        subscriptionSectionRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+    
     setLoading(true);
     setMessage('');
+    
     try {
+      // Créer un FormData pour l'envoi du fichier
       const form = new FormData();
       form.append('file', file);
+      
+      // Ajouter explicitement le format dans la requête
+      console.log(`📊 Import de prospects au format ${importFormat}`);
       form.append('format', importFormat);
       
-      await apiRequest(API_ENDPOINTS.CLIENTS.IMPORT, {
+      const response = await apiRequest(API_ENDPOINTS.CLIENTS.IMPORT, {
         method: 'POST',
+        // Ne pas inclure Content-Type ici, il sera automatiquement défini avec le boundary
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         body: form,
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       
-      setMessage('✅ Prospects importés avec succès');
+      // Afficher un message de succès avec les détails
+      setMessage(`✅ Import réussi : ${response.created} prospect(s) importé(s) sur ${response.total} entrée(s)`);
+      
+      // Forcer un rafraîchissement complet des clients
       if (typeof onDataImported === 'function') {
         onDataImported();
       }
+      
+      // Réinitialiser le champ de fichier
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      
     } catch (error) {
-      setMessage(`❌ Erreur lors de l'import: ${error.message}`);
+      console.error('Erreur lors de l\'import:', error);
+      
+      // Message d'erreur plus détaillé
+      let errorMessage = `❌ Erreur lors de l'import: ${error.message}`;
+      
+      // Ajouter des informations spécifiques selon le format
+      if (importFormat === 'xlsx' && error.message.includes('xlsx')) {
+        errorMessage += ". Vérifiez que votre fichier Excel est au format XLSX valide.";
+      }
+      
+      setMessage(errorMessage);
     } finally {
       setLoading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
+  // Vérifier si l'utilisateur a un abonnement valide
+  const hasValidSubscription = () => {
+    if (!subscription) return false;
+    
+    return subscription.status === SUBSCRIPTION_STATUS.ACTIVE;
+  };
+
   const getSubscriptionStatusText = () => {
-    if (!subscription) return 'Chargement...';
+    if (!subscription) return "Chargement...";
 
     switch (subscription.status) {
       case SUBSCRIPTION_STATUS.ACTIVE:
-        return 'Actif';
+        return "Actif";
       case SUBSCRIPTION_STATUS.TRIAL:
         const daysRemaining = getTrialDaysRemaining(subscription.trialEndDate);
         return `Essai gratuit (${daysRemaining} jour${daysRemaining !== 1 ? 's' : ''} restant${daysRemaining !== 1 ? 's' : ''})`;
       case SUBSCRIPTION_STATUS.EXPIRED:
-        return 'Essai expiré';
+        return "Essai expiré";
       case SUBSCRIPTION_STATUS.CANCELED:
-        return 'Annulé';
+        return "Annulé";
       case SUBSCRIPTION_STATUS.PAST_DUE:
-        return 'Paiement en retard';
+        return "Paiement en retard";
       default:
-        return 'Inconnu';
+        return "Inconnu";
     }
   };
 
   const getSubscriptionStatusColor = () => {
-    if (!subscription) return '#64748b';
+    if (!subscription) return "#64748b";
 
     switch (subscription.status) {
       case SUBSCRIPTION_STATUS.ACTIVE:
-        return '#10b981';
+        return "#10b981";
       case SUBSCRIPTION_STATUS.TRIAL:
-        return '#f59e0b';
+        return "#f59e0b";
       case SUBSCRIPTION_STATUS.EXPIRED:
       case SUBSCRIPTION_STATUS.CANCELED:
       case SUBSCRIPTION_STATUS.PAST_DUE:
-        return '#ef4444';
+        return "#ef4444";
       default:
-        return '#64748b';
-    }
-  };
-
-  // Helper function to get the appropriate file extension description
-  const getImportFormatDescription = () => {
-    switch (importFormat) {
-      case 'csv':
-        return 'fichier CSV (valeurs séparées par des virgules ou points-virgules)';
-      case 'xlsx':
-        return 'fichier Excel (XLSX)';
-      default:
-        return `fichier ${importFormat.toUpperCase()}`;
+        return "#64748b";
     }
   };
 
@@ -604,59 +631,76 @@ const Settings = ({ onDataImported }) => {
               Téléchargez toutes vos données (clients, devis) dans le format sélectionné
             </p>
             
-            <h4 className="data-section-title">📤 Importer des prospects</h4>
-            <div className="import-options">
-              <select
-                value={importFormat}
-                onChange={(e) => setImportFormat(e.target.value)}
-                className="data-select"
-              >
-                <option value="csv">CSV</option>
-                <option value="xlsx">Excel</option>
-              </select>
-              <input
-                type="file"
-                id="file-import"
-                ref={fileInputRef}
-                accept={
-                  importFormat === 'csv' ? '.csv' :
-                  importFormat === 'xlsx' ? '.xlsx,.xls' : '*'
-                }
-                style={{ display: 'none' }}
-                onChange={handleProspectsFileChange}
-              />
-              <button
-                onClick={() => {
-                  // Vérifier si l'utilisateur a un abonnement actif
-                  const hasValidSubscription = subscription && 
-                                             (subscription.status === SUBSCRIPTION_STATUS.ACTIVE);
+            <div className="import-actions">
+              <div className="import-header">
+                <h4>Importer des prospects</h4>
+                <p className="import-description">
+                  {hasValidSubscription() 
+                    ? "Importez vos prospects depuis un fichier CSV ou Excel" 
+                    : "⚠️ Fonctionnalité réservée aux abonnés"}
+                </p>
+              </div>
+              
+              {hasValidSubscription() ? (
+                <>
+                  <div className="import-controls">
+                    <div className="format-selector">
+                      <label htmlFor="importFormat">Format du fichier :</label>
+                      <select
+                        id="importFormat"
+                        value={importFormat}
+                        onChange={(e) => setImportFormat(e.target.value)}
+                        className="format-select"
+                      >
+                        <option value="csv">CSV</option>
+                        <option value="xlsx">Excel (XLSX)</option>
+                      </select>
+                    </div>
+                    
+                    <div className="file-upload-container">
+                      <input
+                        type="file"
+                        id="prospects-file"
+                        ref={fileInputRef}
+                        accept={importFormat === 'xlsx' ? '.xlsx' : '.csv'}
+                        onChange={handleProspectsFileChange}
+                        className="file-input"
+                        disabled={loading}
+                      />
+                      <label htmlFor="prospects-file" className="file-upload-btn">
+                        {loading ? '⏳ Chargement...' : '📂 Sélectionner un fichier'}
+                      </label>
+                    </div>
+                  </div>
                   
-                  // Si l'utilisateur n'a pas d'abonnement actif, rediriger vers la section abonnement
-                  if (!hasValidSubscription) {
-                    setMessage('❌ L\'importation de prospects nécessite un abonnement actif');
-                    if (subscriptionSectionRef.current) {
-                      subscriptionSectionRef.current.scrollIntoView({ behavior: 'smooth' });
-                    }
-                    return;
-                  }
-                  
-                  // Sinon, ouvrir le sélecteur de fichier
-                  fileInputRef.current?.click();
-                }}
-                disabled={loading}
-                className="import-btn"
-              >
-                📤 Importer des prospects
-              </button>
-            </div>
-            <p className="help-text">
-              Importez vos prospects depuis un {getImportFormatDescription()}
-              {subscription && subscription.status !== SUBSCRIPTION_STATUS.ACTIVE && (
-                <span className="subscription-required-notice">
-                  <br />⚠️ <strong>Abonnement requis</strong> pour l'importation de prospects
-                </span>
+                  <div className="import-help">
+                    <p>Formats supportés :</p>
+                    <ul className="format-list">
+                      <li><strong>CSV</strong> - Fichier texte avec valeurs séparées par des virgules ou points-virgules</li>
+                      <li><strong>XLSX</strong> - Fichier Excel</li>
+                    </ul>
+                    <a href="/docs/ImportProspects.md" target="_blank" className="help-link">Voir la documentation d'import</a>
+                  </div>
+                </>
+              ) : (
+                <div className="subscription-required-notice">
+                  <div className="notice-icon">🔒</div>
+                  <div className="notice-content">
+                    <h5>Fonctionnalité Premium</h5>
+                    <p>L'importation de prospects est disponible uniquement avec un abonnement actif.</p>
+                    <button 
+                      onClick={handleSubscribe}
+                      className="upgrade-btn"
+                      disabled={processingCheckout}
+                    >
+                      {processingCheckout 
+                        ? 'Chargement...' 
+                        : "S'abonner maintenant"}
+                    </button>
+                  </div>
+                </div>
               )}
-            </p>
+            </div>
           </div>
         </section>
 
@@ -664,7 +708,7 @@ const Settings = ({ onDataImported }) => {
           <h3>ℹ️ Informations de l'application</h3>
           <div className="app-info">
             <p><strong>Version:</strong> 1.0.0</p>
-            <p><strong>Dernière connexion:</strong> {new Date().toLocaleDateString('fr-FR')}</p>
+            <p><strong>Dernière mise à jour:</strong> {new Date().toLocaleDateString('fr-FR')}</p>
             <p><strong>ID utilisateur:</strong> {user.userId}</p>
           </div>
         </section>
