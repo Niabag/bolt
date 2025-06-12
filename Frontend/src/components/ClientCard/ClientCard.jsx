@@ -155,9 +155,9 @@ const ClientCard = ({
           <button
             onClick={(e) => { e.stopPropagation(); onHistory(); }}
             className="bg-yellow-50 text-yellow-600 hover:bg-yellow-100 rounded px-3 py-1 text-sm"
-            title="Historique"
+            title="Facture"
           >
-            🕑 Historique
+            🕑 Facture
           </button>
         )}
       </div>
