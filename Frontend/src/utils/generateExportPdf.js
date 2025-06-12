@@ -59,5 +59,26 @@ export const generateExportPdf = async (exportData, dateStr) => {
     });
   }
 
+  if (exportData.invoices && exportData.invoices.length) {
+    y += 4;
+    pdf.setFontSize(14);
+    pdf.text('Factures', margin, y);
+    y += 8;
+    pdf.setFontSize(10);
+    exportData.invoices.forEach((invoice, idx) => {
+      const date = invoice.createdAt ? invoice.createdAt.split('T')[0] : '';
+      pdf.text(
+        `${idx + 1}. ${invoice.invoiceNumber || 'Facture'} - ${date}`,
+        margin + 2,
+        y
+      );
+      y += 6;
+      if (y > 280) {
+        pdf.addPage();
+        y = margin;
+      }
+    });
+  }
+
   pdf.save(`crm-export-${dateStr}.pdf`);
 };
