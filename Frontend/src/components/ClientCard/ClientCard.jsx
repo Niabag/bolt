@@ -32,9 +32,6 @@ const ClientCard = ({
     }
   };
 
-  const badgeColor = status ? getStatusColor(status) : isActive ? '#48bb78' : '#f56565';
-  const badgeText = status ? getStatusLabel(status) : isActive ? 'ACTIF' : 'INACTIF';
-
   const getStatusColor = (status) => {
     switch (status) {
       case 'active':
@@ -49,6 +46,9 @@ const ClientCard = ({
         return '#4299e1';
     }
   };
+
+  const badgeColor = status ? getStatusColor(status) : isActive ? '#48bb78' : '#f56565';
+  const badgeText = status ? getStatusLabel(status) : isActive ? 'ACTIF' : 'INACTIF';
 
   const getStatusIcon = (status) => {
     switch (status) {
