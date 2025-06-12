@@ -17,8 +17,23 @@ const ClientCard = ({
   status,
   onStatusClick
 }) => {
-  const badgeClass = isActive ? 'bg-green-500' : 'bg-red-500';
-  const badgeText = isActive ? 'ACTIF' : 'INACTIF';
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case 'active':
+        return 'ACTIF';
+      case 'inactive':
+        return 'INACTIF';
+      case 'nouveau':
+        return 'NOUVEAU';
+      case 'en_attente':
+        return 'EN ATTENTE';
+      default:
+        return status;
+    }
+  };
+
+  const badgeColor = status ? getStatusColor(status) : isActive ? '#48bb78' : '#f56565';
+  const badgeText = status ? getStatusLabel(status) : isActive ? 'ACTIF' : 'INACTIF';
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -120,7 +135,12 @@ const ClientCard = ({
         {level && (
           <span className="text-sm font-medium bg-blue-100 text-blue-600 px-2 py-0.5 rounded">{level}</span>
         )}
-        <span className={`text-xs font-bold px-2 py-0.5 rounded text-white ${badgeClass}`}>{badgeText}</span>
+        <span
+          className="text-xs font-bold px-2 py-0.5 rounded text-white"
+          style={{ backgroundColor: badgeColor }}
+        >
+          {badgeText}
+        </span>
       </div>
       {note && <p className="text-sm text-center text-gray-600 italic">{note}</p>}
       <div className="flex gap-2">
