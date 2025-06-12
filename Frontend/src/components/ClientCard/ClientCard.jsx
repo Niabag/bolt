@@ -130,7 +130,7 @@ const ClientCard = ({
             className="bg-blue-50 text-blue-600 hover:bg-blue-100 rounded px-3 py-1 text-sm"
             title="Voir les devis"
           >
-            👁️ Voir
+            📄 Devis
           </button>
         )}
         {onEdit && (
