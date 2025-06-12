@@ -1,20 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS, apiRequest } from '../../../config/api';
-import {
-  getSubscriptionStatus,
-  createPortalSession,
-  createCheckoutSession,
-  startFreeTrial,
-  SUBSCRIPTION_STATUS,
-  getTrialDaysRemaining,
-  DEFAULT_TRIAL_DAYS,
-  SUBSCRIPTION_PLANS
-} from '../../../services/subscription';
+import { getSubscriptionStatus, createPortalSession, createCheckoutSession, startFreeTrial, SUBSCRIPTION_STATUS, getTrialDaysRemaining, DEFAULT_TRIAL_DAYS, SUBSCRIPTION_PLANS } from '../../../services/subscription';
 import { generateExportPdf } from '../../../utils/generateExportPdf';
 import './settings.scss';
 
-// Ajout d'une prop onDataImported pour informer le parent après import
 const Settings = ({ onDataImported }) => {
+  const navigate = useNavigate();
   const [user, setUser] = useState({});
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -568,7 +560,7 @@ const Settings = ({ onDataImported }) => {
         <section className="settings-section">
           <h3>📊 Gestion des données</h3>
           <div className="data-actions">
-            <h4 className="data-section-title">Exporter vos données</h4>
+            <h4 className="data-section-title">📥 Exporter vos données</h4>
             <div className="export-options">
               <select value={exportFormat} onChange={e => setExportFormat(e.target.value)} className="data-select">
                 <option value="json">JSON</option>
@@ -584,7 +576,7 @@ const Settings = ({ onDataImported }) => {
               Téléchargez toutes vos données (clients, devis) dans le format sélectionné
             </p>
             
-            <h4 className="data-section-title">Importer des prospects</h4>
+            <h4 className="data-section-title">📤 Importer des prospects</h4>
             <div className="import-options">
               <select
                 value={importFormat}
