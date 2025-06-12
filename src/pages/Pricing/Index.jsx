@@ -36,7 +36,9 @@ const Pricing = () => {
       </div>
 
       <div className="selected-plan-price">
+
         {currentPlan.price}€/{currentPlan.period}
+
       </div>
 
       <div className="pricing-plans">

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS, apiRequest } from '../../config/api';
 import { getSubscriptionStatus, createPortalSession, createCheckoutSession, startFreeTrial, SUBSCRIPTION_STATUS, getTrialDaysRemaining, DEFAULT_TRIAL_DAYS } from '../../services/subscription';
+import { generateExportPdf } from '../../utils/generateExportPdf';
 
 import './settings.scss';
 
@@ -221,12 +222,7 @@ const Settings = () => {
       const dateStr = new Date().toISOString().split('T')[0];
 
       if (exportFormat === 'pdf') {
-        const { default: jsPDF } = await import('jspdf');
-        const pdf = new jsPDF();
-        const text = JSON.stringify(exportData, null, 2);
-        const lines = pdf.splitTextToSize(text, 180);
-        pdf.text(lines, 10, 10);
-        pdf.save(`crm-export-${dateStr}.pdf`);
+        await generateExportPdf(exportData, dateStr);
       } else if (exportFormat === 'xlsx') {
         const XLSX = await import('xlsx');
         const wb = XLSX.utils.book_new();

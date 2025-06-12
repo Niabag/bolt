@@ -285,6 +285,7 @@ const importData = async () => {
     try {
       const form = new FormData();
       form.append('file', file);
+      form.append('format', importFormat);
       await apiRequest(API_ENDPOINTS.CLIENTS.IMPORT, {
         method: 'POST',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
