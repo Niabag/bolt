@@ -10,7 +10,7 @@ const Features = () => {
         "Capture automatique via QR code",
         "Statuts personnalisables",
         "Historique complet des interactions",
-        "Fiches détaillées avec notes"
+        "Fiches détaillées avec notes et adresses"
       ]
     },
     {
@@ -60,7 +60,7 @@ const Features = () => {
     {
       icon: "💰",
       title: "Facturation Simplifiée",
-      description: "Transformez vos devis en factures en quelques clics et gérez tout votre cycle de vente dans une seule plateforme intégrée.",
+      description: "Transformez vos devis en factures en quelques clics et gérez tout votre cycle de vente dans une seule plateforme intégrée. Suivez vos paiements et générez des rapports financiers.",
       benefits: [
         "Conversion devis en facture",
         "Suivi des paiements",

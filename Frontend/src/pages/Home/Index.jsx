@@ -39,9 +39,9 @@ const Home = () => {
       description: "Restez informé des opportunités importantes avec des alertes personnalisées."
     },
     {
-      icon: "⚙️",
-      title: "Paramètres Flexibles",
-      description: "Personnalisez votre expérience avec des options de configuration avancées."
+      icon: "💰",
+      title: "Facturation Simplifiée",
+      description: "Transformez vos devis en factures en quelques clics et gérez vos paiements."
     }
   ];
 
@@ -185,7 +185,7 @@ const Home = () => {
               <div className="step-number">3</div>
               <div className="step-content">
                 <h3>💰 Convertissez</h3>
-                <p>Créez des devis professionnels et suivez vos performances en temps réel</p>
+                <p>Créez des devis professionnels, générez des factures et suivez vos performances</p>
               </div>
             </div>
           </div>

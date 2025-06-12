@@ -36,9 +36,7 @@ const Pricing = () => {
       </div>
 
       <div className="selected-plan-price">
-
         {currentPlan.price}€/{currentPlan.period}
-
       </div>
 
       <div className="pricing-plans">
@@ -94,6 +92,7 @@ const Pricing = () => {
               <li>✅ Export PDF et partage</li>
               <li>✅ Support prioritaire</li>
               <li>✅ Mises à jour régulières</li>
+              <li>✅ Import de prospects depuis Excel/CSV/PDF</li>
             </ul>
             <a href="/register-user" className="pricing-cta highlight">
               Choisir ce plan
@@ -124,6 +123,7 @@ const Pricing = () => {
               <li>✅ Export PDF et partage</li>
               <li>✅ Support prioritaire</li>
               <li>✅ Mises à jour régulières</li>
+              <li>✅ Import de prospects depuis Excel/CSV/PDF</li>
               <li>✅ Accès prioritaire aux nouvelles fonctionnalités</li>
             </ul>
             <a href="/register-user" className="pricing-cta">
@@ -154,10 +154,10 @@ const Pricing = () => {
         </div>
         
         <div className="faq-item">
-          <h3>Puis-je changer de plan ?</h3>
+          <h3>Puis-je importer mes données existantes ?</h3>
           <p>
-            Oui, vous pouvez passer d'un plan à l'autre à tout moment. Si vous passez à un plan supérieur, 
-            la différence sera calculée au prorata. Si vous passez à un plan inférieur, le changement prendra effet à la fin de votre période de facturation actuelle.
+            Oui, CRM Pro vous permet d'importer facilement vos prospects existants depuis des fichiers CSV, Excel, PDF ou vCard. 
+            Vous pouvez également exporter vos données à tout moment dans différents formats.
           </p>
         </div>
         
