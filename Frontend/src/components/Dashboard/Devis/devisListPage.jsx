@@ -1,20 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS, apiRequest } from '../../../config/api';
-import DynamicInvoice from '../Billing/DynamicInvoice';
 import './devis.scss';
 import { calculateTTC } from '../../../utils/calculateTTC';
 
-const formatDate = (dateStr) => {
-  if (!dateStr) return '';
-  try {
-    return new Date(dateStr).toLocaleDateString('fr-FR');
-  } catch {
-    return '';
-  }
-};
-
-const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
+const DevisListPage = ({
+  clients = [],
+  onEditDevis,
+  onCreateDevis
+}) => {
   const navigate = useNavigate();
   const [devisList, setDevisList] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -27,7 +21,7 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
   
   // États pour pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 9;
+  const ITEMS_PER_PAGE = 9; // Maximum 9 devis par page
 
   // États pour la prévisualisation de devis
   const [selectedDevis, setSelectedDevis] = useState(null);
@@ -546,6 +540,24 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
     }
   };
 
+  // Envoyer un devis par email
+  const handleSendEmail = async (devisId) => {
+    try {
+      setLoading(true);
+      
+      const response = await apiRequest(API_ENDPOINTS.DEVIS.SEND_BY_EMAIL(devisId), {
+        method: 'POST'
+      });
+      
+      alert('✅ Devis envoyé par email avec succès');
+    } catch (error) {
+      console.error('❌ Erreur envoi email:', error);
+      alert(`❌ Erreur lors de l'envoi de l'email: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading && !devisList.length) {
     return (
       <div className="loading-state">
@@ -778,6 +790,27 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
+                          handleSendEmail(devisItem._id);
+                        }}
+                        className="bg-yellow-50 text-yellow-600 hover:bg-yellow-100 rounded px-3 py-1 text-sm"
+                        disabled={loading}
+                      >
+                        {loading ? "⏳" : "📧"} Email
+                      </button>
+                      
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEditDevis && onEditDevis(devisItem);
+                        }}
+                        className="bg-green-50 text-green-600 hover:bg-green-100 rounded px-3 py-1 text-sm"
+                      >
+                        ✏️ Éditer
+                      </button>
+                      
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
                           handleDelete(devisItem._id);
                         }}
                         className="bg-red-50 text-red-600 hover:bg-red-100 rounded px-3 py-1 text-sm"
@@ -978,6 +1011,13 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
                     className="action-btn pdf-btn"
                   >
                     📄 Télécharger PDF
+                  </button>
+                  <button 
+                    onClick={() => handleSendEmail(selectedDevis._id)}
+                    className="action-btn pdf-btn"
+                    style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}
+                  >
+                    📧 Envoyer par email
                   </button>
                   <button 
                     onClick={() => setSelectedDevis(null)}
