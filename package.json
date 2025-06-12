@@ -1,0 +1,23 @@
+{
+  "name": "crm-project",
+  "version": "1.0.0",
+  "description": "CRM application with frontend and backend",
+  "scripts": {
+    "dev": "cd Frontend && npm run dev",
+    "dev:backend": "cd Backend && npm run dev",
+    "dev:frontend": "cd Frontend && npm run dev",
+    "build": "cd Frontend && npm run build",
+    "build:backend": "cd Backend && npm run build",
+    "build:frontend": "cd Frontend && npm run build",
+    "install:all": "npm install && cd Backend && npm install && cd ../Frontend && npm install",
+    "start": "cd Backend && npm start",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["crm", "react", "node", "express"],
+  "author": "",
+  "license": "ISC",
+  "workspaces": [
+    "Frontend",
+    "Backend"
+  ]
+}
