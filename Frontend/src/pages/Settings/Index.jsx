@@ -548,6 +548,7 @@ const Settings = () => {
             <p><strong>Version:</strong> 1.0.0</p>
             <p><strong>Dernière connexion:</strong> {new Date().toLocaleDateString('fr-FR')}</p>
             <p><strong>ID utilisateur:</strong> {user.userId}</p>
+            <p><strong>Formats disponibles:</strong> PDF, CSV, Excel, JSON, vCard</p>
           </div>
         </section>
       </div>
