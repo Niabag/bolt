@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { getSubscriptionStatus, createCheckoutSession, startFreeTrial, SUBSCRIPTION_STATUS, DEFAULT_TRIAL_DAYS, SUBSCRIPTION_PRICES } from '../../services/subscription';
+import { getSubscriptionStatus, createCheckoutSession, startFreeTrial, SUBSCRIPTION_STATUS, DEFAULT_TRIAL_DAYS, SUBSCRIPTION_PLANS } from '../../services/subscription';
 import Navbar from '../../components/Navbar';
 import './SubscriptionRequired.scss';
 
@@ -11,7 +11,7 @@ const SubscriptionRequired = () => {
   const [processingCheckout, setProcessingCheckout] = useState(false);
   const [processingTrial, setProcessingTrial] = useState(false);
   const [error, setError] = useState('');
-  const [selectedPlan, setSelectedPlan] = useState('monthly'); // 'monthly' ou 'annual'
+  const [selectedPlan, setSelectedPlan] = useState(SUBSCRIPTION_PLANS.MONTHLY.id);
 
   useEffect(() => {
     const fetchSubscriptionStatus = async () => {
@@ -55,16 +55,7 @@ const SubscriptionRequired = () => {
     setError('');
     
     try {
-      // Price IDs for the subscription plans
-      const priceIds = {
-        monthly: 'price_monthly', // Remplacer par le vrai ID Stripe
-        annual: 'price_annual'    // Remplacer par le vrai ID Stripe
-      };
-      
-      const billingInterval = selectedPlan === 'monthly' ? 'month' : 'year';
-      const priceId = priceIds[selectedPlan];
-      
-      const { url } = await createCheckoutSession(priceId, billingInterval);
+      const { url } = await createCheckoutSession(selectedPlan);
       
       if (url) {
         window.location.href = url;
@@ -134,19 +125,36 @@ const SubscriptionRequired = () => {
             {getStatusMessage()}
           </div>
 
-          <div className="plan-toggle">
-            <button 
-              className={`toggle-btn ${selectedPlan === 'monthly' ? 'active' : ''}`}
-              onClick={() => setSelectedPlan('monthly')}
-            >
-              Mensuel
-            </button>
-            <button 
-              className={`toggle-btn ${selectedPlan === 'annual' ? 'active' : ''}`}
-              onClick={() => setSelectedPlan('annual')}
-            >
-              Annuel <span className="savings-badge">Économisez 16%</span>
-            </button>
+          <div className="plan-selector">
+            <h3>Choisissez votre plan</h3>
+            <div className="plan-options">
+              <div 
+                className={`plan-option ${selectedPlan === SUBSCRIPTION_PLANS.MONTHLY.id ? 'selected' : ''}`}
+                onClick={() => setSelectedPlan(SUBSCRIPTION_PLANS.MONTHLY.id)}
+              >
+                <div className="plan-name">{SUBSCRIPTION_PLANS.MONTHLY.name}</div>
+                <div className="plan-price">{SUBSCRIPTION_PLANS.MONTHLY.price}€/{SUBSCRIPTION_PLANS.MONTHLY.period}</div>
+                <div className="plan-savings">&nbsp;</div>
+              </div>
+              
+              <div 
+                className={`plan-option ${selectedPlan === SUBSCRIPTION_PLANS.QUARTERLY.id ? 'selected' : ''}`}
+                onClick={() => setSelectedPlan(SUBSCRIPTION_PLANS.QUARTERLY.id)}
+              >
+                <div className="plan-name">{SUBSCRIPTION_PLANS.QUARTERLY.name}</div>
+                <div className="plan-price">{SUBSCRIPTION_PLANS.QUARTERLY.price}€/{SUBSCRIPTION_PLANS.QUARTERLY.period}</div>
+                <div className="plan-savings">Économisez {SUBSCRIPTION_PLANS.QUARTERLY.savings}</div>
+              </div>
+              
+              <div 
+                className={`plan-option ${selectedPlan === SUBSCRIPTION_PLANS.ANNUAL.id ? 'selected' : ''}`}
+                onClick={() => setSelectedPlan(SUBSCRIPTION_PLANS.ANNUAL.id)}
+              >
+                <div className="plan-name">{SUBSCRIPTION_PLANS.ANNUAL.name}</div>
+                <div className="plan-price">{SUBSCRIPTION_PLANS.ANNUAL.price}€/{SUBSCRIPTION_PLANS.ANNUAL.period}</div>
+                <div className="plan-savings">Économisez {SUBSCRIPTION_PLANS.ANNUAL.savings}</div>
+              </div>
+            </div>
           </div>
 
           <div className="subscription-options">
@@ -154,16 +162,25 @@ const SubscriptionRequired = () => {
               <div className="subscription-badge">Offre Complète</div>
               <h2 className="subscription-title">Abonnement Pro</h2>
               <div className="subscription-price">
-                <span className="price-amount">
-                  {selectedPlan === 'monthly' ? SUBSCRIPTION_PRICES.MONTHLY : SUBSCRIPTION_PRICES.ANNUAL}€
-                </span>
-                <span className="price-period">
-                  /{selectedPlan === 'monthly' ? 'mois' : 'an'}
-                </span>
+                {selectedPlan === SUBSCRIPTION_PLANS.MONTHLY.id && (
+                  <>
+                    <span className="price-amount">{SUBSCRIPTION_PLANS.MONTHLY.price}€</span>
+                    <span className="price-period">/{SUBSCRIPTION_PLANS.MONTHLY.period}</span>
+                  </>
+                )}
+                {selectedPlan === SUBSCRIPTION_PLANS.QUARTERLY.id && (
+                  <>
+                    <span className="price-amount">{SUBSCRIPTION_PLANS.QUARTERLY.price}€</span>
+                    <span className="price-period">/{SUBSCRIPTION_PLANS.QUARTERLY.period}</span>
+                  </>
+                )}
+                {selectedPlan === SUBSCRIPTION_PLANS.ANNUAL.id && (
+                  <>
+                    <span className="price-amount">{SUBSCRIPTION_PLANS.ANNUAL.price}€</span>
+                    <span className="price-period">/{SUBSCRIPTION_PLANS.ANNUAL.period}</span>
+                  </>
+                )}
               </div>
-              <p className="subscription-billing">
-                {selectedPlan === 'monthly' ? 'Facturation mensuelle' : 'Facturation annuelle'}
-              </p>
               <p className="subscription-description">
                 Accès complet à toutes les fonctionnalités pour développer votre activité
               </p>

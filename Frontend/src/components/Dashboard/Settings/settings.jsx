@@ -8,7 +8,7 @@ import {
   SUBSCRIPTION_STATUS,
   getTrialDaysRemaining,
   DEFAULT_TRIAL_DAYS,
-  SUBSCRIPTION_PRICES
+  SUBSCRIPTION_PLANS
 } from '../../../services/subscription';
 import './settings.scss';
 
@@ -28,7 +28,7 @@ const Settings = ({ onDataImported }) => {
   const [subscription, setSubscription] = useState(null);
   const [processingSubscription, setProcessingSubscription] = useState(false);
   const [processingCheckout, setProcessingCheckout] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState('monthly'); // 'monthly' ou 'annual'
+  const [selectedPlan, setSelectedPlan] = useState(SUBSCRIPTION_PLANS.MONTHLY.id);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -182,17 +182,7 @@ const Settings = ({ onDataImported }) => {
     setProcessingCheckout(true);
     setMessage('');
     try {
-      // Price IDs for the subscription plans
-      const priceIds = {
-        monthly: 'price_monthly', // Remplacer par le vrai ID Stripe
-        annual: 'price_annual'    // Remplacer par le vrai ID Stripe
-      };
-      
-      const billingInterval = selectedPlan === 'monthly' ? 'month' : 'year';
-      const priceId = priceIds[selectedPlan];
-      
-      const { url } = await createCheckoutSession(priceId, billingInterval);
-      
+      const { url } = await createCheckoutSession(selectedPlan);
       if (url) {
         window.location.href = url;
       } else {
@@ -282,39 +272,39 @@ const importData = async () => {
   };
 
   const getSubscriptionStatusText = () => {
-    if (!subscription) return "Chargement...";
+    if (!subscription) return 'Chargement...';
 
     switch (subscription.status) {
       case SUBSCRIPTION_STATUS.ACTIVE:
-        return "Actif";
+        return 'Actif';
       case SUBSCRIPTION_STATUS.TRIAL:
         const daysRemaining = getTrialDaysRemaining(subscription.trialEndDate);
         return `Essai gratuit (${daysRemaining} jour${daysRemaining !== 1 ? 's' : ''} restant${daysRemaining !== 1 ? 's' : ''})`;
       case SUBSCRIPTION_STATUS.EXPIRED:
-        return "Essai expiré";
+        return 'Essai expiré';
       case SUBSCRIPTION_STATUS.CANCELED:
-        return "Annulé";
+        return 'Annulé';
       case SUBSCRIPTION_STATUS.PAST_DUE:
-        return "Paiement en retard";
+        return 'Paiement en retard';
       default:
-        return "Inconnu";
+        return 'Inconnu';
     }
   };
 
   const getSubscriptionStatusColor = () => {
-    if (!subscription) return "#64748b";
+    if (!subscription) return '#64748b';
 
     switch (subscription.status) {
       case SUBSCRIPTION_STATUS.ACTIVE:
-        return "#10b981";
+        return '#10b981';
       case SUBSCRIPTION_STATUS.TRIAL:
-        return "#f59e0b";
+        return '#f59e0b';
       case SUBSCRIPTION_STATUS.EXPIRED:
       case SUBSCRIPTION_STATUS.CANCELED:
       case SUBSCRIPTION_STATUS.PAST_DUE:
-        return "#ef4444";
+        return '#ef4444';
       default:
-        return "#64748b";
+        return '#64748b';
     }
   };
 
@@ -361,19 +351,35 @@ const importData = async () => {
             )}
 
             {subscription && subscription.status !== SUBSCRIPTION_STATUS.ACTIVE && (
-              <div className="plan-toggle">
-                <button 
-                  className={`toggle-btn ${selectedPlan === 'monthly' ? 'active' : ''}`}
-                  onClick={() => setSelectedPlan('monthly')}
-                >
-                  Mensuel
-                </button>
-                <button 
-                  className={`toggle-btn ${selectedPlan === 'annual' ? 'active' : ''}`}
-                  onClick={() => setSelectedPlan('annual')}
-                >
-                  Annuel <span className="savings-badge">Économisez 16%</span>
-                </button>
+              <div className="plan-selector">
+                <h4>Choisissez votre plan</h4>
+                <div className="plan-options">
+                  <div 
+                    className={`plan-option ${selectedPlan === SUBSCRIPTION_PLANS.MONTHLY.id ? 'selected' : ''}`}
+                    onClick={() => setSelectedPlan(SUBSCRIPTION_PLANS.MONTHLY.id)}
+                  >
+                    <div className="plan-name">{SUBSCRIPTION_PLANS.MONTHLY.name}</div>
+                    <div className="plan-price">{SUBSCRIPTION_PLANS.MONTHLY.price}€/{SUBSCRIPTION_PLANS.MONTHLY.period}</div>
+                  </div>
+                  
+                  <div 
+                    className={`plan-option ${selectedPlan === SUBSCRIPTION_PLANS.QUARTERLY.id ? 'selected' : ''}`}
+                    onClick={() => setSelectedPlan(SUBSCRIPTION_PLANS.QUARTERLY.id)}
+                  >
+                    <div className="plan-name">{SUBSCRIPTION_PLANS.QUARTERLY.name}</div>
+                    <div className="plan-price">{SUBSCRIPTION_PLANS.QUARTERLY.price}€/{SUBSCRIPTION_PLANS.QUARTERLY.period}</div>
+                    <div className="plan-savings">Économisez {SUBSCRIPTION_PLANS.QUARTERLY.savings}</div>
+                  </div>
+                  
+                  <div 
+                    className={`plan-option ${selectedPlan === SUBSCRIPTION_PLANS.ANNUAL.id ? 'selected' : ''}`}
+                    onClick={() => setSelectedPlan(SUBSCRIPTION_PLANS.ANNUAL.id)}
+                  >
+                    <div className="plan-name">{SUBSCRIPTION_PLANS.ANNUAL.name}</div>
+                    <div className="plan-price">{SUBSCRIPTION_PLANS.ANNUAL.price}€/{SUBSCRIPTION_PLANS.ANNUAL.period}</div>
+                    <div className="plan-savings">Économisez {SUBSCRIPTION_PLANS.ANNUAL.savings}</div>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -391,23 +397,13 @@ const importData = async () => {
             )}
 
             {subscription && subscription.status !== SUBSCRIPTION_STATUS.ACTIVE && (
-              <div className="subscription-price-display">
-                <div className="price-label">
-                  {selectedPlan === 'monthly' ? 'Abonnement mensuel:' : 'Abonnement annuel:'}
-                </div>
-                <div className="price-value">
-                  {selectedPlan === 'monthly' ? 
-                    `${SUBSCRIPTION_PRICES.MONTHLY}€/mois` : 
-                    `${SUBSCRIPTION_PRICES.ANNUAL}€/an`}
-                </div>
-                <button
-                  onClick={handleSubscribe}
-                  className="subscribe-btn"
-                  disabled={processingCheckout}
-                >
-                  {processingCheckout ? 'Redirection...' : "S'abonner"}
-                </button>
-              </div>
+              <button
+                onClick={handleSubscribe}
+                className="subscribe-btn"
+                disabled={processingCheckout}
+              >
+                {processingCheckout ? 'Redirection...' : "S'abonner"}
+              </button>
             )}
 
             {subscription && subscription.status === SUBSCRIPTION_STATUS.ACTIVE && (

@@ -5,14 +5,33 @@ import { API_ENDPOINTS, apiRequest } from "../config/api";
 export const DEFAULT_TRIAL_DAYS =
   parseInt(import.meta.env.VITE_TRIAL_PERIOD_DAYS, 10) || 14;
 
-// Subscription prices
-export const SUBSCRIPTION_PRICES = {
-  MONTHLY: 30,
-  ANNUAL: 100
+// Subscription plans with pricing
+export const SUBSCRIPTION_PLANS = {
+  MONTHLY: {
+    id: 'price_monthly',
+    name: 'Mensuel',
+    price: 15,
+    period: 'mois',
+    savings: '0%'
+  },
+  QUARTERLY: {
+    id: 'price_quarterly',
+    name: 'Trimestriel',
+    price: 30,
+    period: '3 mois',
+    savings: '33%'
+  },
+  ANNUAL: {
+    id: 'price_annual',
+    name: 'Annuel',
+    price: 100,
+    period: 'an',
+    savings: '44%'
+  }
 };
 
 // Subscription price in euros (for backward compatibility)
-export const SUBSCRIPTION_PRICE = SUBSCRIPTION_PRICES.MONTHLY;
+export const SUBSCRIPTION_PRICE = SUBSCRIPTION_PLANS.MONTHLY.price;
 
 // Constants
 export const SUBSCRIPTION_STATUS = {
