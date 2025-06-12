@@ -476,11 +476,13 @@ const ProspectsPage = ({
                 level={prospect.level}
                 note={prospect.notes}
                 isActive={prospect.status === 'active'}
+                status={prospect.status}
                 onView={() => onViewClientDevis && onViewClientDevis(prospect)}
                 onEdit={() => onEditProspect && onEditProspect(prospect)}
                 onDelete={() => handleDeleteClient(prospect._id)}
                 onHistory={() => onViewClientBilling && onViewClientBilling(prospect)}
                 onCardClick={() => onViewProspect && onViewProspect(prospect)}
+                onStatusClick={(currentStatus) => handleStatusClick(prospect._id, currentStatus)}
               />
             ))}
           </div>
