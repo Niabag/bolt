@@ -30,6 +30,7 @@ const Settings = ({ onDataImported }) => {
   const [processingSubscription, setProcessingSubscription] = useState(false);
   const [processingCheckout, setProcessingCheckout] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(SUBSCRIPTION_PLANS.MONTHLY.id);
+  const currentPlan = Object.values(SUBSCRIPTION_PLANS).find(p => p.id === selectedPlan);
   const fileInputRef = useRef(null);
   const profileImageInputRef = useRef(null);
 
@@ -423,6 +424,9 @@ const Settings = ({ onDataImported }) => {
                   >
                     Annuel <span className="savings-badge">Économisez {SUBSCRIPTION_PLANS.ANNUAL.savings}</span>
                   </button>
+                </div>
+                <div className="selected-plan-price">
+                  {currentPlan.price}€/{currentPlan.period}
                 </div>
               </div>
             )}

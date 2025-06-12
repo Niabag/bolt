@@ -5,6 +5,8 @@ import { SUBSCRIPTION_PLANS } from '../../services/subscription';
 const Pricing = () => {
   const [selectedPlan, setSelectedPlan] = useState('monthly'); // 'monthly', 'quarterly' ou 'annual'
 
+  const currentPlan = SUBSCRIPTION_PLANS[selectedPlan.toUpperCase()];
+
   return (
     <div className="pricing-page">
       <div className="pricing-header">
@@ -34,8 +36,9 @@ const Pricing = () => {
       </div>
 
       <div className="selected-plan-price">
-        {SUBSCRIPTION_PLANS[selectedPlan.toUpperCase()].price}€/
-        {SUBSCRIPTION_PLANS[selectedPlan.toUpperCase()].period}
+
+        {currentPlan.price}€/{currentPlan.period}
+
       </div>
 
       <div className="pricing-plans">
