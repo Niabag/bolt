@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { getSubscriptionStatus, createCheckoutSession, startFreeTrial, SUBSCRIPTION_STATUS, DEFAULT_TRIAL_DAYS, SUBSCRIPTION_PRICE } from '../../services/subscription';
+import { getSubscriptionStatus, createCheckoutSession, startFreeTrial, SUBSCRIPTION_STATUS, DEFAULT_TRIAL_DAYS, SUBSCRIPTION_PLANS } from '../../services/subscription';
 import Navbar from '../Navbar';
 import './SubscriptionRequired.scss';
 
@@ -11,6 +11,7 @@ const SubscriptionRequired = () => {
   const [processingCheckout, setProcessingCheckout] = useState(false);
   const [processingTrial, setProcessingTrial] = useState(false);
   const [error, setError] = useState('');
+  const [selectedPlan, setSelectedPlan] = useState(SUBSCRIPTION_PLANS.MONTHLY.id);
 
   useEffect(() => {
     const fetchSubscriptionStatus = async () => {
@@ -54,10 +55,7 @@ const SubscriptionRequired = () => {
     setError('');
     
     try {
-      // Price ID for the monthly subscription plan
-      const priceId = 'price_1OqXYZHGJMCmVBnT8YgYbL3M';
-      
-      const { url } = await createCheckoutSession(priceId);
+      const { url } = await createCheckoutSession(selectedPlan);
       
       if (url) {
         window.location.href = url;
@@ -132,7 +130,7 @@ const SubscriptionRequired = () => {
               <div className="subscription-badge">Offre Unique</div>
               <h2 className="subscription-title">Abonnement Pro</h2>
               <div className="subscription-price">
-                <span className="price-amount">{SUBSCRIPTION_PRICE}€</span>
+                <span className="price-amount">{SUBSCRIPTION_PLANS.MONTHLY.price}€</span>
                 <span className="price-period">/mois</span>
               </div>
               <p className="subscription-description">
@@ -146,6 +144,7 @@ const SubscriptionRequired = () => {
                 <li>✅ Tableaux de bord et analytics</li>
                 <li>✅ Notifications intelligentes</li>
                 <li>✅ Export PDF et partage</li>
+                <li>✅ Import de prospects depuis Excel/CSV</li>
                 <li>✅ Support prioritaire</li>
                 <li>✅ Mises à jour régulières</li>
               </ul>

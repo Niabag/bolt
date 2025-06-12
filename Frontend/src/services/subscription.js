@@ -68,14 +68,11 @@ export const startFreeTrial = async (trialDays = DEFAULT_TRIAL_DAYS) => {
 };
 
 // Create a checkout session for subscription
-export const createCheckoutSession = async (priceId, billingInterval = 'month') => {
+export const createCheckoutSession = async (priceId) => {
   try {
     const response = await apiRequest(API_ENDPOINTS.SUBSCRIPTION.CREATE_CHECKOUT, {
       method: 'POST',
-      body: JSON.stringify({ 
-        priceId,
-        billingInterval 
-      })
+      body: JSON.stringify({ priceId })
     });
     return response;
   } catch (error) {
