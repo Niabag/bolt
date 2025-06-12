@@ -70,19 +70,20 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
     fetchDevis();
   }, [filterClientId]);
 
+  const fetchInvoices = async (clientId = filterClientId) => {
+    if (!clientId) {
+      setClientInvoices([]);
+      return;
+    }
+    try {
+      const data = await apiRequest(API_ENDPOINTS.INVOICES.BY_CLIENT(clientId));
+      setClientInvoices(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Erreur récupération factures client:", err);
+    }
+  };
+
   useEffect(() => {
-    const fetchInvoices = async () => {
-      if (!filterClientId) {
-        setClientInvoices([]);
-        return;
-      }
-      try {
-        const data = await apiRequest(API_ENDPOINTS.INVOICES.BY_CLIENT(filterClientId));
-        setClientInvoices(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error("Erreur récupération factures client:", err);
-      }
-    };
     fetchInvoices();
   }, [filterClientId]);
 
@@ -543,10 +544,24 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
     setSelectedClientForInvoice(client);
   };
 
-  const handleSaveInvoice = () => {
-    alert('✅ Facture créée avec succès !');
-    setSelectedDevisForInvoice(null);
-    setSelectedClientForInvoice(null);
+  const handleSaveInvoice = async (invoiceData) => {
+    if (!selectedClientForInvoice) return;
+    try {
+      await apiRequest(API_ENDPOINTS.INVOICES.BASE, {
+        method: 'POST',
+        body: JSON.stringify({
+          ...invoiceData,
+          clientId: selectedClientForInvoice._id,
+        }),
+      });
+      alert('✅ Facture créée avec succès !');
+      setSelectedDevisForInvoice(null);
+      setSelectedClientForInvoice(null);
+      await fetchInvoices(selectedClientForInvoice._id);
+    } catch (err) {
+      console.error('Erreur création facture:', err);
+      alert(`❌ Erreur lors de la création de la facture: ${err.message}`);
+    }
   };
 
   const totalTTC = calculateTTC(currentDevis);
