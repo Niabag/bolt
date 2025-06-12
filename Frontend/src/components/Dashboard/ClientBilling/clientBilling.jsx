@@ -704,7 +704,16 @@ const ClientBilling = ({ client, onBack }) => {
                       >
                         ✏️ Éditer
                       </button>
-                      
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // Naviguer vers la page d'édition du devis
+                        }}
+                        className="bg-green-50 text-green-600 hover:bg-green-100 rounded px-3 py-1 text-sm"
+                        title="Éditer"
+                      >
+                        ✏️ Facture
+                      </button>
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
