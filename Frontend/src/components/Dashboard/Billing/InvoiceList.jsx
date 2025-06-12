@@ -16,6 +16,10 @@ const InvoiceList = ({ clients = [] }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('date');
+  
+  // États pour pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 9;
 
   useEffect(() => {
     fetchInvoices();
@@ -344,11 +348,82 @@ const InvoiceList = ({ clients = [] }) => {
     }
   });
 
+  // Calculs de pagination
+  const totalPages = Math.ceil(filteredInvoices.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentInvoices = filteredInvoices.slice(startIndex, endIndex);
+
+  // Fonctions de navigation de pagination
+  const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  // Générer les numéros de pages à afficher
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      const start = Math.max(1, currentPage - 2);
+      const end = Math.min(totalPages, start + maxVisiblePages - 1);
+      
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+    }
+    
+    return pages;
+  };
+
   return (
     <div className="invoice-list-container">
       <div className="invoice-list-header">
-        <h2>📋 Factures émises</h2>
-        <p>Historique de vos factures</p>
+        <h2>📋 Mes Factures</h2>
+        <div className="stats-summary">
+          <div className="stat-item">
+            <span className="stat-number">{invoices.length}</span>
+            <span className="stat-label">Total</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-number">{filteredInvoices.length}</span>
+            <span className="stat-label">Affichés</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-number">{invoices.filter(i => i.status === 'draft').length}</span>
+            <span className="stat-label">📝 Brouillons</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-number">{invoices.filter(i => i.status === 'pending').length}</span>
+            <span className="stat-label">⏳ En attente</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-number">{invoices.filter(i => i.status === 'paid').length}</span>
+            <span className="stat-label">✅ Payées</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-number">{invoices.filter(i => i.status === 'overdue').length}</span>
+            <span className="stat-label">⚠️ En retard</span>
+          </div>
+        </div>
       </div>
 
       {/* Filtres pour les factures */}
@@ -363,6 +438,14 @@ const InvoiceList = ({ clients = [] }) => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="search-input"
             />
+            {searchTerm && (
+              <button 
+                className="clear-search"
+                onClick={() => setSearchTerm('')}
+              >
+                ✕
+              </button>
+            )}
           </div>
         </div>
 
@@ -375,10 +458,10 @@ const InvoiceList = ({ clients = [] }) => {
               className="filter-select"
             >
               <option value="all">Tous</option>
-              <option value="draft">Brouillon</option>
-              <option value="pending">En attente</option>
-              <option value="paid">Payée</option>
-              <option value="overdue">En retard</option>
+              <option value="draft">📝 Brouillons</option>
+              <option value="pending">⏳ En attente</option>
+              <option value="paid">✅ Payées</option>
+              <option value="overdue">⚠️ En retard</option>
             </select>
           </div>
 
@@ -396,6 +479,16 @@ const InvoiceList = ({ clients = [] }) => {
             </select>
           </div>
         </div>
+
+        {/* Informations de pagination */}
+        {filteredInvoices.length > 0 && (
+          <div className="pagination-info">
+            <span>
+              Affichage de {startIndex + 1} à {Math.min(endIndex, filteredInvoices.length)} sur {filteredInvoices.length} factures
+              {totalPages > 1 && ` (Page ${currentPage} sur ${totalPages})`}
+            </span>
+          </div>
+        )}
       </div>
 
       {error && (
@@ -412,86 +505,169 @@ const InvoiceList = ({ clients = [] }) => {
       ) : filteredInvoices.length === 0 ? (
         <div className="empty-state">
           <div className="empty-icon">📋</div>
-          <h3>Aucune facture émise</h3>
-          <p>Vos factures créées apparaîtront ici</p>
+          <h3>
+            {searchTerm || statusFilter !== 'all' 
+              ? "Aucune facture trouvée" 
+              : "Aucune facture émise"
+            }
+          </h3>
+          <p>
+            {searchTerm || statusFilter !== 'all'
+              ? "Essayez de modifier vos critères de recherche"
+              : "Créez votre première facture à partir d'un devis"
+            }
+          </p>
         </div>
       ) : (
-        <div className="invoices-grid">
-          {filteredInvoices.map((invoice) => (
-            <div 
-              key={invoice._id || invoice.id} 
-              className="invoice-card"
-              onClick={() => handleViewInvoice(invoice)}
-            >
-              <div className="invoice-header">
-                <div className="invoice-number">{invoice.invoiceNumber}</div>
-                <div
-                  className="invoice-status clickable"
-                  style={{ backgroundColor: getStatusColor(invoice.status), color: 'white' }}
-                  title={getNextStatusLabel(invoice.status)}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleStatusChange(invoice._id || invoice.id, invoice.status);
-                  }}
-                >
-                  {getStatusIcon(invoice.status)} {getStatusLabel(invoice.status)}
-                </div>
-              </div>
-
-              <div className="invoice-content">
-                <div className="invoice-amount">
-                  <span className="amount-label">Montant TTC :</span>
-                  <span className="amount-value">{invoice.amount.toFixed(2)} €</span>
-                </div>
-
-                <div className="invoice-dates">
-                  <div className="invoice-date">
-                    <span>📅 Émise le : {formatDate(invoice.createdAt)}</span>
-                  </div>
-                  <div className="invoice-due">
-                    <span>⏰ Échéance : {formatDate(invoice.dueDate)}</span>
+        <>
+          <div className="invoices-grid">
+            {currentInvoices.map((invoice) => (
+              <div 
+                key={invoice._id || invoice.id} 
+                className="invoice-card"
+                onClick={() => handleViewInvoice(invoice)}
+              >
+                <div className="invoice-header">
+                  <div className="invoice-number">{invoice.invoiceNumber}</div>
+                  <div
+                    className="invoice-status clickable"
+                    style={{ backgroundColor: getStatusColor(invoice.status), color: 'white' }}
+                    title={getNextStatusLabel(invoice.status)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleStatusChange(invoice._id || invoice.id, invoice.status);
+                    }}
+                  >
+                    {getStatusIcon(invoice.status)} {getStatusLabel(invoice.status)}
                   </div>
                 </div>
 
-                <div className="invoice-client">
-                  <span>👤 Client : {
-                    (() => {
-                      const client = clients.find(c => c._id === (typeof invoice.clientId === 'object' ? invoice.clientId._id : invoice.clientId));
-                      return client ? client.name : 'Client inconnu';
-                    })()
-                  }</span>
+                <div className="invoice-content">
+                  <div className="invoice-amount">
+                    <span className="amount-label">Montant TTC :</span>
+                    <span className="amount-value">{invoice.amount.toFixed(2)} €</span>
+                  </div>
+
+                  <div className="invoice-dates">
+                    <div className="invoice-date">
+                      <span>📅 Émise le : {formatDate(invoice.createdAt)}</span>
+                    </div>
+                    <div className="invoice-due">
+                      <span>⏰ Échéance : {formatDate(invoice.dueDate)}</span>
+                    </div>
+                  </div>
+
+                  <div className="invoice-client">
+                    <span>👤 Client : {
+                      (() => {
+                        const client = clients.find(c => c._id === (typeof invoice.clientId === 'object' ? invoice.clientId._id : invoice.clientId));
+                        return client ? client.name : 'Client inconnu';
+                      })()
+                    }</span>
+                  </div>
+
+                  <div className="invoice-devis">
+                    <span>📄 Devis inclus : {invoice.devisIds?.length || 0}</span>
+                  </div>
                 </div>
 
-                <div className="invoice-devis">
-                  <span>📄 Devis inclus : {invoice.devisIds?.length || 0}</span>
+                <div className="invoice-actions">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDownloadPDF(invoice);
+                    }}
+                    className="action-btn download-btn"
+                    title="Télécharger PDF"
+                  >
+                    📥
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteInvoice(invoice._id || invoice.id);
+                    }}
+                    className="action-btn delete-btn"
+                    title="Supprimer"
+                  >
+                    🗑️
+                  </button>
                 </div>
               </div>
+            ))}
+          </div>
 
-              <div className="invoice-actions">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDownloadPDF(invoice);
-                  }}
-                  className="action-btn download-btn"
-                  title="Télécharger PDF"
+          {/* Contrôles de pagination */}
+          {totalPages > 1 && (
+            <div className="pagination-controls">
+              <div className="pagination-wrapper">
+                {/* Bouton Précédent */}
+                <button 
+                  onClick={goToPreviousPage}
+                  disabled={currentPage === 1}
+                  className="pagination-btn pagination-prev"
+                  title="Page précédente"
                 >
-                  📥
+                  ← Précédent
                 </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteInvoice(invoice._id || invoice.id);
-                  }}
-                  className="action-btn delete-btn"
-                  title="Supprimer"
+
+                {/* Numéros de pages */}
+                <div className="pagination-numbers">
+                  {currentPage > 3 && totalPages > 5 && (
+                    <>
+                      <button 
+                        onClick={() => goToPage(1)}
+                        className="pagination-number"
+                      >
+                        1
+                      </button>
+                      {currentPage > 4 && <span className="pagination-ellipsis">...</span>}
+                    </>
+                  )}
+
+                  {getPageNumbers().map(pageNum => (
+                    <button
+                      key={pageNum}
+                      onClick={() => goToPage(pageNum)}
+                      className={`pagination-number ${currentPage === pageNum ? 'active' : ''}`}
+                    >
+                      {pageNum}
+                    </button>
+                  ))}
+
+                  {currentPage < totalPages - 2 && totalPages > 5 && (
+                    <>
+                      {currentPage < totalPages - 3 && <span className="pagination-ellipsis">...</span>}
+                      <button 
+                        onClick={() => goToPage(totalPages)}
+                        className="pagination-number"
+                      >
+                        {totalPages}
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {/* Bouton Suivant */}
+                <button 
+                  onClick={goToNextPage}
+                  disabled={currentPage === totalPages}
+                  className="pagination-btn pagination-next"
+                  title="Page suivante"
                 >
-                  🗑️
+                  Suivant →
                 </button>
+              </div>
+
+              {/* Informations de pagination détaillées */}
+              <div className="pagination-details">
+                <span>
+                  Page {currentPage} sur {totalPages} • {filteredInvoices.length} facture{filteredInvoices.length > 1 ? 's' : ''} au total
+                </span>
               </div>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
 
       {/* Prévisualisation de la facture */}
