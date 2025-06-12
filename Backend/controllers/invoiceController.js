@@ -1,6 +1,7 @@
 const Invoice = require("../models/invoice");
 const Devis = require("../models/devis");
 const Client = require("../models/client");
+const { sendEmail } = require("../utils/emailSender");
 
 // ✅ Créer une nouvelle facture
 exports.createInvoice = async (req, res) => {
@@ -164,9 +165,42 @@ exports.getInvoiceById = async (req, res) => {
     res.json(invoice);
   } catch (error) {
     console.error("❌ Erreur récupération facture:", error);
-    res.status(500).json({ 
-      message: "Erreur lors de la récupération de la facture", 
-      error: error.message 
+    res.status(500).json({
+      message: "Erreur lors de la récupération de la facture",
+      error: error.message
+    });
+  }
+};
+
+// ✅ Envoyer une facture par email
+exports.sendInvoiceByEmail = async (req, res) => {
+  try {
+    const invoice = await Invoice.findOne({
+      _id: req.params.id,
+      userId: req.userId
+    }).populate("clientId", "name email");
+
+    if (!invoice) {
+      return res.status(404).json({ message: "Facture introuvable ou non autorisée" });
+    }
+
+    if (!invoice.clientId.email) {
+      return res.status(400).json({ message: "Le client n'a pas d'adresse email" });
+    }
+
+    await sendEmail({
+      to: invoice.clientId.email,
+      subject: `Facture ${invoice.invoiceNumber}`,
+      text: `Bonjour,\nVeuillez trouver votre facture ${invoice.invoiceNumber} d'un montant de ${invoice.amount} €`,
+      html: `<p>Bonjour,</p><p>Veuillez trouver votre facture <strong>${invoice.invoiceNumber}</strong> d'un montant de <strong>${invoice.amount} €</strong>.</p>`
+    });
+
+    res.json({ message: "Facture envoyée par email" });
+  } catch (error) {
+    console.error("❌ Erreur envoi email facture:", error);
+    res.status(500).json({
+      message: "Erreur lors de l'envoi de la facture",
+      error: error.message
     });
   }
 };

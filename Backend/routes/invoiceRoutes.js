@@ -6,7 +6,8 @@ const {
   getInvoiceById,
   updateInvoice,
   updateInvoiceStatus,
-  deleteInvoice
+  deleteInvoice,
+  sendInvoiceByEmail
 } = require("../controllers/invoiceController");
 const authMiddleware = require("../middleware/auth");
 const { checkSubscription } = require("../middleware/subscription");
@@ -30,6 +31,9 @@ router.put("/:id", authMiddleware, checkSubscription, updateInvoice);
 
 // 📌 Mettre à jour le statut d'une facture (PATCH)
 router.patch("/:id/status", authMiddleware, checkSubscription, updateInvoiceStatus);
+
+// 📌 Envoyer une facture par email
+router.post("/:id/send", authMiddleware, checkSubscription, sendInvoiceByEmail);
 
 // 📌 Supprimer une facture (DELETE)
 router.delete("/:id", authMiddleware, checkSubscription, deleteInvoice);

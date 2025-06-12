@@ -1,4 +1,5 @@
 const Devis = require("../models/devis");
+const { sendEmail } = require("../utils/emailSender");
 
 const calculateTotalTTC = (articles = []) => {
   if (!Array.isArray(articles)) return 0;
@@ -126,6 +127,32 @@ exports.getClientDevis = async (req, res) => {
   } catch (error) {
     console.error("Erreur récupération devis client :", error);
     res.status(500).json({ message: "Erreur lors de la récupération des devis du client", error });
+  }
+};
+
+// ✅ Envoyer un devis par email
+exports.sendDevisByEmail = async (req, res) => {
+  try {
+    const devis = await Devis.findOne({ _id: req.params.id, userId: req.userId }).populate("clientId", "name email");
+    if (!devis) {
+      return res.status(404).json({ message: "Devis introuvable ou non autorisé" });
+    }
+
+    if (!devis.clientId.email) {
+      return res.status(400).json({ message: "Le client n'a pas d'adresse email" });
+    }
+
+    await sendEmail({
+      to: devis.clientId.email,
+      subject: `Devis ${devis.title}`,
+      text: `Bonjour,\nVeuillez trouver votre devis "${devis.title}" d'un montant de ${devis.amount} €`,
+      html: `<p>Bonjour,</p><p>Veuillez trouver votre devis <strong>${devis.title}</strong> d'un montant de <strong>${devis.amount} €</strong>.</p>`
+    });
+
+    res.json({ message: "Devis envoyé par email" });
+  } catch (error) {
+    console.error("❌ Erreur envoi email devis:", error);
+    res.status(500).json({ message: "Erreur lors de l'envoi du devis", error: error.message });
   }
 };
 
