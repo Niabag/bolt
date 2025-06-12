@@ -1,0 +1,9 @@
+BEGIN:VCARD
+VERSION:3.0
+FN:Alice Dupont
+EMAIL:alice.dupont@mail.com
+TEL:06 12 34 56 78
+ORG:Alpha SARL
+NOTE:Client fidèle
+ADR;TYPE=home:;;12 rue Victor Hugo;Paris;;75001;
+END:VCARD
