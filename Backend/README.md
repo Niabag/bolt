@@ -17,7 +17,7 @@ You can customize the trial duration with `TRIAL_PERIOD_DAYS`.
 
 ### Import de prospects
 
-Le fichier [docs/ImportProspects.md](../docs/ImportProspects.md) décrit comment importer des prospects depuis un fichier CSV ou XLSX. Un exemple prêt à l'emploi est disponible dans `example-data/prospect-sample.csv`.
+Le fichier [docs/ImportProspects.md](../docs/ImportProspects.md) explique comment importer des prospects depuis un fichier **CSV**, **XLSX**, **JSON**, **PDF** ou **VCF**. Des exemples sont fournis dans le dossier `example-data`.
 
 ### Card view tracking
 

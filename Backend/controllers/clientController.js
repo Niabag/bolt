@@ -305,6 +305,47 @@ exports.importClients = async (req, res) => {
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       rows = xlsx.utils.sheet_to_json(sheet);
       total = rows.length;
+    } else if (file.originalname.endsWith('.json')) {
+      const jsonContent = fs.readFileSync(filePath, 'utf8');
+      const parsed = JSON.parse(jsonContent);
+      if (Array.isArray(parsed)) {
+        rows = parsed;
+      } else if (Array.isArray(parsed.clients)) {
+        rows = parsed.clients;
+      } else {
+        rows = [parsed];
+      }
+      total = rows.length;
+    } else if (file.originalname.endsWith('.vcf') || file.originalname.endsWith('.vcard')) {
+      const vCard = require('vcf');
+      const content = fs.readFileSync(filePath, 'utf8');
+      const cards = vCard.parse(content);
+      rows = cards.map(card => ({
+        name: card.get('fn') ? card.get('fn').valueOf() : '',
+        email: card.get('email') ? card.get('email').valueOf() : '',
+        phone: card.get('tel') ? card.get('tel').valueOf() : '',
+        company: card.get('org') ? card.get('org').valueOf() : '',
+        notes: card.get('note') ? card.get('note').valueOf() : '',
+        address: card.get('adr') ? card.get('adr').valueOf().split(';').slice(2,3)[0] : '',
+        postalCode: card.get('adr') ? card.get('adr').valueOf().split(';')[5] : '',
+        city: card.get('adr') ? card.get('adr').valueOf().split(';')[3] : ''
+      }));
+      total = rows.length;
+    } else if (file.originalname.endsWith('.pdf')) {
+      const pdfParse = require('pdf-parse');
+      const dataBuffer = fs.readFileSync(filePath);
+      const pdfData = await pdfParse(dataBuffer);
+      const lines = pdfData.text.trim().split(/\r?\n/);
+      const headerLine = lines.shift();
+      const separator = headerLine.includes(';') ? ';' : ',';
+      const headers = headerLine.split(separator).map(h => h.trim());
+      lines.forEach(line => {
+        const values = line.split(separator).map(v => v.trim());
+        const row = {};
+        headers.forEach((h, idx) => { row[h] = values[idx]; });
+        rows.push(row);
+      });
+      total = rows.length;
     } else {
       fs.unlinkSync(filePath);
       return res.status(400).json({ message: 'Format de fichier non supporté' });

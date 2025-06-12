@@ -1,8 +1,8 @@
 # Importer des prospects
 
-Ce dépôt inclut une API permettant d'importer des prospects depuis un fichier CSV ou XLSX.
+Cette API permet d'importer des prospects depuis un fichier CSV, XLSX, PDF, JSON ou VCF (vCard).
 
-## Exemple de fichier
+## Exemple de fichier CSV
 
 Un exemple de fichier se trouve dans `example-data/prospect-sample.csv` :
 
@@ -11,10 +11,12 @@ Nom,Email,Téléphone,Entreprise,Statut,Notes,Adresse,Code Postal,Ville,Date de 
 Alice Dupont,alice.dupont@mail.com,06 12 34 56 78,Alpha SARL,Actif,Client fidèle,12 rue Victor Hugo,75001,Paris,2024-03-01,2025-06-10
 ```
 
+Vous trouverez également des exemples aux formats JSON et VCF dans le dossier `example-data`.
+
 ## Étapes d'import
 
 1. Démarrer le serveur backend comme indiqué dans `Backend/README.md`.
 2. Ouvrir l'interface Frontend et se connecter.
 3. Accéder à **Paramètres** → **Gestion des données**.
-4. Sélectionner le fichier CSV exemple et cliquer sur **Importer des prospects**.
-5. Une notification indique la réussite de l'import. Le prospect apparaît alors dans la page **Prospects**.
+4. Sélectionner le fichier à importer (CSV, XLSX, JSON, PDF ou VCF) puis cliquer sur **Importer des prospects**.
+5. Une notification confirme la réussite de l'import et les prospects apparaissent dans la page **Prospects**.
