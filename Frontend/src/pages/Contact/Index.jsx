@@ -169,6 +169,7 @@ const Contact = () => {
                     <option value="Question générale">Question générale</option>
                     <option value="Support technique">Support technique</option>
                     <option value="Facturation">Facturation</option>
+                    <option value="Import de données">Import de données</option>
                     <option value="Partenariat">Partenariat</option>
                     <option value="Autre">Autre</option>
                   </select>
@@ -229,10 +230,10 @@ const Contact = () => {
             </div>
             
             <div className="faq-item">
-              <h3>Comment fonctionne le support client ?</h3>
+              <h3>Comment importer mes prospects existants ?</h3>
               <p>
-                Notre équipe de support est disponible par email et chat en direct du lundi au vendredi, 
-                de 9h à 18h. Le temps de réponse moyen est inférieur à 4 heures.
+                Vous pouvez facilement importer vos prospects existants depuis des fichiers CSV ou Excel (XLSX). 
+                Accédez simplement à la section "Paramètres > Gestion des données" et suivez les instructions.
               </p>
             </div>
             

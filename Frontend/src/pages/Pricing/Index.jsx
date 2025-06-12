@@ -62,7 +62,7 @@ const Pricing = () => {
               <li>✅ Export PDF et partage</li>
               <li>✅ Support prioritaire</li>
               <li>✅ Mises à jour régulières</li>
-              <li>✅ Import de prospects depuis Excel/CSV/PDF</li>
+              <li>✅ Import de prospects depuis Excel/CSV</li>
             </ul>
             <a href="/register-user" className="pricing-cta">
               Commencer maintenant
@@ -93,7 +93,7 @@ const Pricing = () => {
               <li>✅ Export PDF et partage</li>
               <li>✅ Support prioritaire</li>
               <li>✅ Mises à jour régulières</li>
-              <li>✅ Import de prospects depuis Excel/CSV/PDF</li>
+              <li>✅ Import de prospects depuis Excel/CSV</li>
             </ul>
             <a href="/register-user" className="pricing-cta highlight">
               Choisir ce plan
@@ -124,7 +124,7 @@ const Pricing = () => {
               <li>✅ Export PDF et partage</li>
               <li>✅ Support prioritaire</li>
               <li>✅ Mises à jour régulières</li>
-              <li>✅ Import de prospects depuis Excel/CSV/PDF</li>
+              <li>✅ Import de prospects depuis Excel/CSV</li>
               <li>✅ Accès prioritaire aux nouvelles fonctionnalités</li>
             </ul>
             <a href="/register-user" className="pricing-cta">
@@ -157,7 +157,7 @@ const Pricing = () => {
         <div className="faq-item">
           <h3>Puis-je importer mes données existantes ?</h3>
           <p>
-            Oui, CRM Pro vous permet d'importer facilement vos prospects existants depuis des fichiers CSV, Excel, PDF ou vCard. 
+            Oui, CRM Pro vous permet d'importer facilement vos prospects existants depuis des fichiers CSV ou Excel (XLSX). 
             Vous pouvez également exporter vos données à tout moment dans différents formats.
           </p>
         </div>

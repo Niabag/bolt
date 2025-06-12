@@ -8,6 +8,7 @@ const Features = () => {
       description: "Centralisez tous vos prospects avec un système de suivi avancé et des statuts personnalisables. Suivez l'évolution de chaque relation client et ne manquez jamais une opportunité.",
       benefits: [
         "Capture automatique via QR code",
+        "Import facile depuis Excel et CSV",
         "Statuts personnalisables",
         "Historique complet des interactions",
         "Fiches détaillées avec notes et adresses"
