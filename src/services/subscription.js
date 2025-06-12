@@ -5,12 +5,33 @@ import { API_ENDPOINTS, apiRequest } from "../config/api";
 export const DEFAULT_TRIAL_DAYS =
   parseInt(import.meta.env.VITE_TRIAL_PERIOD_DAYS, 10) || 14;
 
-// Subscription prices in euros
-export const SUBSCRIPTION_PRICE =
-  parseFloat(import.meta.env.VITE_SUBSCRIPTION_PRICE) || 13;
+// Subscription plans with pricing
+export const SUBSCRIPTION_PLANS = {
+  MONTHLY: {
+    id: 'price_monthly',
+    name: 'Mensuel',
+    price: 15,
+    period: 'mois',
+    savings: '0%'
+  },
+  QUARTERLY: {
+    id: 'price_quarterly',
+    name: 'Trimestriel',
+    price: 30,
+    period: '3 mois',
+    savings: '33%'
+  },
+  ANNUAL: {
+    id: 'price_annual',
+    name: 'Annuel',
+    price: 100,
+    period: 'an',
+    savings: '44%'
+  }
+};
 
-export const SUBSCRIPTION_PRICE_QUARTERLY = 30;
-export const SUBSCRIPTION_PRICE_ANNUAL = 100;
+// Subscription price in euros (for backward compatibility)
+export const SUBSCRIPTION_PRICE = SUBSCRIPTION_PLANS.MONTHLY.price;
 
 // Constants
 export const SUBSCRIPTION_STATUS = {
@@ -19,31 +40,6 @@ export const SUBSCRIPTION_STATUS = {
   EXPIRED: 'expired',
   CANCELED: 'canceled',
   PAST_DUE: 'past_due'
-};
-
-// Subscription plans
-export const SUBSCRIPTION_PLANS = {
-  MONTHLY: {
-    id: 'price_1OqXYZHGJMCmVBnT8YgYbL3M',
-    name: 'Mensuel',
-    price: SUBSCRIPTION_PRICE,
-    period: 'mois',
-    savings: '0%'
-  },
-  QUARTERLY: {
-    id: 'price_quarterly',
-    name: 'Trimestriel',
-    price: SUBSCRIPTION_PRICE_QUARTERLY,
-    period: '3 mois',
-    savings: '23%'
-  },
-  ANNUAL: {
-    id: 'price_annual',
-    name: 'Annuel',
-    price: SUBSCRIPTION_PRICE_ANNUAL,
-    period: 'an',
-    savings: '36%'
-  }
 };
 
 // Get current subscription status
@@ -72,11 +68,14 @@ export const startFreeTrial = async (trialDays = DEFAULT_TRIAL_DAYS) => {
 };
 
 // Create a checkout session for subscription
-export const createCheckoutSession = async (priceId) => {
+export const createCheckoutSession = async (priceId, billingInterval = 'month') => {
   try {
     const response = await apiRequest(API_ENDPOINTS.SUBSCRIPTION.CREATE_CHECKOUT, {
       method: 'POST',
-      body: JSON.stringify({ priceId })
+      body: JSON.stringify({ 
+        priceId,
+        billingInterval 
+      })
     });
     return response;
   } catch (error) {
