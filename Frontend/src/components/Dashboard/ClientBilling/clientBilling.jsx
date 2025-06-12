@@ -20,6 +20,11 @@ const ClientBilling = ({ client, onBack }) => {
     pendingAmount: 0,
     paidAmount: 0
   });
+  
+  // État pour la prévisualisation de facture existante
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [selectedInvoiceDevis, setSelectedInvoiceDevis] = useState([]);
+  const invoiceEditPreviewRef = useRef(null);
 
   useEffect(() => {
     if (client && client._id) {
@@ -67,6 +72,7 @@ const ClientBilling = ({ client, onBack }) => {
 
   const handleCreateInvoice = (devis) => {
     setSelectedDevis(devis);
+    setSelectedInvoice(null); // Réinitialiser la facture sélectionnée
     
     // Faire défiler jusqu'à la prévisualisation
     setTimeout(() => {
@@ -74,6 +80,41 @@ const ClientBilling = ({ client, onBack }) => {
         invoicePreviewRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }, 100);
+  };
+
+  const handleViewInvoice = async (invoice) => {
+    try {
+      setLoading(true);
+      setSelectedDevis(null); // Réinitialiser le devis sélectionné
+      setSelectedInvoice(invoice);
+      
+      // Récupérer les devis liés à cette facture
+      const devisDetails = await Promise.all(
+        (invoice.devisIds || []).map(async (devisId) => {
+          try {
+            return await apiRequest(API_ENDPOINTS.DEVIS.BY_ID(devisId));
+          } catch (err) {
+            console.error(`Erreur récupération devis ${devisId}:`, err);
+            return null;
+          }
+        })
+      );
+      
+      // Filtrer les devis null (en cas d'erreur)
+      setSelectedInvoiceDevis(devisDetails.filter(Boolean));
+      
+      // Faire défiler jusqu'à la prévisualisation
+      setTimeout(() => {
+        if (invoiceEditPreviewRef.current) {
+          invoiceEditPreviewRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    } catch (err) {
+      console.error('Erreur récupération des détails de facture:', err);
+      setError("Erreur lors de la récupération des détails de la facture");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -108,6 +149,39 @@ const ClientBilling = ({ client, onBack }) => {
     } catch (err) {
       console.error('Erreur création facture:', err);
       alert(`❌ Erreur lors de la création de la facture: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Mettre à jour une facture existante
+  const handleUpdateInvoice = async (updatedInvoice) => {
+    try {
+      setLoading(true);
+      
+      // Préparer les données de la facture
+      const invoiceData = {
+        ...updatedInvoice,
+        clientId: client._id
+      };
+      
+      // Envoyer la requête à l'API
+      const response = await apiRequest(API_ENDPOINTS.INVOICES.UPDATE(updatedInvoice._id || updatedInvoice.id), {
+        method: 'PUT',
+        body: JSON.stringify(invoiceData)
+      });
+      
+      // Rafraîchir les données
+      await fetchClientData();
+      
+      // Réinitialiser la sélection
+      setSelectedInvoice(null);
+      setSelectedInvoiceDevis([]);
+      
+      alert('✅ Facture mise à jour avec succès !');
+    } catch (err) {
+      console.error('Erreur mise à jour facture:', err);
+      alert(`❌ Erreur lors de la mise à jour de la facture: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -469,6 +543,113 @@ const ClientBilling = ({ client, onBack }) => {
     }
   };
 
+  // Télécharger une facture en PDF
+  const handleDownloadInvoicePDF = async (invoice) => {
+    try {
+      setLoading(true);
+
+      const [{ default: jsPDF }] = await Promise.all([
+        import('jspdf')
+      ]);
+
+      // Récupérer les détails des devis liés à la facture
+      const devisDetails = await Promise.all(
+        (invoice.devisIds || []).map(async (id) => {
+          try {
+            return await apiRequest(API_ENDPOINTS.DEVIS.BY_ID(id));
+          } catch (err) {
+            console.error('Erreur récupération devis:', err);
+            return null;
+          }
+        })
+      );
+      const validDevis = devisDetails.filter(Boolean);
+
+      // Fusionner tous les articles
+      const articles = validDevis.flatMap((d) => d.articles || []);
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+
+      pdf.setFontSize(18);
+      pdf.text(`Facture ${invoice.invoiceNumber}`, 105, 20, { align: 'center' });
+
+      pdf.setFontSize(12);
+      pdf.text(`Client : ${client.name}`, 20, 40);
+      pdf.text(`Émise le : ${formatDate(invoice.createdAt)}`, 20, 48);
+      pdf.text(`Échéance : ${formatDate(invoice.dueDate)}`, 20, 56);
+
+      let currentY = 70;
+      pdf.text('Articles :', 20, currentY);
+      currentY += 8;
+
+      articles.forEach((article) => {
+        const price = parseFloat(article.unitPrice || 0);
+        const qty = parseFloat(article.quantity || 0);
+        const total = price * qty;
+
+        pdf.text(article.description || '', 20, currentY);
+        pdf.text(`${qty}`, 110, currentY, { align: 'right' });
+        pdf.text(`${price.toFixed(2)} €`, 130, currentY, { align: 'right' });
+        pdf.text(`${total.toFixed(2)} €`, 190, currentY, { align: 'right' });
+
+        currentY += 6;
+        if (currentY > 280) { pdf.addPage(); currentY = 20; }
+      });
+
+      const totalHT = articles.reduce(
+        (sum, a) => sum + parseFloat(a.unitPrice || 0) * parseFloat(a.quantity || 0),
+        0
+      );
+      const totalTVA = articles.reduce(
+        (sum, a) => sum + (
+          parseFloat(a.unitPrice || 0) * parseFloat(a.quantity || 0) * (parseFloat(a.tvaRate || 0) / 100)
+        ),
+        0
+      );
+      const totalTTC = totalHT + totalTVA;
+
+      currentY += 10;
+      pdf.text(`Total HT : ${totalHT.toFixed(2)} €`, 20, currentY);
+      currentY += 8;
+      pdf.text(`Total TVA : ${totalTVA.toFixed(2)} €`, 20, currentY);
+      currentY += 8;
+      pdf.setFontSize(14);
+      pdf.text(`Total TTC : ${totalTTC.toFixed(2)} €`, 20, currentY);
+
+      pdf.save(`${invoice.invoiceNumber}.pdf`);
+    } catch (error) {
+      console.error('Erreur téléchargement PDF:', error);
+      alert('❌ Erreur lors de la génération du PDF');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteInvoice = async (invoiceId) => {
+    if (window.confirm("Supprimer cette facture ?")) {
+      try {
+        setLoading(true);
+        await apiRequest(API_ENDPOINTS.INVOICES.DELETE(invoiceId), {
+          method: 'DELETE'
+        });
+        
+        await fetchClientData();
+        alert('✅ Facture supprimée avec succès');
+        
+        // Réinitialiser la sélection si c'est la facture actuellement sélectionnée
+        if (selectedInvoice && (selectedInvoice.id === invoiceId || selectedInvoice._id === invoiceId)) {
+          setSelectedInvoice(null);
+          setSelectedInvoiceDevis([]);
+        }
+      } catch (error) {
+        console.error('Erreur lors de la suppression:', error);
+        alert('❌ Erreur lors de la suppression de la facture');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   const formatDate = (dateStr) => {
     if (!dateStr) return "";
     try {
@@ -508,33 +689,18 @@ const ClientBilling = ({ client, onBack }) => {
     }
   };
 
-  const getDevisStatusColor = (status) => {
+  const getNextStatusLabel = (status) => {
     switch (status) {
-      case 'nouveau': return '#3b82f6'; // Bleu
-      case 'en_attente': return '#8b5cf6'; // Violet
-      case 'fini': return '#10b981'; // Vert
-      case 'inactif': return '#ef4444'; // Rouge
-      default: return '#3b82f6';
-    }
-  };
-
-  const getDevisStatusLabel = (status) => {
-    switch (status) {
-      case 'nouveau': return 'Nouveau';
-      case 'en_attente': return 'En attente';
-      case 'fini': return 'Finalisé';
-      case 'inactif': return 'Inactif';
-      default: return 'Nouveau';
-    }
-  };
-
-  const getDevisStatusIcon = (status) => {
-    switch (status) {
-      case 'nouveau': return '🔵';
-      case 'en_attente': return '🟣';
-      case 'fini': return '🟢';
-      case 'inactif': return '🔴';
-      default: return '🔵';
+      case 'draft':
+        return 'Passer en Attente';
+      case 'pending':
+        return 'Marquer Payée';
+      case 'paid':
+        return 'Marquer En retard';
+      case 'overdue':
+        return 'Repasser en Brouillon';
+      default:
+        return 'Changer le statut';
     }
   };
 
@@ -690,12 +856,13 @@ const ClientBilling = ({ client, onBack }) => {
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
-                          // Naviguer vers la page d'édition du devis
+                          handleDownloadPDF(devis);
                         }}
-                        className="bg-green-50 text-green-600 hover:bg-green-100 rounded px-3 py-1 text-sm"
-                        title="Éditer"
+                        className="bg-blue-50 text-blue-600 hover:bg-blue-100 rounded px-3 py-1 text-sm"
+                        disabled={loading}
+                        title="Télécharger PDF"
                       >
-                        ✏️ Éditer
+                        {loading ? "⏳" : "📄"} PDF
                       </button>
                       <button 
                         onClick={(e) => {
@@ -706,17 +873,6 @@ const ClientBilling = ({ client, onBack }) => {
                         title="Créer une facture"
                       >
                         💶 Facture
-                      </button>
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDownloadPDF(devis);
-                        }}
-                        className="bg-blue-50 text-blue-600 hover:bg-blue-100 rounded px-3 py-1 text-sm"
-                        disabled={loading}
-                        title="Télécharger PDF"
-                      >
-                        {loading ? "⏳" : "📄"} PDF
                       </button>
                     </div>
                   </div>
@@ -745,14 +901,21 @@ const ClientBilling = ({ client, onBack }) => {
         ) : (
           <div className="invoices-grid">
             {invoices.map((invoice) => (
-              <div key={invoice._id || invoice.id} className="invoice-card">
+              <div 
+                key={invoice._id || invoice.id} 
+                className="invoice-card"
+                onClick={() => handleViewInvoice(invoice)}
+              >
                 <div className="invoice-header">
                   <div className="invoice-number">{invoice.invoiceNumber}</div>
                   <div
                     className="invoice-status clickable"
                     style={{ backgroundColor: getStatusColor(invoice.status) }}
                     title="Cliquer pour changer le statut"
-                    onClick={() => handleInvoiceStatusClick(invoice._id || invoice.id, invoice.status)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleInvoiceStatusClick(invoice._id || invoice.id, invoice.status);
+                    }}
                   >
                     {getStatusIcon(invoice.status)} {getStatusLabel(invoice.status)}
                   </div>
@@ -776,15 +939,12 @@ const ClientBilling = ({ client, onBack }) => {
                 
                 <div className="invoice-actions flex gap-2">
                   <button
-                    className="bg-blue-50 text-blue-600 hover:bg-blue-100 rounded px-3 py-1 text-sm"
-                    title="Voir la facture"
-                  >
-                    👁️ Voir
-                  </button>
-
-                  <button
                     className="bg-green-50 text-green-600 hover:bg-green-100 rounded px-3 py-1 text-sm"
                     title="Télécharger PDF"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDownloadInvoicePDF(invoice);
+                    }}
                   >
                     📥 PDF
                   </button>
@@ -792,6 +952,7 @@ const ClientBilling = ({ client, onBack }) => {
                   <button
                     className="bg-yellow-50 text-yellow-600 hover:bg-yellow-100 rounded px-3 py-1 text-sm"
                     title="Envoyer par email"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     📧 Envoyer
                   </button>
@@ -799,6 +960,10 @@ const ClientBilling = ({ client, onBack }) => {
                   <button
                     className="bg-red-50 text-red-600 hover:bg-red-100 rounded px-3 py-1 text-sm"
                     title="Supprimer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteInvoice(invoice._id || invoice.id);
+                    }}
                   >
                     🗑️ Supprimer
                   </button>
@@ -830,8 +995,60 @@ const ClientBilling = ({ client, onBack }) => {
           />
         </div>
       )}
+
+      {/* Prévisualisation de facture existante */}
+      {selectedInvoice && (
+        <div className="invoice-preview-section" ref={invoiceEditPreviewRef}>
+          <div className="section-header">
+            <h3>Modification de facture</h3>
+            <p>Facture: {selectedInvoice.invoiceNumber}</p>
+          </div>
+          
+          <DynamicInvoice
+            invoice={selectedInvoice}
+            client={client}
+            devisDetails={selectedInvoiceDevis}
+            onSave={handleUpdateInvoice}
+            onCancel={() => {
+              setSelectedInvoice(null);
+              setSelectedInvoiceDevis([]);
+            }}
+          />
+        </div>
+      )}
     </div>
   );
+};
+
+// Fonctions utilitaires pour les statuts de devis
+const getDevisStatusColor = (status) => {
+  switch (status) {
+    case 'nouveau': return '#3b82f6'; // Bleu
+    case 'en_attente': return '#8b5cf6'; // Violet
+    case 'fini': return '#10b981'; // Vert
+    case 'inactif': return '#ef4444'; // Rouge
+    default: return '#3b82f6';
+  }
+};
+
+const getDevisStatusLabel = (status) => {
+  switch (status) {
+    case 'nouveau': return 'Nouveau';
+    case 'en_attente': return 'En attente';
+    case 'fini': return 'Finalisé';
+    case 'inactif': return 'Inactif';
+    default: return 'Nouveau';
+  }
+};
+
+const getDevisStatusIcon = (status) => {
+  switch (status) {
+    case 'nouveau': return '🔵';
+    case 'en_attente': return '🟣';
+    case 'fini': return '🟢';
+    case 'inactif': return '🔴';
+    default: return '🔵';
+  }
 };
 
 export default ClientBilling;
