@@ -62,6 +62,7 @@ const Pricing = () => {
               <li>✅ Export PDF et partage</li>
               <li>✅ Support prioritaire</li>
               <li>✅ Mises à jour régulières</li>
+              <li>✅ Import de prospects depuis Excel/CSV/PDF</li>
             </ul>
             <a href="/register-user" className="pricing-cta">
               Commencer maintenant

@@ -388,24 +388,6 @@ const Settings = ({ onDataImported }) => {
     }
   };
 
-  // Helper function to get the appropriate file extension description
-  const getImportFormatDescription = () => {
-    switch (importFormat) {
-      case 'csv':
-        return 'fichier CSV (valeurs séparées par des virgules ou points-virgules)';
-      case 'xlsx':
-        return 'fichier Excel (XLSX)';
-      case 'json':
-        return 'fichier JSON';
-      case 'pdf':
-        return 'fichier PDF contenant des données tabulaires';
-      case 'vcf':
-        return 'fichier vCard (VCF) contenant des contacts';
-      default:
-        return `fichier ${importFormat.toUpperCase()}`;
-    }
-  };
-
   return (
     <div className="settings-container">
       <h2>⚙️ Paramètres</h2>
