@@ -12,6 +12,7 @@ const SubscriptionRequired = () => {
   const [processingTrial, setProcessingTrial] = useState(false);
   const [error, setError] = useState('');
   const [selectedPlan, setSelectedPlan] = useState(SUBSCRIPTION_PLANS.MONTHLY.id);
+  const currentPlan = Object.values(SUBSCRIPTION_PLANS).find(p => p.id === selectedPlan);
 
   useEffect(() => {
     const fetchSubscriptionStatus = async () => {
@@ -125,34 +126,40 @@ const SubscriptionRequired = () => {
             {getStatusMessage()}
           </div>
 
-          <div className="plan-toggle">
-            <button
-              className={`toggle-btn ${selectedPlan === SUBSCRIPTION_PLANS.MONTHLY.id ? 'active' : ''}`}
-              onClick={() => setSelectedPlan(SUBSCRIPTION_PLANS.MONTHLY.id)}
-            >
-              Mensuel
-            </button>
-            <button
-              className={`toggle-btn ${selectedPlan === SUBSCRIPTION_PLANS.QUARTERLY.id ? 'active' : ''}`}
-              onClick={() => setSelectedPlan(SUBSCRIPTION_PLANS.QUARTERLY.id)}
-            >
-              Trimestriel <span className="savings-badge">Économisez {SUBSCRIPTION_PLANS.QUARTERLY.savings}</span>
-            </button>
-            <button
-              className={`toggle-btn ${selectedPlan === SUBSCRIPTION_PLANS.ANNUAL.id ? 'active' : ''}`}
-              onClick={() => setSelectedPlan(SUBSCRIPTION_PLANS.ANNUAL.id)}
-            >
-              Annuel <span className="savings-badge">Économisez {SUBSCRIPTION_PLANS.ANNUAL.savings}</span>
-            </button>
+          <div className="plan-selector">
+            <h3>Choisissez votre plan</h3>
+            <div className="plan-toggle">
+              <button
+                className={`toggle-btn ${selectedPlan === SUBSCRIPTION_PLANS.MONTHLY.id ? 'active' : ''}`}
+                onClick={() => setSelectedPlan(SUBSCRIPTION_PLANS.MONTHLY.id)}
+              >
+                Mensuel
+              </button>
+              <button
+                className={`toggle-btn ${selectedPlan === SUBSCRIPTION_PLANS.QUARTERLY.id ? 'active' : ''}`}
+                onClick={() => setSelectedPlan(SUBSCRIPTION_PLANS.QUARTERLY.id)}
+              >
+                Trimestriel <span className="savings-badge">Économisez {SUBSCRIPTION_PLANS.QUARTERLY.savings}</span>
+              </button>
+              <button
+                className={`toggle-btn ${selectedPlan === SUBSCRIPTION_PLANS.ANNUAL.id ? 'active' : ''}`}
+                onClick={() => setSelectedPlan(SUBSCRIPTION_PLANS.ANNUAL.id)}
+              >
+                Annuel <span className="savings-badge">Économisez {SUBSCRIPTION_PLANS.ANNUAL.savings}</span>
+              </button>
+            </div>
+            <div className="selected-plan-price">
+              {currentPlan.price}€/{currentPlan.period}
+            </div>
           </div>
 
           <div className="subscription-options">
             <div className="subscription-card">
-              <div className="subscription-badge">Offre Unique</div>
+              <div className="subscription-badge">Offre Complète</div>
               <h2 className="subscription-title">Abonnement Pro</h2>
               <div className="subscription-price">
-                <span className="price-amount">{SUBSCRIPTION_PLANS[selectedPlan.toUpperCase()].price}€</span>
-                <span className="price-period">/{SUBSCRIPTION_PLANS[selectedPlan.toUpperCase()].period}</span>
+                <span className="price-amount">{currentPlan.price}€</span>
+                <span className="price-period">/{currentPlan.period}</span>
               </div>
               <p className="subscription-description">
                 Accès complet à toutes les fonctionnalités pour développer votre activité
@@ -165,7 +172,7 @@ const SubscriptionRequired = () => {
                 <li>✅ Tableaux de bord et analytics</li>
                 <li>✅ Notifications intelligentes</li>
                 <li>✅ Export PDF et partage</li>
-                <li>✅ Import de prospects depuis Excel/CSV</li>
+                <li>✅ Import de prospects (CSV/Excel)</li>
                 <li>✅ Support prioritaire</li>
                 <li>✅ Mises à jour régulières</li>
               </ul>

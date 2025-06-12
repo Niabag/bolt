@@ -8,10 +8,9 @@ const Features = () => {
       description: "Centralisez tous vos prospects avec un système de suivi avancé et des statuts personnalisables. Suivez l'évolution de chaque relation client et ne manquez jamais une opportunité.",
       benefits: [
         "Capture automatique via QR code",
-        "Import facile depuis Excel et CSV (abonnés)",
         "Statuts personnalisables",
         "Historique complet des interactions",
-        "Fiches détaillées avec notes et adresses"
+        "Fiches détaillées avec notes"
       ]
     },
     {
@@ -61,12 +60,12 @@ const Features = () => {
     {
       icon: "💰",
       title: "Facturation Simplifiée",
-      description: "Transformez vos devis en factures en quelques clics et gérez tout votre cycle de vente dans une seule plateforme intégrée. Suivez vos paiements et générez des rapports financiers.",
+      description: "Transformez vos devis en factures en quelques clics et gérez tout votre cycle de vente dans une seule plateforme intégrée.",
       benefits: [
         "Conversion devis en facture",
         "Suivi des paiements",
         "Rappels automatiques",
-        "Export comptable"
+        "Import de prospects (CSV/Excel avec abonnement)"
       ]
     }
   ];

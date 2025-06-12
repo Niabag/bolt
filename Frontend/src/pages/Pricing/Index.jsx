@@ -60,7 +60,7 @@ const Pricing = () => {
               <li>✅ Tableaux de bord et analytics</li>
               <li>✅ Notifications intelligentes</li>
               <li>✅ Export PDF et partage</li>
-              <li>✅ Import de prospects depuis Excel/CSV</li>
+              <li>✅ Import de prospects (CSV/Excel)</li>
               <li>✅ Support prioritaire</li>
               <li>✅ Mises à jour régulières</li>
             </ul>
@@ -91,7 +91,7 @@ const Pricing = () => {
               <li>✅ Tableaux de bord et analytics</li>
               <li>✅ Notifications intelligentes</li>
               <li>✅ Export PDF et partage</li>
-              <li>✅ Import de prospects depuis Excel/CSV</li>
+              <li>✅ Import de prospects (CSV/Excel)</li>
               <li>✅ Support prioritaire</li>
               <li>✅ Mises à jour régulières</li>
             </ul>
@@ -122,9 +122,8 @@ const Pricing = () => {
               <li>✅ Tableaux de bord et analytics</li>
               <li>✅ Notifications intelligentes</li>
               <li>✅ Export PDF et partage</li>
-              <li>✅ Import de prospects depuis Excel/CSV</li>
+              <li>✅ Import de prospects (CSV/Excel)</li>
               <li>✅ Support prioritaire</li>
-              <li>✅ Mises à jour régulières</li>
               <li>✅ Accès prioritaire aux nouvelles fonctionnalités</li>
             </ul>
             <a href="/register-user" className="pricing-cta">
@@ -155,18 +154,19 @@ const Pricing = () => {
         </div>
         
         <div className="faq-item">
-          <h3>Puis-je importer mes données existantes ?</h3>
+          <h3>Puis-je changer de plan ?</h3>
           <p>
-            Oui, CRM Pro vous permet d'importer facilement vos prospects existants depuis des fichiers CSV ou Excel (XLSX). 
-            Cette fonctionnalité est disponible uniquement pour les utilisateurs avec un abonnement actif.
+            Oui, vous pouvez passer d'un plan à l'autre à tout moment. Si vous passez à un plan supérieur, 
+            la différence sera calculée au prorata. Si vous passez à un plan inférieur, le changement prendra effet à la fin de votre période de facturation actuelle.
           </p>
         </div>
         
         <div className="faq-item">
-          <h3>Comment fonctionne le support client ?</h3>
+          <h3>Comment fonctionne l'importation de prospects ?</h3>
           <p>
-            Notre équipe de support est disponible par email et chat en direct du lundi au vendredi, 
-            de 9h à 18h. Le temps de réponse moyen est inférieur à 4 heures.
+            L'importation de prospects depuis des fichiers CSV ou Excel est disponible uniquement pour les utilisateurs avec un abonnement actif. 
+            Pendant la période d'essai, vous pouvez tester toutes les fonctionnalités, mais l'importation sera désactivée à la fin de l'essai 
+            jusqu'à ce que vous vous abonniez.
           </p>
         </div>
       </div>
@@ -203,7 +203,7 @@ const Pricing = () => {
           
           <div className="testimonial-card">
             <div className="testimonial-content">
-              <p>"La carte de visite numérique avec QR code a considérablement augmenté mes conversions. Un investissement rentabilisé dès le premier mois."</p>
+              <p>"L'importation de prospects depuis Excel a considérablement accéléré ma mise en route. Un investissement rentabilisé dès le premier mois."</p>
             </div>
             <div className="testimonial-author">
               <div className="author-avatar">S</div>
