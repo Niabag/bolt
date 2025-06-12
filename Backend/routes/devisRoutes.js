@@ -5,7 +5,8 @@ const {
   getClientDevis,
   updateDevis,
   updateDevisStatus, // ✅ NOUVEAU
-  deleteDevis
+  deleteDevis,
+  sendDevisByEmail
 } = require("../controllers/devisController");
 const authMiddleware = require("../middleware/auth");
 const { checkSubscription } = require("../middleware/subscription");
@@ -26,6 +27,9 @@ router.put("/:id", authMiddleware, checkSubscription, updateDevis);
 
 // 📌 ✅ NOUVEAU: Mettre à jour le statut d'un devis (PATCH)
 router.patch("/:id/status", authMiddleware, checkSubscription, updateDevisStatus);
+
+// 📌 Envoyer un devis par email
+router.post("/:id/send", authMiddleware, checkSubscription, sendDevisByEmail);
 
 // 📌 Supprimer un devis (DELETE)
 router.delete("/:id", authMiddleware, checkSubscription, deleteDevis);
