@@ -302,7 +302,7 @@ const Settings = ({ onDataImported }) => {
       return;
     }
     
-    // Vérifier si l'utilisateur a un abonnement actif ou est en période d'essai
+    // Vérifier si l'utilisateur a un abonnement actif
     if (!hasValidSubscription()) {
       setMessage('❌ L\'importation de prospects est réservée aux utilisateurs avec un abonnement actif');
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -360,8 +360,7 @@ const Settings = ({ onDataImported }) => {
   const hasValidSubscription = () => {
     if (!subscription) return false;
     
-    return subscription.status === SUBSCRIPTION_STATUS.ACTIVE || 
-           subscription.status === SUBSCRIPTION_STATUS.TRIAL;
+    return subscription.status === SUBSCRIPTION_STATUS.ACTIVE;
   };
 
   const getSubscriptionStatusText = () => {
@@ -684,7 +683,7 @@ const Settings = ({ onDataImported }) => {
                   <div className="notice-icon">🔒</div>
                   <div className="notice-content">
                     <h5>Fonctionnalité Premium</h5>
-                    <p>L'importation de prospects est disponible uniquement avec un abonnement actif ou pendant la période d'essai.</p>
+                    <p>L'importation de prospects est disponible uniquement avec un abonnement actif.</p>
                     <button 
                       onClick={subscription && !subscription.hasHadTrial ? handleStartTrial : handleSubscribe}
                       className="upgrade-btn"

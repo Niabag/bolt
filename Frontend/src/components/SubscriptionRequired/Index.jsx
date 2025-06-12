@@ -125,13 +125,34 @@ const SubscriptionRequired = () => {
             {getStatusMessage()}
           </div>
 
+          <div className="plan-toggle">
+            <button
+              className={`toggle-btn ${selectedPlan === SUBSCRIPTION_PLANS.MONTHLY.id ? 'active' : ''}`}
+              onClick={() => setSelectedPlan(SUBSCRIPTION_PLANS.MONTHLY.id)}
+            >
+              Mensuel
+            </button>
+            <button
+              className={`toggle-btn ${selectedPlan === SUBSCRIPTION_PLANS.QUARTERLY.id ? 'active' : ''}`}
+              onClick={() => setSelectedPlan(SUBSCRIPTION_PLANS.QUARTERLY.id)}
+            >
+              Trimestriel <span className="savings-badge">Économisez {SUBSCRIPTION_PLANS.QUARTERLY.savings}</span>
+            </button>
+            <button
+              className={`toggle-btn ${selectedPlan === SUBSCRIPTION_PLANS.ANNUAL.id ? 'active' : ''}`}
+              onClick={() => setSelectedPlan(SUBSCRIPTION_PLANS.ANNUAL.id)}
+            >
+              Annuel <span className="savings-badge">Économisez {SUBSCRIPTION_PLANS.ANNUAL.savings}</span>
+            </button>
+          </div>
+
           <div className="subscription-options">
             <div className="subscription-card">
               <div className="subscription-badge">Offre Unique</div>
               <h2 className="subscription-title">Abonnement Pro</h2>
               <div className="subscription-price">
-                <span className="price-amount">{SUBSCRIPTION_PLANS.MONTHLY.price}€</span>
-                <span className="price-period">/mois</span>
+                <span className="price-amount">{SUBSCRIPTION_PLANS[selectedPlan.toUpperCase()].price}€</span>
+                <span className="price-period">/{SUBSCRIPTION_PLANS[selectedPlan.toUpperCase()].period}</span>
               </div>
               <p className="subscription-description">
                 Accès complet à toutes les fonctionnalités pour développer votre activité

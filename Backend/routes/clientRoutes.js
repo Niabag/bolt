@@ -8,7 +8,7 @@ const {
   importClients
 } = require("../controllers/clientController");
 const authMiddleware = require("../middleware/auth");
-const { checkSubscription } = require("../middleware/subscription");
+const { checkSubscription, checkActiveSubscription } = require("../middleware/subscription");
 const upload = require("../middleware/upload");
 
 const router = express.Router();
@@ -25,8 +25,8 @@ router.patch("/:id/status", authMiddleware, checkSubscription, updateClientStatu
 // 📌 ✅ NOUVEAU: Mettre à jour un client
 router.put("/:id", authMiddleware, checkSubscription, updateClient);
 
-// 📌 Importer des prospects depuis un fichier
-router.post("/import", authMiddleware, checkSubscription, upload.single("file"), importClients);
+// 📌 Importer des prospects depuis un fichier - NÉCESSITE UN ABONNEMENT ACTIF
+router.post("/import", authMiddleware, checkActiveSubscription, upload.single("file"), importClients);
 
 // 📌 Supprimer un client
 router.delete("/:id", authMiddleware, checkSubscription, deleteClient);
