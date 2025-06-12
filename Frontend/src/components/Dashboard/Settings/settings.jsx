@@ -295,6 +295,7 @@ const Settings = ({ onDataImported }) => {
     try {
       const form = new FormData();
       form.append('file', file);
+      form.append('format', importFormat);
       await apiRequest(API_ENDPOINTS.CLIENTS.IMPORT, {
         method: 'POST',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
@@ -315,15 +316,6 @@ const Settings = ({ onDataImported }) => {
   const handleProspectsFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      importData(file);
-    }
-  };
-
-  const handleImportButtonClick = () => {
-    const file = fileInputRef.current?.files[0];
-    if (!file) {
-      fileInputRef.current?.click();
-    } else {
       importData(file);
     }
   };
@@ -576,8 +568,9 @@ const Settings = ({ onDataImported }) => {
         <section className="settings-section">
           <h3>📊 Gestion des données</h3>
           <div className="data-actions">
+            <h4 className="data-section-title">Exporter vos données</h4>
             <div className="export-options">
-              <select value={exportFormat} onChange={e => setExportFormat(e.target.value)}>
+              <select value={exportFormat} onChange={e => setExportFormat(e.target.value)} className="data-select">
                 <option value="json">JSON</option>
                 <option value="pdf">PDF</option>
                 <option value="xlsx">Excel</option>
@@ -590,12 +583,13 @@ const Settings = ({ onDataImported }) => {
             <p className="help-text">
               Téléchargez toutes vos données (clients, devis) dans le format sélectionné
             </p>
-            <p></p>
-      <div className="import-actions">
+            
+            <h4 className="data-section-title">Importer des prospects</h4>
+            <div className="import-options">
               <select
                 value={importFormat}
                 onChange={(e) => setImportFormat(e.target.value)}
-                className="filter-select"
+                className="data-select"
               >
                 <option value="csv">CSV</option>
                 <option value="xlsx">Excel</option>
@@ -625,6 +619,9 @@ const Settings = ({ onDataImported }) => {
                 📤 Importer des prospects
               </button>
             </div>
+            <p className="help-text">
+              Importez vos prospects depuis un fichier {importFormat.toUpperCase()}
+            </p>
           </div>
         </section>
 
