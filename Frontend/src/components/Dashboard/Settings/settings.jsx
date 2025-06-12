@@ -26,6 +26,7 @@ const Settings = ({ onDataImported }) => {
   const fileInputRef = useRef(null);
   const profileImageInputRef = useRef(null);
   const [importFormat, setImportFormat] = useState('csv');
+  const subscriptionSectionRef = useRef(null);
   
   useEffect(() => {
     fetchUserData();
@@ -56,6 +57,12 @@ const Settings = ({ onDataImported }) => {
       setSubscription(status);
     } catch (error) {
       console.error("Erreur lors du chargement des données d'abonnement:", error);
+    }
+  };
+
+  const scrollToSubscriptionSection = () => {
+    if (subscriptionSectionRef.current) {
+      subscriptionSectionRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
@@ -305,6 +312,9 @@ const Settings = ({ onDataImported }) => {
     // Vérifier si l'utilisateur a un abonnement actif
     if (!hasValidSubscription()) {
       setMessage('❌ L\'importation de prospects est réservée aux utilisateurs avec un abonnement actif');
+      if (subscriptionSectionRef.current) {
+        subscriptionSectionRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
@@ -411,7 +421,7 @@ const Settings = ({ onDataImported }) => {
       )}
 
       <div className="settings-sections">
-        <section className="settings-section subscription-section">
+        <section className="settings-section subscription-section" ref={subscriptionSectionRef}>
           <h3>💳 Abonnement</h3>
           <div className="subscription-info">
             <div className="subscription-status">
@@ -684,15 +694,15 @@ const Settings = ({ onDataImported }) => {
                   <div className="notice-content">
                     <h5>Fonctionnalité Premium</h5>
                     <p>L'importation de prospects est disponible uniquement avec un abonnement actif.</p>
-                    <button 
-                      onClick={subscription && !subscription.hasHadTrial ? handleStartTrial : handleSubscribe}
+                    <button
+                      onClick={scrollToSubscriptionSection}
                       className="upgrade-btn"
                       disabled={processingCheckout}
                     >
-                      {processingCheckout 
-                        ? 'Chargement...' 
-                        : subscription && !subscription.hasHadTrial 
-                          ? `Commencer l'essai gratuit (${DEFAULT_TRIAL_DAYS} jours)` 
+                      {processingCheckout
+                        ? 'Chargement...'
+                        : subscription && !subscription.hasHadTrial
+                          ? `Commencer l'essai gratuit (${DEFAULT_TRIAL_DAYS} jours)`
                           : "S'abonner maintenant"}
                     </button>
                   </div>

@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import DevisPreview from "./devisPreview";
 import DevisCard from "./DevisCard";
+import DynamicInvoice from "../Billing/DynamicInvoice";
 import { API_ENDPOINTS, apiRequest } from "../../../config/api";
 import { DEFAULT_DEVIS } from "./constants";
 import "./devis.scss";
@@ -36,6 +37,11 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [clientInvoices, setClientInvoices] = useState([]);
+
+  // Prévisualisation de facture
+  const [selectedDevisForInvoice, setSelectedDevisForInvoice] = useState(null);
+  const [selectedClientForInvoice, setSelectedClientForInvoice] = useState(null);
+  const invoicePreviewRef = useRef(null);
 
   useEffect(() => {
     const fetchDevis = async () => {
@@ -97,6 +103,15 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
       }));
     }
   }, [selectedClientId]);
+
+  // Faire défiler vers la prévisualisation de facture lorsqu'un devis est sélectionné
+  useEffect(() => {
+    if (selectedDevisForInvoice && invoicePreviewRef.current) {
+      setTimeout(() => {
+        invoicePreviewRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  }, [selectedDevisForInvoice]);
 
   const handleSelectDevis = (devis) => {
     const normalizedClientId = normalizeClientId(devis.clientId);
@@ -522,6 +537,18 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
     setCurrentDevis(updated);
   };
 
+  const handleCreateInvoice = (devis) => {
+    const client = clients.find(c => c._id === (typeof devis.clientId === 'object' ? devis.clientId?._id : devis.clientId));
+    setSelectedDevisForInvoice(devis);
+    setSelectedClientForInvoice(client);
+  };
+
+  const handleSaveInvoice = () => {
+    alert('✅ Facture créée avec succès !');
+    setSelectedDevisForInvoice(null);
+    setSelectedClientForInvoice(null);
+  };
+
   const totalTTC = calculateTTC(currentDevis);
 
   const filteredDevisList = filterClientId 
@@ -619,6 +646,7 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
                   onEdit={() => handleSelectDevis(devis)}
                   onPdf={() => handleDownloadPDF(devis)}
                   onDelete={handleDelete}
+                  onInvoice={() => handleCreateInvoice(devis)}
                   loading={loading}
                 />
               ))}
@@ -704,6 +732,7 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
               ))}
             </div>
           )}
+
         </div>
       )}
     </div>

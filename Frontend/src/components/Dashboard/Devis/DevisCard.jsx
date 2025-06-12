@@ -10,7 +10,14 @@ const formatDate = (dateStr) => {
   }
 };
 
-const DevisCard = ({ devis, onEdit, onPdf, onDelete, loading = false }) => {
+const DevisCard = ({
+  devis,
+  onEdit,
+  onPdf,
+  onDelete,
+  onInvoice,
+  loading = false
+}) => {
   const ttc = calculateTTC(devis);
 
   return (
@@ -29,6 +36,14 @@ const DevisCard = ({ devis, onEdit, onPdf, onDelete, loading = false }) => {
         >
           ✏️ Éditer
         </button>
+        {onInvoice && (
+          <button
+            className="bg-purple-50 text-purple-600 hover:bg-purple-100 rounded px-3 py-1 text-sm"
+            onClick={() => onInvoice(devis)}
+          >
+            💶 Facture
+          </button>
+        )}
         <button
           className="bg-blue-50 text-blue-600 hover:bg-blue-100 rounded px-3 py-1 text-sm"
           onClick={() => onPdf && onPdf(devis)}
