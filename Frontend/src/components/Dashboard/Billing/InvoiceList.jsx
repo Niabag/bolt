@@ -11,6 +11,11 @@ const InvoiceList = ({ clients = [] }) => {
   const [selectedClient, setSelectedClient] = useState(null);
   const [selectedDevis, setSelectedDevis] = useState([]);
   const invoicePreviewRef = useRef(null);
+  
+  // États pour filtres et recherche
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('date');
 
   useEffect(() => {
     fetchInvoices();
@@ -74,7 +79,7 @@ const InvoiceList = ({ clients = [] }) => {
     try {
       setLoading(true);
       
-      await apiRequest(API_ENDPOINTS.INVOICES.UPDATE(updatedInvoice._id), {
+      await apiRequest(API_ENDPOINTS.INVOICES.UPDATE(updatedInvoice._id || updatedInvoice.id), {
         method: 'PUT',
         body: JSON.stringify(updatedInvoice)
       });
@@ -308,11 +313,89 @@ const InvoiceList = ({ clients = [] }) => {
     }
   };
 
+  // Filtrer et trier les factures
+  const filteredInvoices = invoices.filter(invoice => {
+    const client = clients.find(c => c._id === (typeof invoice.clientId === "object" ? invoice.clientId?._id : invoice.clientId));
+    const clientName = client?.name || invoice.clientName || "Client inconnu";
+    
+    const matchesSearch = invoice.invoiceNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         clientName.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || 
+                         (statusFilter === 'paid' && invoice.status === 'paid') ||
+                         (statusFilter === 'pending' && invoice.status === 'pending') ||
+                         (statusFilter === 'overdue' && invoice.status === 'overdue') ||
+                         (statusFilter === 'draft' && invoice.status === 'draft');
+    
+    return matchesSearch && matchesStatus;
+  }).sort((a, b) => {
+    switch (sortBy) {
+      case 'number':
+        return (a.invoiceNumber || "").localeCompare(b.invoiceNumber || "");
+      case 'client':
+        const clientA = clients.find(c => c._id === (typeof a.clientId === "object" ? a.clientId?._id : a.clientId))?.name || a.clientName || "";
+        const clientB = clients.find(c => c._id === (typeof b.clientId === "object" ? b.clientId?._id : b.clientId))?.name || b.clientName || "";
+        return clientA.localeCompare(clientB);
+      case 'amount':
+        return b.amount - a.amount;
+      case 'date':
+      default:
+        return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+    }
+  });
+
   return (
     <div className="invoice-list-container">
       <div className="invoice-list-header">
         <h2>📋 Factures émises</h2>
         <p>Historique de vos factures</p>
+      </div>
+
+      {/* Filtres pour les factures */}
+      <div className="filters-section">
+        <div className="search-bar">
+          <div className="search-input-wrapper">
+            <span className="search-icon">🔍</span>
+            <input
+              type="text"
+              placeholder="Rechercher par numéro ou client..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
+            />
+          </div>
+        </div>
+
+        <div className="filters-row">
+          <div className="filter-group">
+            <label>Statut :</label>
+            <select 
+              value={statusFilter} 
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="filter-select"
+            >
+              <option value="all">Tous</option>
+              <option value="draft">Brouillon</option>
+              <option value="pending">En attente</option>
+              <option value="paid">Payée</option>
+              <option value="overdue">En retard</option>
+            </select>
+          </div>
+
+          <div className="filter-group">
+            <label>Trier par :</label>
+            <select 
+              value={sortBy} 
+              onChange={(e) => setSortBy(e.target.value)}
+              className="filter-select"
+            >
+              <option value="date">Plus récent</option>
+              <option value="number">Numéro</option>
+              <option value="client">Client A-Z</option>
+              <option value="amount">Montant décroissant</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       {error && (
@@ -326,7 +409,7 @@ const InvoiceList = ({ clients = [] }) => {
           <div className="loading-spinner">⏳</div>
           <p>Chargement des factures...</p>
         </div>
-      ) : invoices.length === 0 ? (
+      ) : filteredInvoices.length === 0 ? (
         <div className="empty-state">
           <div className="empty-icon">📋</div>
           <h3>Aucune facture émise</h3>
@@ -334,7 +417,7 @@ const InvoiceList = ({ clients = [] }) => {
         </div>
       ) : (
         <div className="invoices-grid">
-          {invoices.map((invoice) => (
+          {filteredInvoices.map((invoice) => (
             <div 
               key={invoice._id || invoice.id} 
               className="invoice-card"

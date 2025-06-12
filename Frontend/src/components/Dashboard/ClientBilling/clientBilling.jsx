@@ -910,8 +910,8 @@ const ClientBilling = ({ client, onBack }) => {
                   <div className="invoice-number">{invoice.invoiceNumber}</div>
                   <div
                     className="invoice-status clickable"
-                    style={{ backgroundColor: getStatusColor(invoice.status) }}
-                    title="Cliquer pour changer le statut"
+                    style={{ backgroundColor: getStatusColor(invoice.status), color: 'white' }}
+                    title={getNextStatusLabel(invoice.status)}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleInvoiceStatusClick(invoice._id || invoice.id, invoice.status);
