@@ -926,6 +926,19 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+.export-modal {
+  background: transparent;
+  box-shadow: none;
+  border: none;
+}
+
+.export-options {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  padding: 2rem;
+}
+
 .modal-header {
   display: flex;
   justify-content: space-between;
