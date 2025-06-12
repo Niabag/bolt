@@ -18,8 +18,8 @@ Vous trouverez également des exemples aux formats JSON et VCF dans le dossier `
 1. Démarrer le serveur backend comme indiqué dans `Backend/README.md`.
 2. Ouvrir l'interface Frontend et se connecter.
 
-3. Accéder à **Paramètres** → **Gestion des données**.
+3. Accéder à **Paramètres** → **Gestion des données** ou directement à la page **Prospects**.
 4. Choisir l'extension du fichier dans la liste déroulante (CSV, XLSX, JSON, PDF ou VCF), sélectionner le fichier puis cliquer sur **Importer des prospects**. L'extension choisie est transmise à l'API dans le champ `format`.
 
-5. Une notification confirme la réussite de l'import et les prospects apparaissent dans la page **Prospects**.
+5. Une notification confirme la réussite de l'import et les prospects apparaissent ensuite dans la page **Prospects**.
 
