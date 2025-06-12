@@ -179,7 +179,11 @@ const Notifications = ({ onNotificationsUpdate }) => {
   useEffect(() => {
     if (!loading) {
       localStorage.setItem('notificationsData', JSON.stringify(notifications));
-      localStorage.setItem('lastGeneratedTime', lastGeneratedTime ? lastGeneratedTime.toISOString() : null);
+      const timeValue =
+        lastGeneratedTime instanceof Date && !isNaN(lastGeneratedTime)
+          ? lastGeneratedTime.toISOString()
+          : '';
+      localStorage.setItem('lastGeneratedTime', timeValue);
       localStorage.setItem('deletedNotificationIds', JSON.stringify(deletedNotificationIds));
       
       // Mettre à jour le compteur de notifications non lues dans le parent
@@ -215,7 +219,10 @@ const Notifications = ({ onNotificationsUpdate }) => {
           setNotifications(filteredNotifications);
           
           if (lastGenTime) {
-            setLastGeneratedTime(new Date(lastGenTime));
+            const parsedDate = new Date(lastGenTime);
+            if (!isNaN(parsedDate)) {
+              setLastGeneratedTime(parsedDate);
+            }
           }
           
           setLoading(false);
