@@ -276,6 +276,13 @@ const Settings = ({ onDataImported }) => {
     }
   };
 
+  const handleProspectsFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      importData(file);
+    }
+  };
+
   const importData = async (selectedFile) => {
     const file = selectedFile || fileInputRef.current?.files[0];
     if (!file) {
@@ -288,11 +295,13 @@ const Settings = ({ onDataImported }) => {
       const form = new FormData();
       form.append('file', file);
       form.append('format', importFormat);
+      
       await apiRequest(API_ENDPOINTS.CLIENTS.IMPORT, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         body: form,
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
+      
       setMessage('✅ Prospects importés avec succès');
       if (typeof onDataImported === 'function') {
         onDataImported();
@@ -302,13 +311,6 @@ const Settings = ({ onDataImported }) => {
     } finally {
       setLoading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-  };
-
-  const handleProspectsFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      importData(file);
     }
   };
 
@@ -346,6 +348,24 @@ const Settings = ({ onDataImported }) => {
         return '#ef4444';
       default:
         return '#64748b';
+    }
+  };
+
+  // Helper function to get the appropriate file extension description
+  const getImportFormatDescription = () => {
+    switch (importFormat) {
+      case 'csv':
+        return 'fichier CSV (valeurs séparées par des virgules ou points-virgules)';
+      case 'xlsx':
+        return 'fichier Excel (XLSX)';
+      case 'json':
+        return 'fichier JSON';
+      case 'pdf':
+        return 'fichier PDF contenant des données tabulaires';
+      case 'vcf':
+        return 'fichier vCard (VCF) contenant des contacts';
+      default:
+        return `fichier ${importFormat.toUpperCase()}`;
     }
   };
 
@@ -612,7 +632,7 @@ const Settings = ({ onDataImported }) => {
               </button>
             </div>
             <p className="help-text">
-              Importez vos prospects depuis un fichier {importFormat.toUpperCase()}
+              Importez vos prospects depuis un {getImportFormatDescription()}
             </p>
           </div>
         </section>
