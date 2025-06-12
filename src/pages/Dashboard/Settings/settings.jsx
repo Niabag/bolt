@@ -211,6 +211,7 @@ const Settings = ({ onDataImported }) => {
   };
 
   const [exportFormat, setExportFormat] = useState('json');
+  const [importFormat, setImportFormat] = useState('csv');
 
   const exportData = async () => {
     try {
@@ -557,12 +558,21 @@ const importData = async () => {
             <p className="help-text">
               Téléchargez toutes vos données (clients, devis) dans le format sélectionné
             </p>
+            <div className="import-options" style={{ marginTop: '0.5rem' }}>
+              <select value={importFormat} onChange={e => setImportFormat(e.target.value)}>
+                <option value="csv">CSV</option>
+                <option value="xlsx">Excel</option>
+                <option value="json">JSON</option>
+                <option value="pdf">PDF</option>
+                <option value="vcf">vCard</option>
+              </select>
+            </div>
             <div className="file-upload" style={{ marginTop: '0.5rem' }}>
               <input
                 type="file"
                 id="prospects-file"
                 ref={fileInputRef}
-                accept=".csv,.xlsx"
+                accept={importFormat === 'vcf' ? '.vcf,.vcard' : `.${importFormat}`}
                 disabled={loading}
               />
               <label htmlFor="prospects-file" className="upload-btn">
