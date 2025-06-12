@@ -12,7 +12,6 @@ import Settings from "../../components/Dashboard/Settings/settings";
 import Notifications from "../../components/Dashboard/Notifications/notifications";
 import BusinessCard from "../../components/Dashboard/BusinessCard/businessCard";
 import Billing from "../../components/Dashboard/Billing/billing";
-import InvoiceList from "../../components/Dashboard/Billing/InvoiceList";
 import { API_ENDPOINTS, apiRequest } from "../../config/api";
 import { clearNotificationsStorage } from "../../utils/notifications";
 import "./dashboard.scss";
@@ -515,7 +514,7 @@ const Dashboard = () => {
             )}
 
             {activeTab === "factures" && (
-              <InvoiceList clients={clients} />
+              <Billing clients={clients} />
             )}
 
             {activeTab === "devis-creation" && (
