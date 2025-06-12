@@ -14,6 +14,7 @@ const Navbar = () => {
   });
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
   const userMenuRef = useRef(null);
 
   useEffect(() => {
@@ -44,6 +45,11 @@ const Navbar = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  useEffect(() => {
+    document.body.classList.toggle('dark-mode', theme === 'dark');
+    localStorage.setItem('theme', theme);
+  }, [theme]);
 
   const fetchUser = async () => {
     try {
@@ -76,6 +82,10 @@ const Navbar = () => {
     setIsUserMenuOpen(!isUserMenuOpen);
   };
 
+  const toggleThemeMode = () => {
+    setTheme(theme === 'light' ? 'dark' : 'light');
+  };
+
   // Masquer la navbar sur la page dashboard et sur les pages de scan QR code
   if (location.pathname === "/dashboard" || location.pathname.startsWith("/register-client/")) {
     return null;
@@ -92,7 +102,7 @@ const Navbar = () => {
         </div>
 
         {/* Menu burger pour mobile */}
-        <button 
+        <button
           className={`menu-toggle ${isMenuOpen ? 'active' : ''}`}
           onClick={toggleMenu}
           aria-label="Toggle menu"
@@ -100,6 +110,14 @@ const Navbar = () => {
           <span></span>
           <span></span>
           <span></span>
+        </button>
+
+        <button
+          className="theme-toggle"
+          onClick={toggleThemeMode}
+          aria-label="Toggle theme"
+        >
+          {theme === 'light' ? '🌙' : '☀️'}
         </button>
 
         <div className={`navbar-menu ${isMenuOpen ? 'active' : ''}`}>

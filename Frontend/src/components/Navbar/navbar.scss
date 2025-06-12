@@ -473,3 +473,16 @@
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
 }
+
+.theme-toggle {
+  background: transparent;
+  border: none;
+  font-size: 1.25rem;
+  margin-left: 1rem;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.theme-toggle:hover {
+  transform: scale(1.1);
+}

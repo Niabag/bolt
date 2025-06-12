@@ -664,7 +664,7 @@ const ClientBilling = ({ client, onBack }) => {
                   
                   <div className="devis-card-content">
                     <div className="devis-card-header">
-                      <h3 className="devis-card-title">{devis.title || "Devis sans titre"}</h3>
+                      <h3 className="devis-card-title">Devis {formatDate(devis.dateDevis)}</h3>
                       
                       <div className="devis-card-meta">
                         <div className="devis-card-date">

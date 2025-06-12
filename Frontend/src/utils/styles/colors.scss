@@ -7,3 +7,17 @@ $secondary: #BC9C23;
 $background: #FFFFFF;
 $text-dark: #2d3748;
 $accent: #f8ab37;
+
+:root {
+  --background: #FFFFFF;
+  --text-dark: #2d3748;
+  --primary-start: #667eea;
+  --primary-end: #764ba2;
+  --secondary: #BC9C23;
+  --accent: #f8ab37;
+}
+
+body.dark-mode {
+  --background: #1a202c;
+  --text-dark: #f9fafb;
+}

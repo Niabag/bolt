@@ -745,7 +745,7 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
                   {/* Section contenu principal */}
                   <div className="devis-card-content">
                     <div className="devis-card-header">
-                      <h3 className="devis-card-title">{devisItem.title || "Devis sans titre"}</h3>
+                      <h3 className="devis-card-title">Devis {formatDate(devisItem.dateDevis)}</h3>
                       
                       <div className="devis-card-meta">
                         <div className="devis-card-date">

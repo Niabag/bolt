@@ -519,7 +519,7 @@ const Billing = ({ clients = [], onRefresh }) => {
                   onClick={() => handleSelectDevis(devis._id)}
                 >
                   <div className="devis-card-content">
-                    <h3 className="devis-card-title">{devis.title || "Devis sans titre"}</h3>
+                    <h3 className="devis-card-title">Devis {formatDate(devis.dateDevis)}</h3>
                     
                     <div className="devis-meta">
                       <div className="devis-client">
