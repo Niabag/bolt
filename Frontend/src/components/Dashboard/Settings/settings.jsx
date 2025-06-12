@@ -30,6 +30,7 @@ const Settings = ({ onDataImported }) => {
   const [processingCheckout, setProcessingCheckout] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(SUBSCRIPTION_PLANS.MONTHLY.id);
   const fileInputRef = useRef(null);
+  const profileImageInputRef = useRef(null);
 
   useEffect(() => {
     fetchUserData();
@@ -76,20 +77,29 @@ const Settings = ({ onDataImported }) => {
     if (!file) return;
     const reader = new FileReader();
     reader.onloadend = () => {
-      setFormData(prev => ({ ...prev, profileImage: reader.result }));
+      const dataUrl = reader.result;
+      setFormData(prev => ({ ...prev, profileImage: dataUrl }));
+      handleProfileImageUpload(dataUrl);
     };
     reader.readAsDataURL(file);
   };
 
-  const handleProfileImageUpload = async (e) => {
-    e.preventDefault();
-    if (!formData.profileImage) return;
+  const handleProfileImageButtonClick = () => {
+    if (!formData.profileImage) {
+      profileImageInputRef.current?.click();
+    } else {
+      handleProfileImageUpload();
+    }
+  };
+
+  const handleProfileImageUpload = async (imageData = formData.profileImage) => {
+    if (!imageData) return;
     setLoading(true);
     setMessage('');
     try {
       await apiRequest(API_ENDPOINTS.AUTH.UPDATE_PROFILE_PICTURE, {
         method: 'PUT',
-        body: JSON.stringify({ profileImage: formData.profileImage })
+        body: JSON.stringify({ profileImage: imageData })
       });
       setMessage('✅ Photo de profil mise à jour');
       fetchUserData();
@@ -243,8 +253,8 @@ const Settings = ({ onDataImported }) => {
     }
   };
 
-const importData = async () => {
-    const file = fileInputRef.current?.files[0];
+  const importData = async (selectedFile) => {
+    const file = selectedFile || fileInputRef.current?.files[0];
     if (!file) {
       setMessage('❌ Sélectionnez un fichier à importer');
       return;
@@ -268,6 +278,22 @@ const importData = async () => {
     } finally {
       setLoading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleProspectsFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      importData(file);
+    }
+  };
+
+  const handleImportButtonClick = () => {
+    const file = fileInputRef.current?.files[0];
+    if (!file) {
+      fileInputRef.current?.click();
+    } else {
+      importData(file);
     }
   };
 
@@ -451,14 +477,16 @@ const importData = async () => {
                 type="file"
                 id="profileImage"
                 accept="image/*"
+                ref={profileImageInputRef}
                 onChange={handleProfileImageChange}
+                style={{ display: 'none' }}
               />
               {formData.profileImage && (
                 <img src={formData.profileImage} alt="Aperçu" className="profile-preview" />
               )}
               <button
-                onClick={handleProfileImageUpload}
-                disabled={loading || !formData.profileImage}
+                onClick={handleProfileImageButtonClick}
+                disabled={loading}
                 style={{ marginTop: '0.5rem' }}
               >
                 {loading ? 'Envoi...' : 'Mettre à jour la photo'}
@@ -534,12 +562,11 @@ const importData = async () => {
                 ref={fileInputRef}
                 accept=".csv,.xlsx"
                 disabled={loading}
+                onChange={handleProspectsFileChange}
+                style={{ display: 'none' }}
               />
-              <label htmlFor="prospects-file" className="upload-btn">
-                📂 Choisir un fichier
-              </label>
             </div>
-            <button onClick={importData} disabled={loading} className="import-btn" style={{ marginTop: '0.5rem' }}>
+            <button onClick={handleImportButtonClick} disabled={loading} className="import-btn" style={{ marginTop: '0.5rem' }}>
               📤 Importer des prospects
             </button>
           </div>
