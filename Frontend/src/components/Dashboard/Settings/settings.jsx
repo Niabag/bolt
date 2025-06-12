@@ -603,12 +603,26 @@ const Settings = ({ onDataImported }) => {
                 <option value="pdf">PDF</option>
                 <option value="vcf">vCard</option>
               </select>
+              <input
+                type="file"
+                id="file-import"
+                ref={fileInputRef}
+                accept={
+                  importFormat === 'csv' ? '.csv' :
+                  importFormat === 'xlsx' ? '.xlsx,.xls' :
+                  importFormat === 'json' ? '.json' :
+                  importFormat === 'pdf' ? '.pdf' :
+                  importFormat === 'vcf' ? '.vcf,.vcard' : '*'
+                }
+                style={{ display: 'none' }}
+                onChange={handleProspectsFileChange}
+              />
               <button
-                onClick={importData}
+                onClick={() => fileInputRef.current?.click()}
                 disabled={loading}
                 className="import-btn"
               >
-                📤 Importer
+                📤 Importer des prospects
               </button>
             </div>
           </div>
