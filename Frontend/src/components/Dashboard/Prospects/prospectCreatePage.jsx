@@ -179,8 +179,9 @@ const ProspectCreatePage = ({ userId, onBack, onCreated }) => {
               type="button"
               onClick={onBack || (() => navigate(-1))}
               className="btn-cancel"
+              title="Annuler"
             >
-              Annuler
+              ✕
             </button>
             <button type="submit" className="btn-save" disabled={saving}>
               {saving ? 'Enregistrement...' : '💾 Enregistrer'}
