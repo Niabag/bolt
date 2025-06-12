@@ -5,6 +5,15 @@ import DynamicInvoice from '../Billing/DynamicInvoice';
 import './devis.scss';
 import { calculateTTC } from '../../../utils/calculateTTC';
 
+const formatDate = (dateStr) => {
+  if (!dateStr) return '';
+  try {
+    return new Date(dateStr).toLocaleDateString('fr-FR');
+  } catch {
+    return '';
+  }
+};
+
 const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
   const navigate = useNavigate();
   const [devisList, setDevisList] = useState([]);
