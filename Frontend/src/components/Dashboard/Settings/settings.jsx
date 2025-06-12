@@ -281,7 +281,7 @@ const Settings = ({ onDataImported }) => {
     if (file) {
       // Vérifier que le format du fichier correspond au format sélectionné
       const fileExtension = file.name.split('.').pop().toLowerCase();
-      const expectedExtension = importFormat === 'vcf' ? 'vcf' : importFormat;
+      const expectedExtension = importFormat === 'xlsx' ? 'xlsx' : 'csv';
       
       if (fileExtension !== expectedExtension) {
         setMessage(`❌ Format de fichier incorrect. Vous avez sélectionné un fichier .${fileExtension} mais le format choisi est ${importFormat}`);
@@ -339,9 +339,7 @@ const Settings = ({ onDataImported }) => {
       let errorMessage = `❌ Erreur lors de l'import: ${error.message}`;
       
       // Ajouter des informations spécifiques selon le format
-      if (importFormat === 'pdf' && error.message.includes('pdf-parse')) {
-        errorMessage += ". Le module d'analyse PDF n'est pas disponible. Contactez l'administrateur.";
-      } else if (importFormat === 'xlsx' && error.message.includes('xlsx')) {
+      if (importFormat === 'xlsx' && error.message.includes('xlsx')) {
         errorMessage += ". Vérifiez que votre fichier Excel est au format XLSX valide.";
       }
       
@@ -618,7 +616,7 @@ const Settings = ({ onDataImported }) => {
             <div className="import-actions">
               <div className="import-header">
                 <h4>Importer des prospects</h4>
-                <p className="import-description">Importez vos prospects depuis un fichier CSV, Excel, JSON, PDF ou vCard</p>
+                <p className="import-description">Importez vos prospects depuis un fichier CSV ou Excel</p>
               </div>
               
               <div className="import-controls">
@@ -632,9 +630,6 @@ const Settings = ({ onDataImported }) => {
                   >
                     <option value="csv">CSV</option>
                     <option value="xlsx">Excel (XLSX)</option>
-                    <option value="json">JSON</option>
-                    <option value="pdf">PDF</option>
-                    <option value="vcf">vCard (VCF)</option>
                   </select>
                 </div>
                 
@@ -643,7 +638,7 @@ const Settings = ({ onDataImported }) => {
                     type="file"
                     id="prospects-file"
                     ref={fileInputRef}
-                    accept={importFormat === 'vcf' ? '.vcf,.vcard' : `.${importFormat}`}
+                    accept={importFormat === 'xlsx' ? '.xlsx' : '.csv'}
                     onChange={handleProspectsFileChange}
                     className="file-input"
                     disabled={loading}
@@ -659,9 +654,6 @@ const Settings = ({ onDataImported }) => {
                 <ul className="format-list">
                   <li><strong>CSV</strong> - Fichier texte avec valeurs séparées par des virgules ou points-virgules</li>
                   <li><strong>XLSX</strong> - Fichier Excel</li>
-                  <li><strong>JSON</strong> - Format de données structurées</li>
-                  <li><strong>PDF</strong> - Document PDF contenant des données tabulaires</li>
-                  <li><strong>VCF</strong> - Fichier de contacts vCard</li>
                 </ul>
                 <a href="/docs/ImportProspects.md" target="_blank" className="help-link">Voir la documentation d'import</a>
               </div>
