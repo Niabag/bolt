@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS, apiRequest } from '../../../config/api';
 import DynamicInvoice from './DynamicInvoice';
 import './billing.scss';
 
 const Billing = ({ clients = [], onRefresh }) => {
+  const navigate = useNavigate();
   const [devisList, setDevisList] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -328,7 +330,7 @@ const Billing = ({ clients = [], onRefresh }) => {
           method: 'DELETE'
         });
         
-        setInvoices(prev => prev.filter(inv => inv.id !== invoiceId));
+        setInvoices(prev => prev.filter(inv => inv.id !== invoiceId && inv._id !== invoiceId));
         alert('✅ Facture supprimée avec succès');
       } catch (error) {
         console.error('Erreur lors de la suppression:', error);
@@ -367,7 +369,7 @@ const Billing = ({ clients = [], onRefresh }) => {
       
       setInvoices(prev =>
         prev.map(inv =>
-          inv.id === invoiceId ? { ...inv, status: newStatus } : inv
+          (inv.id === invoiceId || inv._id === invoiceId) ? { ...inv, status: newStatus } : inv
         )
       );
 
@@ -638,7 +640,7 @@ const Billing = ({ clients = [], onRefresh }) => {
         </div>
 
         {invoices.length === 0 ? (
-          <div className="empty-state">
+          <div className="empty-state small">
             <div className="empty-icon">📋</div>
             <h3>Aucune facture émise</h3>
             <p>Vos factures créées apparaîtront ici</p>
@@ -660,11 +662,6 @@ const Billing = ({ clients = [], onRefresh }) => {
                 </div>
 
                 <div className="invoice-content">
-                  <div className="invoice-client">
-                    <span className="client-icon">👤</span>
-                    <span>{invoice.clientName}</span>
-                  </div>
-
                   <div className="invoice-amount">
                     <span className="amount-label">Montant TTC :</span>
                     <span className="amount-value">{invoice.amount.toFixed(2)} €</span>
@@ -982,7 +979,7 @@ const handleDownloadPDF = async (devis) => {
     await addSectionToPDF(`
       <div style="margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #f1f5f9; text-align: center;">
         <p style="font-size: 0.85rem; color: #64748b; font-style: italic; margin: 0;">
-          ${devis.footerText || `${devis.entrepriseName || 'Votre entreprise'} - ${devis.entrepriseAddress || 'Adresse'} - ${devis.entrepriseCity || 'Ville'}`}
+          ${devis.footerText || `${devis.entrepriseName || 'Cartisy'} - ${devis.entrepriseAddress || 'Adresse'} - ${devis.entrepriseCity || 'Ville'}`}
         </p>
       </div>
     `);
