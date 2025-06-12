@@ -12,6 +12,7 @@ import Settings from "../../components/Dashboard/Settings/settings";
 import Notifications from "../../components/Dashboard/Notifications/notifications";
 import BusinessCard from "../../components/Dashboard/BusinessCard/businessCard";
 import Billing from "../../components/Dashboard/Billing/billing";
+import InvoiceList from "../../components/Dashboard/Billing/InvoiceList";
 import { API_ENDPOINTS, apiRequest } from "../../config/api";
 import { clearNotificationsStorage } from "../../utils/notifications";
 import "./dashboard.scss";
@@ -87,7 +88,7 @@ const Dashboard = () => {
     
     // Vérifier si un onglet est spécifié dans l'URL (hash)
     const hash = location.hash.replace('#', '');
-    if (hash && ['dashboard', 'clients', 'devis', 'notifications', 'carte', 'settings'].includes(hash)) {
+    if (hash && ['dashboard', 'clients', 'devis', 'factures', 'notifications', 'carte', 'settings'].includes(hash)) {
       setActiveTab(hash);
     }
   }, [location]);
@@ -245,7 +246,8 @@ const Dashboard = () => {
       items: [
         { id: "dashboard", icon: "📊", label: "Tableau de bord" },
         { id: "clients", icon: "👥", label: "Prospects" },
-        { id: "devis", icon: "📄", label: "Devis et Facturation" },
+        { id: "devis", icon: "📄", label: "Devis" },
+        { id: "factures", icon: "💰", label: "Factures" },
       ]
     },
     {
@@ -267,7 +269,8 @@ const Dashboard = () => {
     switch (activeTab) {
       case "dashboard": return "Tableau de bord";
       case "clients": return "Mes Prospects";
-      case "devis": return "Devis et Facturation";
+      case "devis": return "Devis";
+      case "factures": return "Factures";
       case "devis-creation": return "Création de Devis";
       case "client-billing": return `Facturation - ${selectedClientForBilling?.name || 'Client'}`;
       case "notifications": return "Notifications";
@@ -276,7 +279,7 @@ const Dashboard = () => {
       case "prospect-edit": return "Modification Prospect";
       case "prospect-create": return "Nouveau Prospect";
       case "prospect-view": return "Détails Prospect";
-      default: return "CRM Pro";
+      default: return "Cartisy";
     }
   };
 
@@ -285,6 +288,7 @@ const Dashboard = () => {
       case "dashboard": return "📊";
       case "clients": return "👥";
       case "devis": return "📄";
+      case "factures": return "💰";
       case "devis-creation": return "📝";
       case "client-billing": return "💰";
       case "notifications": return "🔔";
@@ -305,7 +309,7 @@ const Dashboard = () => {
         <div className="sidebar-header">
           <div className="sidebar-brand">
             <div className="brand-logo">CRM</div>
-            <div className="brand-text">CRM Pro</div>
+            <div className="brand-text">Cartisy</div>
           </div>
         </div>
         
@@ -375,7 +379,7 @@ const Dashboard = () => {
               <span>{getPageIcon()}</span> {getPageTitle()}
             </h1>
             <div className="page-breadcrumb">
-              <span>CRM Pro</span>
+              <span>Cartisy</span>
               <span className="breadcrumb-separator">/</span>
               <span>{getPageTitle()}</span>
             </div>
@@ -508,6 +512,10 @@ const Dashboard = () => {
                 onEditDevis={handleEditDevisFromList}
                 onCreateDevis={handleCreateNewDevis}
               />
+            )}
+
+            {activeTab === "factures" && (
+              <InvoiceList clients={clients} />
             )}
 
             {activeTab === "devis-creation" && (

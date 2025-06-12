@@ -8,7 +8,7 @@
 
 /* ✅ EN-TÊTE AVEC STATISTIQUES */
 .billing-header {
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
 }
 
 .header-content {
@@ -142,6 +142,38 @@
 .stat-trend.neutral {
   background: #f1f5f9;
   color: #475569;
+}
+
+/* Onglets */
+.billing-tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.tab-button {
+  padding: 1rem 2rem;
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tab-button.active {
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.2);
+}
+
+.tab-button:hover:not(.active) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
 }
 
 /* ✅ SECTIONS */
@@ -901,6 +933,15 @@
   .btn-save {
     width: 100%;
   }
+  
+  .billing-tabs {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .tab-button {
+    width: 100%;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1013,4 +1054,50 @@
 
 .create-invoice-btn:hover {
   animation: pulse 2s infinite;
+}
+
+/* Auto-preview toggle */
+.auto-preview-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.auto-preview-toggle input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 40px;
+  height: 20px;
+  background: #e2e8f0;
+  border-radius: 20px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.auto-preview-toggle input[type="checkbox"]:checked {
+  background: #10b981;
+}
+
+.auto-preview-toggle input[type="checkbox"]::before {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.auto-preview-toggle input[type="checkbox"]:checked::before {
+  left: 22px;
+}
+
+.toggle-label {
+  font-size: 0.9rem;
+  color: #475569;
+  font-weight: 500;
 }
