@@ -34,39 +34,18 @@ const ClientBilling = ({ client, onBack }) => {
       const devisData = await apiRequest(API_ENDPOINTS.DEVIS.BY_CLIENT(client._id));
       setDevisList(Array.isArray(devisData) ? devisData : []);
       
-      // Récupérer les factures du client (simulation pour le moment)
-      // À remplacer par un appel API réel quand disponible
-      const mockInvoices = [
-        {
-          id: 'INV-001',
-          invoiceNumber: 'FACT-2024-001',
-          amount: 2500.0,
-          status: 'paid',
-          dueDate: '2024-02-15',
-          createdAt: '2024-01-15',
-          devisIds: []
-        },
-        {
-          id: 'INV-002',
-          invoiceNumber: 'FACT-2024-002',
-          amount: 1800.0,
-          status: 'pending',
-          dueDate: '2024-02-20',
-          createdAt: '2024-01-20',
-          devisIds: []
-        }
-      ];
-      
-      setInvoices(mockInvoices);
+      // Récupérer les factures du client
+      const invoicesData = await apiRequest(API_ENDPOINTS.INVOICES.BY_CLIENT(client._id));
+      setInvoices(Array.isArray(invoicesData) ? invoicesData : []);
       
       // Calculer les statistiques
       const totalDevis = devisData.length;
-      const totalInvoices = mockInvoices.length;
+      const totalInvoices = invoicesData.length;
       const totalAmount = devisData.reduce((sum, devis) => sum + calculateTTC(devis), 0);
-      const pendingAmount = mockInvoices
+      const pendingAmount = invoicesData
         .filter(inv => inv.status === 'pending')
         .reduce((sum, inv) => sum + inv.amount, 0);
-      const paidAmount = mockInvoices
+      const paidAmount = invoicesData
         .filter(inv => inv.status === 'paid')
         .reduce((sum, inv) => sum + inv.amount, 0);
       
@@ -86,46 +65,52 @@ const ClientBilling = ({ client, onBack }) => {
     }
   };
 
-
   const handleCreateInvoice = (devis) => {
     setSelectedDevis(devis);
+    
+    // Faire défiler jusqu'à la prévisualisation
+    setTimeout(() => {
+      if (invoicePreviewRef.current) {
+        invoicePreviewRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
   };
 
-  // Scroll to invoice creation when a devis is selected
-  useEffect(() => {
-    if (selectedDevis && invoicePreviewRef.current) {
-      setTimeout(() => {
-        invoicePreviewRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 100);
-    }
-  }, [selectedDevis]);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    // Logique de soumission du formulaire
+  };
 
-  const handleSaveInvoice = (invoice) => {
-    // Ici, vous implémenteriez la sauvegarde réelle de la facture
-    console.log("Facture à sauvegarder:", invoice);
-    
-    // Simuler l'ajout de la facture à la liste
-    const newInvoice = {
-      id: `INV-${Date.now()}`,
-      invoiceNumber: invoice.invoiceNumber,
-      amount: invoice.amount,
-      status: 'pending',
-      dueDate: invoice.dueDate,
-      createdAt: new Date().toISOString(),
-      devisIds: [selectedDevis._id]
-    };
-    
-    setInvoices(prev => [newInvoice, ...prev]);
-    setSelectedDevis(null);
-    
-    // Mettre à jour les statistiques
-    setStats(prev => ({
-      ...prev,
-      totalInvoices: prev.totalInvoices + 1,
-      pendingAmount: prev.pendingAmount + newInvoice.amount
-    }));
-    
-    alert("✅ Facture créée avec succès !");
+  const handleSaveInvoice = async (invoice) => {
+    try {
+      setLoading(true);
+      
+      // Préparer les données de la facture
+      const invoiceData = {
+        ...invoice,
+        clientId: client._id,
+        devisIds: [selectedDevis._id]
+      };
+      
+      // Envoyer la requête à l'API
+      const response = await apiRequest(API_ENDPOINTS.INVOICES.BASE, {
+        method: 'POST',
+        body: JSON.stringify(invoiceData)
+      });
+      
+      // Rafraîchir les données
+      await fetchClientData();
+      
+      // Réinitialiser la sélection
+      setSelectedDevis(null);
+      
+      alert('✅ Facture créée avec succès !');
+    } catch (err) {
+      console.error('Erreur création facture:', err);
+      alert(`❌ Erreur lors de la création de la facture: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Changer le statut d'un devis depuis la facturation client
@@ -168,7 +153,7 @@ const ClientBilling = ({ client, onBack }) => {
   };
 
   // Changer le statut d'une facture
-  const handleInvoiceStatusClick = (invoiceId, currentStatus) => {
+  const handleInvoiceStatusClick = async (invoiceId, currentStatus) => {
     let newStatus;
     switch (currentStatus) {
       case 'draft':
@@ -187,13 +172,21 @@ const ClientBilling = ({ client, onBack }) => {
         newStatus = 'pending';
     }
 
-    setInvoices(prev =>
-      prev.map(inv =>
-        inv.id === invoiceId ? { ...inv, status: newStatus } : inv
-      )
-    );
+    try {
+      setLoading(true);
+      await apiRequest(API_ENDPOINTS.INVOICES.UPDATE_STATUS(invoiceId), {
+        method: 'PATCH',
+        body: JSON.stringify({ status: newStatus })
+      });
 
-    alert(`Statut de la facture mis à jour : ${getStatusLabel(newStatus)}`);
+      await fetchClientData();
+      alert(`✅ Statut de la facture mis à jour : ${getStatusLabel(newStatus)}`);
+    } catch (err) {
+      console.error("Erreur changement statut facture:", err);
+      alert(`❌ Erreur lors du changement de statut: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDownloadPDF = async (devis) => {
@@ -707,12 +700,12 @@ const ClientBilling = ({ client, onBack }) => {
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
-                          // Naviguer vers la page d'édition du devis
+                          handleCreateInvoice(devis);
                         }}
                         className="bg-green-50 text-green-600 hover:bg-green-100 rounded px-3 py-1 text-sm"
-                        title="Éditer"
+                        title="Créer une facture"
                       >
-                        ✏️ Facture
+                        💶 Facture
                       </button>
                       <button 
                         onClick={(e) => {
@@ -752,14 +745,14 @@ const ClientBilling = ({ client, onBack }) => {
         ) : (
           <div className="invoices-grid">
             {invoices.map((invoice) => (
-              <div key={invoice.id} className="invoice-card">
+              <div key={invoice._id || invoice.id} className="invoice-card">
                 <div className="invoice-header">
                   <div className="invoice-number">{invoice.invoiceNumber}</div>
                   <div
                     className="invoice-status clickable"
                     style={{ backgroundColor: getStatusColor(invoice.status) }}
                     title="Cliquer pour changer le statut"
-                    onClick={() => handleInvoiceStatusClick(invoice.id, invoice.status)}
+                    onClick={() => handleInvoiceStatusClick(invoice._id || invoice.id, invoice.status)}
                   >
                     {getStatusIcon(invoice.status)} {getStatusLabel(invoice.status)}
                   </div>
@@ -821,7 +814,7 @@ const ClientBilling = ({ client, onBack }) => {
         <div className="invoice-preview-section" ref={invoicePreviewRef}>
           <div className="section-header">
             <h3>Création de facture</h3>
-            <p>Basée sur le devis: {selectedDevis.title}</p>
+            <p>Basée sur le devis: {selectedDevis.title || formatDate(selectedDevis.dateDevis)}</p>
           </div>
           
           <DynamicInvoice
