@@ -258,6 +258,15 @@ const DevisListPage = ({
     }
   };
 
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "";
+    try {
+      return new Date(dateStr).toLocaleDateString("fr-FR");
+    } catch (error) {
+      return dateStr;
+    }
+  };
+
   // ✅ GÉNÉRATION PDF AVEC COUPURES AU NIVEAU DES LIGNES DE TABLEAU
   const handleDownloadPDF = async (devis) => {
     try {
