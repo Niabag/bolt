@@ -580,46 +580,7 @@ const Billing = ({ clients = [], onRefresh }) => {
     <div className="billing-container">
       {/* En-tête avec statistiques */}
       <div className="billing-header">
-        <div className="header-content">
-          <h1 className="page-title">💰 Facturation</h1>
-          <div className="billing-stats">
-            <div className="stat-card revenue">
-              <div className="stat-icon">💰</div>
-              <div className="stat-content">
-                <h3>{invoices.filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + inv.amount, 0).toLocaleString('fr-FR')} € TTC</h3>
-                <p>Chiffre d'affaires</p>
-                <span className="stat-trend">Factures payées</span>
-              </div>
-            </div>
-            
-            <div className="stat-card pending">
-              <div className="stat-icon">⏳</div>
-              <div className="stat-content">
-                <h3>{invoices.filter(inv => inv.status === 'pending').reduce((sum, inv) => sum + inv.amount, 0).toLocaleString('fr-FR')} € TTC</h3>
-                <p>En attente</p>
-                <span className="stat-trend">À encaisser</span>
-              </div>
-            </div>
-            
-            <div className="stat-card overdue">
-              <div className="stat-icon">⚠️</div>
-              <div className="stat-content">
-                <h3>{invoices.filter(inv => inv.status === 'overdue').reduce((sum, inv) => sum + inv.amount, 0).toLocaleString('fr-FR')} € TTC</h3>
-                <p>En retard</p>
-                <span className="stat-trend">Relances nécessaires</span>
-              </div>
-            </div>
-            
-            <div className="stat-card total">
-              <div className="stat-icon">📊</div>
-              <div className="stat-content">
-                <h3>{invoices.length}</h3>
-                <p>Factures totales</p>
-                <span className="stat-trend">Toutes périodes</span>
-              </div>
-            </div>
-          </div>
-        </div>
+     <div class="prospects-header"><div class="header-content"><h1 class="page-title">📄 Factures</h1><div class="stats-summary"><div class="stat-item"><span class="stat-number">41</span><span class="stat-label">Total</span></div><div class="stat-item"><span class="stat-number">41</span><span class="stat-label">Affichés</span></div><div class="stat-item"><span class="stat-number">16</span><span class="stat-label">🔵 Nouveaux</span></div><div class="stat-item"><span class="stat-number">9</span><span class="stat-label">🟣 En attente</span></div><div class="stat-item"><span class="stat-number">7</span><span class="stat-label">🟢 Finalisés</span></div><div class="stat-item"><span class="stat-number">9</span><span class="stat-label">🔴 Inactifs</span></div></div></div></div>
       </div>
 
       {/* Section de création de factures */}
