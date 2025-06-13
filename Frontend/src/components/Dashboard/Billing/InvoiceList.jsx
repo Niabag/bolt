@@ -11,6 +11,16 @@ const InvoiceList = ({ clients = [] }) => {
   const [selectedClient, setSelectedClient] = useState(null);
   const [selectedDevis, setSelectedDevis] = useState([]);
   const invoicePreviewRef = useRef(null);
+
+  const [stats, setStats] = useState({
+    total: 0,
+    draft: 0,
+    pending: 0,
+    paid: 0,
+    overdue: 0,
+    canceled: 0,
+    totalAmount: 0
+  });
   
   // États pour filtres et recherche
   const [searchTerm, setSearchTerm] = useState('');
@@ -23,6 +33,7 @@ const InvoiceList = ({ clients = [] }) => {
 
   useEffect(() => {
     fetchInvoices();
+    fetchStats();
   }, []);
 
   const fetchInvoices = async () => {
@@ -35,6 +46,15 @@ const InvoiceList = ({ clients = [] }) => {
       setError("Erreur lors du chargement des factures");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const data = await apiRequest(API_ENDPOINTS.INVOICES.STATS);
+      if (data) setStats(data);
+    } catch (err) {
+      console.error('Erreur lors du chargement des statistiques de factures:', err);
     }
   };
 
@@ -87,8 +107,9 @@ const InvoiceList = ({ clients = [] }) => {
         method: 'PUT',
         body: JSON.stringify(updatedInvoice)
       });
-      
+
       await fetchInvoices();
+      await fetchStats();
       setSelectedInvoice(null);
       setSelectedClient(null);
       setSelectedDevis([]);
@@ -113,8 +134,9 @@ const InvoiceList = ({ clients = [] }) => {
       await apiRequest(API_ENDPOINTS.INVOICES.DELETE(invoiceId), {
         method: 'DELETE'
       });
-      
+
       await fetchInvoices();
+      await fetchStats();
       alert('✅ Facture supprimée avec succès');
     } catch (err) {
       console.error('Erreur lors de la suppression de la facture:', err);
@@ -154,8 +176,9 @@ const InvoiceList = ({ clients = [] }) => {
         method: 'PATCH',
         body: JSON.stringify({ status: newStatus })
       });
-      
+
       await fetchInvoices();
+      await fetchStats();
       alert(`✅ Statut de la facture mis à jour: ${getStatusLabel(newStatus)}`);
     } catch (err) {
       console.error('Erreur lors de la mise à jour du statut:', err);
@@ -412,7 +435,7 @@ const InvoiceList = ({ clients = [] }) => {
         <h2>📋 Mes Factures</h2>
         <div className="stats-summary">
           <div className="stat-item">
-            <span className="stat-number">{invoices.length}</span>
+            <span className="stat-number">{stats.total}</span>
             <span className="stat-label">Total</span>
           </div>
           <div className="stat-item">
@@ -420,23 +443,23 @@ const InvoiceList = ({ clients = [] }) => {
             <span className="stat-label">Affichés</span>
           </div>
           <div className="stat-item">
-            <span className="stat-number">{invoices.filter(i => i.status === 'draft').length}</span>
+            <span className="stat-number">{stats.draft}</span>
             <span className="stat-label">📝 Brouillons</span>
           </div>
           <div className="stat-item">
-            <span className="stat-number">{invoices.filter(i => i.status === 'pending').length}</span>
+            <span className="stat-number">{stats.pending}</span>
             <span className="stat-label">⏳ En attente</span>
           </div>
           <div className="stat-item">
-            <span className="stat-number">{invoices.filter(i => i.status === 'paid').length}</span>
+            <span className="stat-number">{stats.paid}</span>
             <span className="stat-label">✅ Payées</span>
           </div>
           <div className="stat-item">
-            <span className="stat-number">{invoices.filter(i => i.status === 'overdue').length}</span>
+            <span className="stat-number">{stats.overdue}</span>
             <span className="stat-label">⚠️ En retard</span>
           </div>
           <div className="stat-item">
-            <span className="stat-number">{invoices.filter(i => i.status === 'canceled').length}</span>
+            <span className="stat-number">{stats.canceled}</span>
             <span className="stat-label">❌ Annulées</span>
           </div>
         </div>
