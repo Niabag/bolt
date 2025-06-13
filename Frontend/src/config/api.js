@@ -48,6 +48,7 @@ export const API_ENDPOINTS = {
     UPDATE_STATUS: (invoiceId) => `${API_CONFIG.BASE_URL}/invoices/${invoiceId}/status`,
     DELETE: (invoiceId) => `${API_CONFIG.BASE_URL}/invoices/${invoiceId}`,
     SEND_BY_EMAIL: (invoiceId) => `${API_CONFIG.BASE_URL}/invoices/${invoiceId}/send`,
+    STATS: `${API_CONFIG.BASE_URL}/invoices/stats/summary`,
   },
 
   // Cartes de visite

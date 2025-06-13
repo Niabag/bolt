@@ -7,7 +7,8 @@ const {
   updateInvoice,
   updateInvoiceStatus,
   deleteInvoice,
-  sendInvoiceByEmail
+  sendInvoiceByEmail,
+  getInvoiceStats
 } = require("../controllers/invoiceController");
 const authMiddleware = require("../middleware/auth");
 const { checkSubscription } = require("../middleware/subscription");
@@ -37,5 +38,8 @@ router.post("/:id/send", authMiddleware, checkSubscription, sendInvoiceByEmail);
 
 // 📌 Supprimer une facture (DELETE)
 router.delete("/:id", authMiddleware, checkSubscription, deleteInvoice);
+
+// 📌 Obtenir les statistiques des factures (GET)
+router.get("/stats/summary", authMiddleware, checkSubscription, getInvoiceStats);
 
 module.exports = router;

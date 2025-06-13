@@ -1,6 +1,7 @@
 const Invoice = require("../models/invoice");
 const Devis = require("../models/devis");
 const Client = require("../models/client");
+const mongoose = require('mongoose');
 const { sendEmail } = require("../utils/emailSender");
 
 // ✅ Créer une nouvelle facture
@@ -418,6 +419,48 @@ exports.deleteInvoice = async (req, res) => {
     res.status(500).json({ 
       message: "Erreur lors de la suppression de la facture", 
       error: error.message 
+    });
+  }
+};
+
+// ✅ Obtenir les statistiques des factures
+exports.getInvoiceStats = async (req, res) => {
+  try {
+    const userId = req.userId;
+
+    const stats = await Invoice.aggregate([
+      { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 },
+          totalAmount: { $sum: "$amount" }
+        }
+      }
+    ]);
+
+    const result = {
+      total: 0,
+      draft: 0,
+      pending: 0,
+      paid: 0,
+      overdue: 0,
+      canceled: 0,
+      totalAmount: 0
+    };
+
+    stats.forEach((s) => {
+      result[s._id] = s.count;
+      result.total += s.count;
+      result.totalAmount += s.totalAmount;
+    });
+
+    res.json(result);
+  } catch (error) {
+    console.error("❌ Erreur statistiques factures:", error);
+    res.status(500).json({
+      message: "Erreur lors de la récupération des statistiques de factures",
+      error: error.message
     });
   }
 };
