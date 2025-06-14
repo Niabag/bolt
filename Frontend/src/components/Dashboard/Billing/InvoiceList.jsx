@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { API_ENDPOINTS, apiRequest } from '../../../config/api';
 import DynamicInvoice from './DynamicInvoice';
+import InvoiceCard from './InvoiceCard';
 import './InvoiceList.scss';
 
 const InvoiceList = ({ clients = [] }) => {
@@ -562,94 +563,16 @@ const InvoiceList = ({ clients = [] }) => {
         <>
           <div className="invoices-grid">
             {currentInvoices.map((invoice) => (
-              <div
+              <InvoiceCard
                 key={invoice._id || invoice.id}
-                className="invoice-card"
-                onClick={() => handleViewInvoice(invoice)}
-              >
-                <div
-                  className="status-indicator clickable"
-                  style={{
-                    backgroundColor: getStatusColor(invoice.status),
-                    position: 'absolute',
-                    top: '1rem',
-                    right: '1rem'
-                  }}
-                  title={getNextStatusLabel(invoice.status)}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleStatusChange(invoice._id || invoice.id, invoice.status);
-                  }}
-                >
-                  {getStatusIcon(invoice.status)}
-                </div>
-                <div className="invoice-header">
-                  <div className="invoice-number">{invoice.invoiceNumber}</div>
-                  <div
-                    className="invoice-status clickable"
-                    style={{ backgroundColor: getStatusColor(invoice.status), color: 'white' }}
-                    title={getNextStatusLabel(invoice.status)}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleStatusChange(invoice._id || invoice.id, invoice.status);
-                    }}
-                  >
-                    {getStatusIcon(invoice.status)} {getStatusLabel(invoice.status)}
-                  </div>
-                </div>
-
-                <div className="invoice-content">
-                  <div className="invoice-amount">
-                    <span className="amount-label">Montant TTC :</span>
-                    <span className="amount-value">{invoice.amount.toFixed(2)} €</span>
-                  </div>
-
-                  <div className="invoice-dates">
-                    <div className="invoice-date">
-                      <span>📅 Émise le : {formatDate(invoice.createdAt)}</span>
-                    </div>
-                    <div className="invoice-due">
-                      <span>⏰ Échéance : {formatDate(invoice.dueDate)}</span>
-                    </div>
-                  </div>
-
-                  <div className="invoice-client">
-                    <span>👤 Client : {
-                      (() => {
-                        const client = clients.find(c => c._id === (typeof invoice.clientId === 'object' ? invoice.clientId._id : invoice.clientId));
-                        return client ? client.name : 'Client inconnu';
-                      })()
-                    }</span>
-                  </div>
-
-                  <div className="invoice-devis">
-                    <span>📄 Devis inclus : {invoice.devisIds?.length || 0}</span>
-                  </div>
-                </div>
-
-                <div className="invoice-actions">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDownloadPDF(invoice);
-                    }}
-                    className="action-btn download-btn"
-                    title="Télécharger PDF"
-                  >
-                    📥
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteInvoice(invoice._id || invoice.id);
-                    }}
-                    className="action-btn delete-btn"
-                    title="Supprimer"
-                  >
-                    🗑️
-                  </button>
-                </div>
-              </div>
+                invoice={invoice}
+                onView={handleViewInvoice}
+                onPdf={handleDownloadPDF}
+                onDelete={handleDeleteInvoice}
+                onStatusChange={handleStatusChange}
+                loading={loading}
+                clients={clients}
+              />
             ))}
           </div>
 
