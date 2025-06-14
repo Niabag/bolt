@@ -6,8 +6,11 @@ const InvoiceCard = ({
   onView,
   onPdf,
   onDelete,
-  onStatusClick,
-  loading = false
+
+  onStatusChange,
+  loading = false,
+  clients = []
+
 }) => {
   const formatDate = (dateStr) => {
     if (!dateStr) return '';
@@ -20,10 +23,15 @@ const InvoiceCard = ({
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'paid': return '#10b981';
-      case 'pending': return '#f59e0b';
-      case 'overdue': return '#ef4444';
-      case 'canceled': return '#9ca3af';
+
+      case 'paid':
+        return '#10b981';
+      case 'pending':
+        return '#f59e0b';
+      case 'overdue':
+        return '#ef4444';
+      case 'canceled':
+        return '#9ca3af';
       case 'draft':
       default:
         return '#6b7280';
@@ -32,10 +40,15 @@ const InvoiceCard = ({
 
   const getStatusLabel = (status) => {
     switch (status) {
-      case 'paid': return 'Payée';
-      case 'pending': return 'En attente';
-      case 'overdue': return 'En retard';
-      case 'canceled': return 'Annulée';
+
+      case 'paid':
+        return 'Payée';
+      case 'pending':
+        return 'En attente';
+      case 'overdue':
+        return 'En retard';
+      case 'canceled':
+        return 'Annulée';
       case 'draft':
       default:
         return 'Brouillon';
@@ -44,10 +57,15 @@ const InvoiceCard = ({
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'paid': return '✅';
-      case 'pending': return '⏳';
-      case 'overdue': return '⚠️';
-      case 'canceled': return '❌';
+
+      case 'paid':
+        return '✅';
+      case 'pending':
+        return '⏳';
+      case 'overdue':
+        return '⚠️';
+      case 'canceled':
+        return '❌';
       case 'draft':
       default:
         return '📝';
@@ -71,13 +89,22 @@ const InvoiceCard = ({
     }
   };
 
+  const clientName = (() => {
+    const client = clients.find(
+      (c) => c._id === (typeof invoice.clientId === 'object' ? invoice.clientId._id : invoice.clientId)
+    );
+    return client ? client.name : invoice.clientName || 'Client inconnu';
+  })();
+
   return (
-    <div className="devis-card invoice-card" onClick={onView}>
+    <div className="devis-card" onClick={() => onView && onView(invoice)}>
+
       <div className="devis-card-top">
         <div className="devis-avatar">
           {invoice.invoiceNumber ? invoice.invoiceNumber.charAt(0).toUpperCase() : 'F'}
         </div>
-        {onStatusClick && (
+        {onStatusChange && (
+
           <div
             className="status-indicator clickable"
             style={{
@@ -89,16 +116,20 @@ const InvoiceCard = ({
             title={getNextStatusLabel(invoice.status)}
             onClick={(e) => {
               e.stopPropagation();
-              onStatusClick(invoice._id || invoice.id, invoice.status);
+
+              onStatusChange(invoice._id || invoice.id, invoice.status);
+
             }}
           >
             {getStatusIcon(invoice.status)}
           </div>
         )}
       </div>
+
+
       <div className="devis-card-content">
         <div className="devis-card-header">
-          <h3 className="devis-card-title">{invoice.invoiceNumber}</h3>
+          <h3 className="devis-card-title">Facture {invoice.invoiceNumber}</h3>
           <div className="devis-card-meta">
             <div className="devis-card-date">
               <span>📅</span>
@@ -106,34 +137,22 @@ const InvoiceCard = ({
             </div>
             <div className="devis-card-amount">
               <span>💰</span>
-              <span>{invoice.amount.toFixed(2)} € TTC</span>
+              <span>{invoice.amount?.toFixed(2)} € TTC</span>
             </div>
           </div>
         </div>
-        <div className="invoice-dates">
-          <div className="invoice-due">
-            <span>⏰ Échéance : {formatDate(invoice.dueDate)}</span>
-          </div>
-          <div className="invoice-devis">
-            <span>📄 Devis inclus : {invoice.devisIds?.length || 0}</span>
-          </div>
+
+        <div className="devis-client-info">
+          <span className="devis-client-icon">👤</span>
+          <span className="devis-client-name">{clientName}</span>
         </div>
-        {invoice.clientId && (
-          <div className="devis-client-info">
-            <span className="devis-client-icon">👤</span>
-            <span className="devis-client-name">
-              {typeof invoice.clientId === 'object' && invoice.clientId?.name
-                ? invoice.clientId.name
-                : 'Client'}
-            </span>
-          </div>
-        )}
         <div
           className="devis-status-badge"
           style={{ backgroundColor: getStatusColor(invoice.status), color: 'white' }}
         >
           {getStatusIcon(invoice.status)} {getStatusLabel(invoice.status)}
         </div>
+
         <div className="devis-card-actions">
           {onPdf && (
             <button
@@ -145,9 +164,11 @@ const InvoiceCard = ({
               disabled={loading}
               title="Télécharger PDF"
             >
-              {loading ? '⏳' : '📥'} PDF
+              {loading ? '⏳' : '📄'} PDF
             </button>
           )}
+
+
           {onDelete && (
             <button
               onClick={(e) => {
