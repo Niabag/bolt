@@ -511,9 +511,9 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
   };
 
   const handleCreateInvoice = (devis) => {
-    const client = clients.find(c => c._id === (typeof devis.clientId === 'object' ? devis.clientId?._id : devis.clientId));
+    const clientInfo = clients.find(c => c._id === (typeof devis.clientId === 'object' ? devis.clientId?._id : devis.clientId));
     setSelectedDevisForInvoice(devis);
-    setSelectedClientForInvoice(client);
+    setSelectedClientForInvoice(clientInfo);
   };
 
   const handleSaveInvoice = async (invoiceData) => {
@@ -555,6 +555,15 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
       </div>
     );
   }
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "";
+    try {
+      return new Date(dateStr).toLocaleDateString("fr-FR");
+    } catch (error) {
+      return dateStr;
+    }
+  };
 
   return (
     <div className="devis-page">
