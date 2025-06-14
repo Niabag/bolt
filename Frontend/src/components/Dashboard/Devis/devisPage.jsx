@@ -560,27 +560,65 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
     <div className="devis-page">
       {/* Liste des devis existants */}
       <div className="devis-list-section">
-        <div className="devis-list-header">
-          <h2 className="devis-list-title">
-            📄 {selectedClient ? `Devis de ${selectedClient.name}` : "Mes Devis"}
-          </h2>
-          {selectedClient && (
-            <p style={{textAlign: 'center', color: '#718096', marginTop: '0.5rem'}}>
-              📧 {selectedClient.email} • 📞 {selectedClient.phone}
-            </p>
-          )}
+        <button onClick={onBack} className="back-button">
+          ← Retour aux prospects
+        </button>
+        
+        <div className="client-info">
+          <div className="client-avatar">
+            {client.name ? client.name.charAt(0).toUpperCase() : "C"}
+          </div>
+          <div className="client-details">
+            <h2>{client.name}</h2>
+            <div className="client-contact">
+              <span>{client.email}</span>
+              <span>•</span>
+              <span>{client.phone}</span>
+              {client.company && (
+                <>
+                  <span>•</span>
+                  <span>{client.company}</span>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="billing-stats">
+        <div className="stat-card">
+          <div className="stat-icon">💰</div>
+          <div className="stat-content">
+            <h3>{stats.totalAmount.toFixed(2)} €</h3>
+            <p>Montant total</p>
+          </div>
         </div>
         
-        {error && (
-          <div className="error-state">{error}</div>
-        )}
+        <div className="stat-card">
+          <div className="stat-icon">📄</div>
+          <div className="stat-content">
+            <h3>{stats.totalDevis}</h3>
+            <p>Devis</p>
+          </div>
+        </div>
+        
+        <div className="stat-card">
+          <div className="stat-icon">⏳</div>
+          <div className="stat-content">
+            <h3>{stats.pendingAmount.toFixed(2)} €</h3>
+            <p>En attente</p>
+          </div>
+        </div>
+      </div>
 
-        {onBack && (
-          <button className="btn-secondary" onClick={onBack} style={{marginBottom: '2rem'}}>
-            ← Retour aux prospects
-          </button>
-        )}
+      <div className="client-billing-actions">
+        <button className="create-invoice-btn">
+          + Créer une nouvelle facture
+        </button>
+      </div>
 
+        <p>Devis (4)</p>
+      <div>
         {filteredDevisList.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">📄</div>
