@@ -14,6 +14,15 @@ const DevisListPage = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   
+  // Stats pour le header
+  const [stats, setStats] = useState({
+    total: 0,
+    nouveau: 0,
+    en_attente: 0,
+    fini: 0,
+    inactif: 0
+  });
+  
   // États pour filtres et recherche
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -53,6 +62,16 @@ const DevisListPage = ({
       const data = await apiRequest(API_ENDPOINTS.DEVIS.BASE);
       const devisArray = Array.isArray(data) ? data : [];
       setDevisList(devisArray);
+      
+      // Calculer les statistiques
+      const statsData = {
+        total: devisArray.length,
+        nouveau: devisArray.filter(d => d.status === 'nouveau').length,
+        en_attente: devisArray.filter(d => d.status === 'en_attente').length,
+        fini: devisArray.filter(d => d.status === 'fini').length,
+        inactif: devisArray.filter(d => d.status === 'inactif').length
+      };
+      setStats(statsData);
       
       console.log("📋 Devis récupérés:", devisArray.length);
       
@@ -172,9 +191,9 @@ const DevisListPage = ({
 
   // Sélectionner un devis pour prévisualisation
   const handleSelectDevis = (devis) => {
-    const client = clients.find(c => c._id === (typeof devis.clientId === 'object' ? devis.clientId?._id : devis.clientId));
+    const clientInfo = clients.find(c => c._id === (typeof devis.clientId === 'object' ? devis.clientId?._id : devis.clientId));
     setSelectedDevis(devis);
-    setSelectedClient(client);
+    setSelectedClient(clientInfo);
   };
 
   // Fonctions de navigation de pagination
@@ -341,76 +360,14 @@ const DevisListPage = ({
       `, true);
 
       // 2. INFORMATIONS PARTIES
-      const clientInfo = clients.find(c => c._id === devis.clientId) || {};
-      
-      await addSectionToPDF(`
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; margin-bottom: 30px;">
-          <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 2rem; border-radius: 12px; border-left: 4px solid #667eea;">
-            <h3 style="margin: 0 0 1.5rem 0; color: #2d3748; font-size: 1.2rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">ÉMETTEUR</h3>
-            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-              <div style="font-weight: 600; font-size: 1.1rem; color: #2d3748;">${devis.entrepriseName || 'Nom de l\'entreprise'}</div>
-              <div>${devis.entrepriseAddress || 'Adresse'}</div>
-              <div>${devis.entrepriseCity || 'Code postal et ville'}</div>
-              <div>${devis.entreprisePhone || 'Téléphone'}</div>
-              <div>${devis.entrepriseEmail || 'Email'}</div>
-            </div>
-          </div>
-          
-          <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 2rem; border-radius: 12px; border-left: 4px solid #667eea;">
-            <h3 style="margin: 0 0 1.5rem 0; color: #2d3748; font-size: 1.2rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">DESTINATAIRE</h3>
-            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-              <div style="font-weight: 600; font-size: 1.1rem; color: #2d3748;">${clientInfo.name || devis.clientName || 'Nom du client'}</div>
-              <div>${clientInfo.email || devis.clientEmail || 'Email du client'}</div>
-              <div>${clientInfo.phone || devis.clientPhone || 'Téléphone du client'}</div>
-              <div>${devis.clientAddress || 'Adresse du client'}</div>
-            </div>
-          </div>
-        </div>
-      `);
+      await addSectionToPDF(generatePartiesHTML(devis));
 
       // 3. MÉTADONNÉES
-      await addSectionToPDF(`
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 30px;">
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-            <div>
-              <div style="font-weight: 600; font-size: 0.9rem; opacity: 0.9;">Date du devis :</div>
-              <div style="background: rgba(255, 255, 255, 0.2); padding: 0.5rem; border-radius: 6px; font-weight: 600;">${formatDate(devis.dateDevis)}</div>
-            </div>
-            <div>
-              <div style="font-weight: 600; font-size: 0.9rem; opacity: 0.9;">Numéro de devis :</div>
-              <div style="background: rgba(255, 255, 255, 0.2); padding: 0.5rem; border-radius: 6px; font-weight: 600;">${devis._id || 'À définir'}</div>
-            </div>
-            <div>
-              <div style="font-weight: 600; font-size: 0.9rem; opacity: 0.9;">Date de validité :</div>
-              <div style="background: rgba(255, 255, 255, 0.2); padding: 0.5rem; border-radius: 6px; font-weight: 600;">${formatDate(devis.dateValidite)}</div>
-            </div>
-            <div>
-              <div style="font-weight: 600; font-size: 0.9rem; opacity: 0.9;">Client :</div>
-              <div style="background: rgba(255, 255, 255, 0.2); padding: 0.5rem; border-radius: 6px; font-weight: 600;">${clientInfo.name || 'Client non défini'}</div>
-            </div>
-          </div>
-        </div>
-      `);
+      await addSectionToPDF(generateMetadataHTML(devis));
 
       // 4. TABLEAU - TRAITEMENT LIGNE PAR LIGNE
       // En-tête du tableau
-      await addSectionToPDF(`
-        <div style="margin-bottom: 10px;">
-          <h3 style="margin: 0 0 1.5rem 0; color: #2d3748; font-size: 1.3rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem;">DÉTAIL DES PRESTATIONS</h3>
-          <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-              <tr style="background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%); color: white;">
-                <th style="padding: 1rem 0.75rem; text-align: center; font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; width: 35%;">Description</th>
-                <th style="padding: 1rem 0.75rem; text-align: center; font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; width: 10%;">Unité</th>
-                <th style="padding: 1rem 0.75rem; text-align: center; font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; width: 10%;">Qté</th>
-                <th style="padding: 1rem 0.75rem; text-align: center; font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; width: 15%;">Prix unitaire HT</th>
-                <th style="padding: 1rem 0.75rem; text-align: center; font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; width: 10%;">TVA</th>
-                <th style="padding: 1rem 0.75rem; text-align: center; font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; width: 20%;">Total HT</th>
-              </tr>
-            </thead>
-          </table>
-        </div>
-      `);
+      await addSectionToPDF(generateTableHeaderHTML());
 
       // TRAITER CHAQUE LIGNE INDIVIDUELLEMENT
       for (let i = 0; i < devis.articles.length; i++) {
@@ -439,98 +396,10 @@ const DevisListPage = ({
       }
 
       // 5. TOTAUX
-      const tauxTVA = {
-        "20": { ht: 0, tva: 0 },
-        "10": { ht: 0, tva: 0 },
-        "5.5": { ht: 0, tva: 0 },
-      };
-
-      devis.articles.forEach((item) => {
-        const price = parseFloat(item.unitPrice || "0");
-        const qty = parseFloat(item.quantity || "0");
-        const taux = item.tvaRate || "20";
-
-        if (!isNaN(price) && !isNaN(qty) && tauxTVA[taux]) {
-          const ht = price * qty;
-          tauxTVA[taux].ht += ht;
-          tauxTVA[taux].tva += ht * (parseFloat(taux) / 100);
-        }
-      });
-
-      const totalHT = Object.values(tauxTVA).reduce((sum, t) => sum + t.ht, 0);
-      const totalTVA = Object.values(tauxTVA).reduce((sum, t) => sum + t.tva, 0);
-      const totalTTC = totalHT + totalTVA;
-
-      await addSectionToPDF(`
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 30px 0;">
-          <div>
-            <h4 style="margin: 0 0 1rem 0; color: #2d3748; font-weight: 600;">Récapitulatif TVA</h4>
-            <table style="width: 100%; border-collapse: collapse; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">
-              <thead>
-                <tr style="background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); color: white;">
-                  <th style="padding: 0.75rem; text-align: center; font-weight: 600; font-size: 0.8rem; text-transform: uppercase;">Base HT</th>
-                  <th style="padding: 0.75rem; text-align: center; font-weight: 600; font-size: 0.8rem; text-transform: uppercase;">Taux TVA</th>
-                  <th style="padding: 0.75rem; text-align: center; font-weight: 600; font-size: 0.8rem; text-transform: uppercase;">Montant TVA</th>
-                  <th style="padding: 0.75rem; text-align: center; font-weight: 600; font-size: 0.8rem; text-transform: uppercase;">Total TTC</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${Object.entries(tauxTVA)
-                  .filter(([, { ht }]) => ht > 0)
-                  .map(([rate, { ht, tva }]) => `
-                    <tr>
-                      <td style="padding: 0.75rem; text-align: center; border-bottom: 1px solid #f1f5f9;">${ht.toFixed(2)} €</td>
-                      <td style="padding: 0.75rem; text-align: center; border-bottom: 1px solid #f1f5f9;">${rate}%</td>
-                      <td style="padding: 0.75rem; text-align: center; border-bottom: 1px solid #f1f5f9;">${tva.toFixed(2)} €</td>
-                      <td style="padding: 0.75rem; text-align: center; border-bottom: 1px solid #f1f5f9;">${(ht + tva).toFixed(2)} €</td>
-                    </tr>
-                  `).join('')}
-              </tbody>
-            </table>
-          </div>
-
-          <div style="display: flex; flex-direction: column; gap: 0.75rem; align-self: end;">
-            <div style="display: flex; justify-content: space-between; padding: 0.75rem 1rem; background: #f8fafc; border-radius: 6px; font-weight: 500;">
-              <span>Total HT :</span>
-              <span>${totalHT.toFixed(2)} €</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; padding: 0.75rem 1rem; background: #f8fafc; border-radius: 6px; font-weight: 500;">
-              <span>Total TVA :</span>
-              <span>${totalTVA.toFixed(2)} €</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; padding: 0.75rem 1rem; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; font-weight: 700; font-size: 1.1rem; border-radius: 6px; box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);">
-              <span>Total TTC :</span>
-              <span>${totalTTC.toFixed(2)} €</span>
-            </div>
-          </div>
-        </div>
-      `);
+      await addSectionToPDF(generateTotalsHTML(devis));
 
       // 6. CONDITIONS
-      await addSectionToPDF(`
-        <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); padding: 2rem; border-radius: 12px; border-left: 4px solid #667eea; margin-top: 30px;">
-          <div style="margin-bottom: 2rem;">
-            <p style="margin: 0.5rem 0; color: #4a5568; line-height: 1.6;"><strong>Conditions :</strong></p>
-            <p style="margin: 0.5rem 0; color: #4a5568; line-height: 1.6;">• Devis valable jusqu'au ${formatDate(devis.dateValidite) || "date à définir"}</p>
-            <p style="margin: 0.5rem 0; color: #4a5568; line-height: 1.6;">• Règlement à 30 jours fin de mois</p>
-            <p style="margin: 0.5rem 0; color: #4a5568; line-height: 1.6;">• TVA non applicable, art. 293 B du CGI (si applicable)</p>
-          </div>
-          
-          <div style="text-align: center;">
-            <p style="font-style: italic; color: #718096; margin-bottom: 2rem;">
-              <em>Bon pour accord - Date et signature du client :</em>
-            </p>
-            <div style="display: flex; justify-content: space-around; gap: 2rem;">
-              <div style="flex: 1; padding: 1rem; border-bottom: 2px solid #2d3748; color: #4a5568; font-weight: 500;">
-                <span>Date : _______________</span>
-              </div>
-              <div style="flex: 1; padding: 1rem; border-bottom: 2px solid #2d3748; color: #4a5568; font-weight: 500;">
-                <span>Signature :</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      `);
+      await addSectionToPDF(generateConditionsHTML(devis));
 
       // Télécharger le PDF
       const fileName = devis.title?.replace(/[^a-zA-Z0-9]/g, '-') || `devis-${devis._id}`;
@@ -549,12 +418,193 @@ const DevisListPage = ({
     }
   };
 
-  // Envoyer un devis par email
+  // ✅ FONCTIONS POUR GÉNÉRER CHAQUE SECTION HTML
+  const generateHeaderHTML = (devis) => `
+    <div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid #e2e8f0;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div style="flex: 1;">
+          ${devis.logoUrl ? `<img src="${devis.logoUrl}" alt="Logo" style="max-width: 200px; max-height: 100px; object-fit: contain; border-radius: 8px;">` : ''}
+        </div>
+        <div style="flex: 1; text-align: right;">
+          <h1 style="font-size: 3rem; font-weight: 700; margin: 0; color: #2d3748; letter-spacing: 2px;">DEVIS</h1>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const generatePartiesHTML = (devis) => {
+    const clientInfo = clients.find(c => c._id === (typeof devis.clientId === 'object' ? devis.clientId?._id : devis.clientId)) || {};
+    
+    return `
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; margin-bottom: 30px;">
+        <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 2rem; border-radius: 12px; border-left: 4px solid #667eea;">
+          <h3 style="margin: 0 0 1.5rem 0; color: #2d3748; font-size: 1.2rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">ÉMETTEUR</h3>
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <div style="font-weight: 600; font-size: 1.1rem; color: #2d3748;">${devis.entrepriseName || 'Nom de l\'entreprise'}</div>
+            <div>${devis.entrepriseAddress || 'Adresse'}</div>
+            <div>${devis.entrepriseCity || 'Code postal et ville'}</div>
+            <div>${devis.entreprisePhone || 'Téléphone'}</div>
+            <div>${devis.entrepriseEmail || 'Email'}</div>
+          </div>
+        </div>
+        
+        <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 2rem; border-radius: 12px; border-left: 4px solid #667eea;">
+          <h3 style="margin: 0 0 1.5rem 0; color: #2d3748; font-size: 1.2rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">DESTINATAIRE</h3>
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <div style="font-weight: 600; font-size: 1.1rem; color: #2d3748;">${clientInfo.name || devis.clientName || 'Nom du client'}</div>
+            <div>${clientInfo.email || devis.clientEmail || 'Email du client'}</div>
+            <div>${clientInfo.phone || devis.clientPhone || 'Téléphone du client'}</div>
+            <div>${devis.clientAddress || clientInfo.address || 'Adresse du client'}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  };
+
+  const generateMetadataHTML = (devis) => {
+    const clientInfo = clients.find(c => c._id === (typeof devis.clientId === 'object' ? devis.clientId?._id : devis.clientId)) || {};
+    
+    return `
+      <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 30px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+          <div>
+            <div style="font-weight: 600; font-size: 0.9rem; opacity: 0.9;">Date du devis :</div>
+            <div style="background: rgba(255, 255, 255, 0.2); padding: 0.5rem; border-radius: 6px; font-weight: 600;">${formatDate(devis.dateDevis)}</div>
+          </div>
+          <div>
+            <div style="font-weight: 600; font-size: 0.9rem; opacity: 0.9;">Numéro de devis :</div>
+            <div style="background: rgba(255, 255, 255, 0.2); padding: 0.5rem; border-radius: 6px; font-weight: 600;">${devis._id || 'À définir'}</div>
+          </div>
+          <div>
+            <div style="font-weight: 600; font-size: 0.9rem; opacity: 0.9;">Date de validité :</div>
+            <div style="background: rgba(255, 255, 255, 0.2); padding: 0.5rem; border-radius: 6px; font-weight: 600;">${formatDate(devis.dateValidite)}</div>
+          </div>
+          <div>
+            <div style="font-weight: 600; font-size: 0.9rem; opacity: 0.9;">Client :</div>
+            <div style="background: rgba(255, 255, 255, 0.2); padding: 0.5rem; border-radius: 6px; font-weight: 600;">${clientInfo.name || 'Client non défini'}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  };
+
+  const generateTableHeaderHTML = () => `
+    <div style="margin-bottom: 10px;">
+      <h3 style="margin: 0 0 1.5rem 0; color: #2d3748; font-size: 1.3rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem;">DÉTAIL DES PRESTATIONS</h3>
+      <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr style="background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%); color: white;">
+            <th style="padding: 1rem 0.75rem; text-align: center; font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; width: 35%;">Description</th>
+            <th style="padding: 1rem 0.75rem; text-align: center; font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; width: 10%;">Unité</th>
+            <th style="padding: 1rem 0.75rem; text-align: center; font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; width: 10%;">Qté</th>
+            <th style="padding: 1rem 0.75rem; text-align: center; font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; width: 15%;">Prix unitaire HT</th>
+            <th style="padding: 1rem 0.75rem; text-align: center; font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; width: 10%;">TVA</th>
+            <th style="padding: 1rem 0.75rem; text-align: center; font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; width: 20%;">Total HT</th>
+          </tr>
+        </thead>
+      </table>
+    </div>
+  `;
+
+  const generateTotalsHTML = (devis) => {
+    const tauxTVA = {
+      "20": { ht: 0, tva: 0 },
+      "10": { ht: 0, tva: 0 },
+      "5.5": { ht: 0, tva: 0 },
+    };
+
+    devis.articles.forEach((item) => {
+      const price = parseFloat(item.unitPrice || "0");
+      const qty = parseFloat(item.quantity || "0");
+      const taux = item.tvaRate || "20";
+
+      if (!isNaN(price) && !isNaN(qty) && tauxTVA[taux]) {
+        const ht = price * qty;
+        tauxTVA[taux].ht += ht;
+        tauxTVA[taux].tva += ht * (parseFloat(taux) / 100);
+      }
+    });
+
+    const totalHT = Object.values(tauxTVA).reduce((sum, t) => sum + t.ht, 0);
+    const totalTVA = Object.values(tauxTVA).reduce((sum, t) => sum + t.tva, 0);
+    const totalTTC = totalHT + totalTVA;
+
+    return `
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 30px 0;">
+        <div>
+          <h4 style="margin: 0 0 1rem 0; color: #2d3748; font-weight: 600;">Récapitulatif TVA</h4>
+          <table style="width: 100%; border-collapse: collapse; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">
+            <thead>
+              <tr style="background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); color: white;">
+                <th style="padding: 0.75rem; text-align: center; font-weight: 600; font-size: 0.8rem; text-transform: uppercase;">Base HT</th>
+                <th style="padding: 0.75rem; text-align: center; font-weight: 600; font-size: 0.8rem; text-transform: uppercase;">Taux TVA</th>
+                <th style="padding: 0.75rem; text-align: center; font-weight: 600; font-size: 0.8rem; text-transform: uppercase;">Montant TVA</th>
+                <th style="padding: 0.75rem; text-align: center; font-weight: 600; font-size: 0.8rem; text-transform: uppercase;">Total TTC</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${Object.entries(tauxTVA)
+                .filter(([, { ht }]) => ht > 0)
+                .map(([rate, { ht, tva }]) => `
+                  <tr>
+                    <td style="padding: 0.75rem; text-align: center; border-bottom: 1px solid #f1f5f9;">${ht.toFixed(2)} €</td>
+                    <td style="padding: 0.75rem; text-align: center; border-bottom: 1px solid #f1f5f9;">${rate}%</td>
+                    <td style="padding: 0.75rem; text-align: center; border-bottom: 1px solid #f1f5f9;">${tva.toFixed(2)} €</td>
+                    <td style="padding: 0.75rem; text-align: center; border-bottom: 1px solid #f1f5f9;">${(ht + tva).toFixed(2)} €</td>
+                  </tr>
+                `).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 0.75rem; align-self: end;">
+          <div style="display: flex; justify-content: space-between; padding: 0.75rem 1rem; background: #f8fafc; border-radius: 6px; font-weight: 500;">
+            <span>Total HT :</span>
+            <span>${totalHT.toFixed(2)} €</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 0.75rem 1rem; background: #f8fafc; border-radius: 6px; font-weight: 500;">
+            <span>Total TVA :</span>
+            <span>${totalTVA.toFixed(2)} €</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 0.75rem 1rem; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; font-weight: 700; font-size: 1.1rem; border-radius: 6px; box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);">
+            <span>Total TTC :</span>
+            <span>${totalTTC.toFixed(2)} €</span>
+          </div>
+        </div>
+      </div>
+    `;
+  };
+
+  const generateConditionsHTML = (devis) => `
+    <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); padding: 2rem; border-radius: 12px; border-left: 4px solid #667eea; margin-top: 30px;">
+      <div style="margin-bottom: 2rem;">
+        <p style="margin: 0.5rem 0; color: #4a5568; line-height: 1.6;"><strong>Conditions :</strong></p>
+        <p style="margin: 0.5rem 0; color: #4a5568; line-height: 1.6;">• Devis valable jusqu'au ${formatDate(devis.dateValidite) || "date à définir"}</p>
+        <p style="margin: 0.5rem 0; color: #4a5568; line-height: 1.6;">• Règlement à 30 jours fin de mois</p>
+        <p style="margin: 0.5rem 0; color: #4a5568; line-height: 1.6;">• TVA non applicable, art. 293 B du CGI (si applicable)</p>
+      </div>
+      
+      <div style="text-align: center;">
+        <p style="font-style: italic; color: #718096; margin-bottom: 2rem;">
+          <em>Bon pour accord - Date et signature du client :</em>
+        </p>
+        <div style="display: flex; justify-content: space-around; gap: 2rem;">
+          <div style="flex: 1; padding: 1rem; border-bottom: 2px solid #2d3748; color: #4a5568; font-weight: 500;">
+            <span>Date : _______________</span>
+          </div>
+          <div style="flex: 1; padding: 1rem; border-bottom: 2px solid #2d3748; color: #4a5568; font-weight: 500;">
+            <span>Signature :</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
   const handleSendEmail = async (devisId) => {
     try {
       setLoading(true);
       
-      const response = await apiRequest(API_ENDPOINTS.DEVIS.SEND_BY_EMAIL(devisId), {
+      await apiRequest(API_ENDPOINTS.DEVIS.SEND_BY_EMAIL(devisId), {
         method: 'POST'
       });
       
@@ -584,7 +634,7 @@ const DevisListPage = ({
           <h1 className="page-title">📄 Mes Devis</h1>
           <div className="stats-summary">
             <div className="stat-item">
-              <span className="stat-number">{devisList.length}</span>
+              <span className="stat-number">{stats.total}</span>
               <span className="stat-label">Total</span>
             </div>
             <div className="stat-item">
@@ -592,19 +642,19 @@ const DevisListPage = ({
               <span className="stat-label">Affichés</span>
             </div>
             <div className="stat-item">
-              <span className="stat-number">{devisList.filter(d => d.status === 'nouveau').length}</span>
+              <span className="stat-number">{stats.nouveau}</span>
               <span className="stat-label">🔵 Nouveaux</span>
             </div>
             <div className="stat-item">
-              <span className="stat-number">{devisList.filter(d => d.status === 'en_attente').length}</span>
+              <span className="stat-number">{stats.en_attente}</span>
               <span className="stat-label">🟣 En attente</span>
             </div>
             <div className="stat-item">
-              <span className="stat-number">{devisList.filter(d => d.status === 'fini').length}</span>
+              <span className="stat-number">{stats.fini}</span>
               <span className="stat-label">🟢 Finalisés</span>
             </div>
             <div className="stat-item">
-              <span className="stat-number">{devisList.filter(d => d.status === 'inactif').length}</span>
+              <span className="stat-number">{stats.inactif}</span>
               <span className="stat-label">🔴 Inactifs</span>
             </div>
           </div>
@@ -720,7 +770,7 @@ const DevisListPage = ({
           {/* Grille des cartes devis */}
           <div className="devis-grid">
             {currentDevis.map((devisItem) => {
-              const client = clients.find(c => c._id === (typeof devisItem.clientId === "object" ? devisItem.clientId?._id : devisItem.clientId));
+              const clientInfo = clients.find(c => c._id === (typeof devisItem.clientId === "object" ? devisItem.clientId?._id : devisItem.clientId));
               const ttc = calculateTTC(devisItem);
               
               return (
@@ -775,7 +825,7 @@ const DevisListPage = ({
                     {/* Informations client */}
                     <div className="devis-client-info">
                       <span className="devis-client-icon">👤</span>
-                      <span className="devis-client-name">{client?.name || "Client inconnu"}</span>
+                      <span className="devis-client-name">{clientInfo?.name || "Client inconnu"}</span>
                     </div>
 
                     {/* Badge de statut */}
