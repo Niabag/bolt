@@ -1,3 +1,5 @@
+@import '../Devis/devis.scss';
+
 .invoice-list-container {
   padding: 0;
   max-width: 1400px;
@@ -203,23 +205,11 @@
 }
 
 .invoice-card {
-  background: white;
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-  border: 2px solid #f1f5f9;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  cursor: pointer;
-  position: relative;
+  @extend .devis-card;
 }
 
 .invoice-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
-  border-color: #3b82f6;
+  @extend .devis-card:hover;
 }
 
 .invoice-header {
@@ -570,9 +560,6 @@
     gap: 1rem;
   }
   
-  .invoice-card {
-    padding: 1.25rem;
-  }
   
   .invoice-preview-section {
     margin: 2rem 0;
@@ -622,9 +609,6 @@
     min-width: auto;
   }
   
-  .invoice-card {
-    padding: 1rem;
-  }
   
   .invoice-number {
     font-size: 1rem;
