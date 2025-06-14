@@ -6,9 +6,11 @@ const InvoiceCard = ({
   onView,
   onPdf,
   onDelete,
+
   onStatusChange,
   loading = false,
   clients = []
+
 }) => {
   const formatDate = (dateStr) => {
     if (!dateStr) return '';
@@ -21,6 +23,7 @@ const InvoiceCard = ({
 
   const getStatusColor = (status) => {
     switch (status) {
+
       case 'paid':
         return '#10b981';
       case 'pending':
@@ -37,6 +40,7 @@ const InvoiceCard = ({
 
   const getStatusLabel = (status) => {
     switch (status) {
+
       case 'paid':
         return 'Payée';
       case 'pending':
@@ -53,6 +57,7 @@ const InvoiceCard = ({
 
   const getStatusIcon = (status) => {
     switch (status) {
+
       case 'paid':
         return '✅';
       case 'pending':
@@ -93,11 +98,13 @@ const InvoiceCard = ({
 
   return (
     <div className="devis-card" onClick={() => onView && onView(invoice)}>
+
       <div className="devis-card-top">
         <div className="devis-avatar">
           {invoice.invoiceNumber ? invoice.invoiceNumber.charAt(0).toUpperCase() : 'F'}
         </div>
         {onStatusChange && (
+
           <div
             className="status-indicator clickable"
             style={{
@@ -109,13 +116,16 @@ const InvoiceCard = ({
             title={getNextStatusLabel(invoice.status)}
             onClick={(e) => {
               e.stopPropagation();
+
               onStatusChange(invoice._id || invoice.id, invoice.status);
+
             }}
           >
             {getStatusIcon(invoice.status)}
           </div>
         )}
       </div>
+
 
       <div className="devis-card-content">
         <div className="devis-card-header">
@@ -136,7 +146,6 @@ const InvoiceCard = ({
           <span className="devis-client-icon">👤</span>
           <span className="devis-client-name">{clientName}</span>
         </div>
-
         <div
           className="devis-status-badge"
           style={{ backgroundColor: getStatusColor(invoice.status), color: 'white' }}
@@ -158,6 +167,7 @@ const InvoiceCard = ({
               {loading ? '⏳' : '📄'} PDF
             </button>
           )}
+
 
           {onDelete && (
             <button

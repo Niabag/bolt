@@ -566,6 +566,7 @@ const InvoiceList = ({ clients = [] }) => {
               <InvoiceCard
                 key={invoice._id || invoice.id}
                 invoice={invoice}
+
                 onView={handleViewInvoice}
                 onPdf={handleDownloadPDF}
                 onDelete={handleDeleteInvoice}
