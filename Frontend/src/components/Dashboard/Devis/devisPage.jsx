@@ -243,8 +243,6 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
       await addSectionToPDF(generateMetadataHTML(devis));
 
       // ✅ 4. TABLEAU - TRAITEMENT LIGNE PAR LIGNE
-      const clientInfo = clients.find(c => c._id === devis.clientId) || {};
-      
       // En-tête du tableau
       await addSectionToPDF(generateTableHeaderHTML());
 
@@ -312,7 +310,8 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
   `;
 
   const generatePartiesHTML = (devis) => {
-    const clientInfo = clients.find(c => c._id === devis.clientId) || {};
+    const clientInfo = clients.find(c => c._id === (typeof devis.clientId === 'object' ? devis.clientId?._id : devis.clientId)) || {};
+    
     return `
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; margin-bottom: 30px;">
         <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 2rem; border-radius: 12px; border-left: 4px solid #667eea;">
@@ -332,7 +331,7 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
             <div style="font-weight: 600; font-size: 1.1rem; color: #2d3748;">${clientInfo.name || devis.clientName || 'Nom du client'}</div>
             <div>${clientInfo.email || devis.clientEmail || 'Email du client'}</div>
             <div>${clientInfo.phone || devis.clientPhone || 'Téléphone du client'}</div>
-            <div>${devis.clientAddress || 'Adresse du client'}</div>
+            <div>${devis.clientAddress || clientInfo.address || 'Adresse du client'}</div>
           </div>
         </div>
       </div>
@@ -340,7 +339,8 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
   };
 
   const generateMetadataHTML = (devis) => {
-    const clientInfo = clients.find(c => c._id === devis.clientId) || {};
+    const clientInfo = clients.find(c => c._id === (typeof devis.clientId === 'object' ? devis.clientId?._id : devis.clientId)) || {};
+    
     return `
       <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 30px;">
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
@@ -424,10 +424,10 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
                 .filter(([, { ht }]) => ht > 0)
                 .map(([rate, { ht, tva }]) => `
                   <tr>
-                    <td style="padding: 0.75rem; text-align: center; border-bottom: 1px solid #e2e8f0;">${ht.toFixed(2)} €</td>
-                    <td style="padding: 0.75rem; text-align: center; border-bottom: 1px solid #e2e8f0;">${rate}%</td>
-                    <td style="padding: 0.75rem; text-align: center; border-bottom: 1px solid #e2e8f0;">${tva.toFixed(2)} €</td>
-                    <td style="padding: 0.75rem; text-align: center; border-bottom: 1px solid #e2e8f0;">${(ht + tva).toFixed(2)} €</td>
+                    <td style="padding: 0.75rem; text-align: center; border-bottom: 1px solid #f1f5f9;">${ht.toFixed(2)} €</td>
+                    <td style="padding: 0.75rem; text-align: center; border-bottom: 1px solid #f1f5f9;">${rate}%</td>
+                    <td style="padding: 0.75rem; text-align: center; border-bottom: 1px solid #f1f5f9;">${tva.toFixed(2)} €</td>
+                    <td style="padding: 0.75rem; text-align: center; border-bottom: 1px solid #f1f5f9;">${(ht + tva).toFixed(2)} €</td>
                   </tr>
                 `).join('')}
             </tbody>
@@ -556,78 +556,31 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
     );
   }
 
-  const formatDate = (dateStr) => {
-    if (!dateStr) return "";
-    try {
-      return new Date(dateStr).toLocaleDateString("fr-FR");
-    } catch (error) {
-      return dateStr;
-    }
-  };
-
   return (
     <div className="devis-page">
       {/* Liste des devis existants */}
       <div className="devis-list-section">
-        <button onClick={onBack} className="back-button">
-          ← Retour aux prospects
-        </button>
-        
-        <div className="client-info">
-          <div className="client-avatar">
-            {client.name ? client.name.charAt(0).toUpperCase() : "C"}
-          </div>
-          <div className="client-details">
-            <h2>{client.name}</h2>
-            <div className="client-contact">
-              <span>{client.email}</span>
-              <span>•</span>
-              <span>{client.phone}</span>
-              {client.company && (
-                <>
-                  <span>•</span>
-                  <span>{client.company}</span>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="billing-stats">
-        <div className="stat-card">
-          <div className="stat-icon">💰</div>
-          <div className="stat-content">
-            <h3>{stats.totalAmount.toFixed(2)} €</h3>
-            <p>Montant total</p>
-          </div>
+        <div className="devis-list-header">
+          <h2 className="devis-list-title">
+            📄 {selectedClient ? `Devis de ${selectedClient.name}` : "Mes Devis"}
+          </h2>
+          {selectedClient && (
+            <p style={{textAlign: 'center', color: '#718096', marginTop: '0.5rem'}}>
+              📧 {selectedClient.email} • 📞 {selectedClient.phone}
+            </p>
+          )}
         </div>
         
-        <div className="stat-card">
-          <div className="stat-icon">📄</div>
-          <div className="stat-content">
-            <h3>{stats.totalDevis}</h3>
-            <p>Devis</p>
-          </div>
-        </div>
-        
-        <div className="stat-card">
-          <div className="stat-icon">⏳</div>
-          <div className="stat-content">
-            <h3>{stats.pendingAmount.toFixed(2)} €</h3>
-            <p>En attente</p>
-          </div>
-        </div>
-      </div>
+        {error && (
+          <div className="error-state">{error}</div>
+        )}
 
-      <div className="client-billing-actions">
-        <button className="create-invoice-btn">
-          + Créer une nouvelle facture
-        </button>
-      </div>
+        {onBack && (
+          <button className="btn-secondary" onClick={onBack} style={{marginBottom: '2rem'}}>
+            ← Retour aux prospects
+          </button>
+        )}
 
-        <p>Devis (4)</p>
-      <div>
         {filteredDevisList.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">📄</div>
