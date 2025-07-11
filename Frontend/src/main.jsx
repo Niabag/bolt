@@ -6,6 +6,7 @@ import Home from "./pages/Home/Index";
 import Login from "./pages/Login/Index";
 import RegisterUser from "./pages/RegisterUser/Index";
 import RegisterClient from "./pages/RegisterClient/Index";
+import DevisPreviewPublic from "./pages/DevisPreviewPublic/Index";
 import Dashboard from "./pages/Dashboard/Index";
 import Terms from "./pages/Terms/Terms";
 import Privacy from "./pages/Privacy/Privacy";
@@ -33,6 +34,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             {/* Routes publiques */}
             <Route path="/register-user" element={<RegisterUser />} />
             <Route path="/register-client/:userId" element={<RegisterClient />} />
+            <Route path="/devis-preview/:devisId" element={<DevisPreviewPublic />} />
             <Route path="/login" element={<Login />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />

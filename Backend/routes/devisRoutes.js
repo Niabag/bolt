@@ -3,6 +3,8 @@ const {
   createDevis,
   getUserDevis,
   getClientDevis,
+  getDevisById,
+  getPublicDevis,
   updateDevis,
   updateDevisStatus, // ✅ NOUVEAU
   deleteDevis,
@@ -13,6 +15,9 @@ const { checkSubscription } = require("../middleware/subscription");
 
 const router = express.Router();
 
+// 📌 Route publique pour récupérer un devis sans authentification
+router.get("/public/:id", getPublicDevis);
+
 // 📌 Créer un devis (POST)
 router.post("/", authMiddleware, checkSubscription, createDevis);
 
@@ -21,6 +26,9 @@ router.get("/", authMiddleware, checkSubscription, getUserDevis);
 
 // 📌 Voir les devis d'un client spécifique (GET)
 router.get("/client/:clientId", authMiddleware, checkSubscription, getClientDevis);
+
+// 📌 Récupérer un devis par son ID
+router.get("/:id", authMiddleware, checkSubscription, getDevisById);
 
 // 📌 Modifier un devis existant (PUT)
 router.put("/:id", authMiddleware, checkSubscription, updateDevis);
