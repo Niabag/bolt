@@ -28,12 +28,22 @@ exports.createDevis = async (req, res) => {
       entrepriseCity,
       entreprisePhone,
       entrepriseEmail,
+      entrepriseSiret,
+      entrepriseTva,
       logoUrl,
       articles = [],
       status = 'nouveau' // ✅ NOUVEAU: Statut par défaut
     } = req.body;
 
     const userId = req.userId;
+
+    // Debug: Vérifier les champs SIRET et TVA reçus
+    console.log("📤 Données reçues pour création devis:", {
+      entrepriseSiret,
+      entrepriseTva,
+      title,
+      clientId
+    });
 
     if (!clientId) {
       return res.status(400).json({ message: "Client manquant." });
@@ -55,12 +65,21 @@ exports.createDevis = async (req, res) => {
       entrepriseCity,
       entreprisePhone,
       entrepriseEmail,
+      entrepriseSiret,
+      entrepriseTva,
       logoUrl,
       articles,
       status // ✅ NOUVEAU
     });
 
     await newDevis.save();
+    
+    // Debug: Vérifier les données sauvegardées
+    console.log("💾 Devis sauvegardé avec SIRET/TVA:", {
+      _id: newDevis._id,
+      entrepriseSiret: newDevis.entrepriseSiret,
+      entrepriseTva: newDevis.entrepriseTva
+    });
     
     // ✅ NOUVEAU: Envoyer une notification en temps réel
     const io = req.app.get("io");
@@ -160,6 +179,14 @@ exports.updateDevis = async (req, res) => {
   try {
     const devisId = req.params.id;
 
+    // Debug: Vérifier les champs SIRET et TVA reçus pour mise à jour
+    console.log("🔄 Données reçues pour mise à jour devis:", {
+      devisId,
+      entrepriseSiret: req.body.entrepriseSiret,
+      entrepriseTva: req.body.entrepriseTva,
+      title: req.body.title
+    });
+
     // Vérifier que le devis appartient à l'utilisateur
     const existingDevis = await Devis.findOne({ _id: devisId, userId: req.userId });
     if (!existingDevis) {
@@ -176,6 +203,13 @@ exports.updateDevis = async (req, res) => {
       updateData,
       { new: true }
     );
+
+    // Debug: Vérifier les données mises à jour
+    console.log("💾 Devis mis à jour avec SIRET/TVA:", {
+      _id: updatedDevis._id,
+      entrepriseSiret: updatedDevis.entrepriseSiret,
+      entrepriseTva: updatedDevis.entrepriseTva
+    });
 
     // ✅ NOUVEAU: Envoyer une notification en temps réel
     const io = req.app.get("io");

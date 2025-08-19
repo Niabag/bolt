@@ -7,6 +7,16 @@ import { DEFAULT_DEVIS } from "./constants";
 import "./devis.scss";
 import { calculateTTC } from "../../../utils/calculateTTC";
 
+// Fonction utilitaire pour formater les dates
+const formatDate = (dateStr) => {
+  if (!dateStr) return '';
+  try {
+    return new Date(dateStr).toLocaleDateString('fr-FR');
+  } catch {
+    return '';
+  }
+};
+
 const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedClientId = null }) => {
   const normalizeClientId = (c) => {
     if (!c) return null;
@@ -87,12 +97,30 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
   }, [selectedDevisForInvoice]);
 
   const handleSelectDevis = (devis) => {
+    console.log("📝 Devis sélectionné pour édition:", devis);
+    
+    // Log spécial pour vérifier les champs SIRET et TVA du devis sélectionné
+    console.log("🔍 SIRET/TVA du devis sélectionné:", {
+      entrepriseSiret: devis.entrepriseSiret,
+      entrepriseTva: devis.entrepriseTva,
+      siretType: typeof devis.entrepriseSiret,
+      tvaType: typeof devis.entrepriseTva
+    });
+    
     const normalizedClientId = normalizeClientId(devis.clientId);
     const updatedDevis = {
       ...devis,
       clientId: normalizedClientId,
       articles: Array.isArray(devis.articles) ? devis.articles : [],
+      // S'assurer que les champs SIRET et TVA sont préservés
+      entrepriseSiret: devis.entrepriseSiret || "",
+      entrepriseTva: devis.entrepriseTva || "",
     };
+    console.log("🔄 Devis mis à jour pour édition:", updatedDevis);
+    
+    // Log spécial pour vérifier que la TVA est bien préservée
+    console.log("✅ TVA après mise à jour pour édition:", updatedDevis.entrepriseTva);
+    
     setCurrentDevis(updatedDevis);
   };
 
@@ -114,28 +142,37 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
 
     setLoading(true);
     try {
-      const url = isEdit
-        ? API_ENDPOINTS.DEVIS.UPDATE(updatedDevis._id)
-        : API_ENDPOINTS.DEVIS.BASE;
-
-      const method = isEdit ? "PUT" : "POST";
-      
-      const devisData = {
-        ...updatedDevis,
-        clientId: clientId,
-        amount: calculateTTC(updatedDevis)
-      };
-      
-      await apiRequest(url, {
-        method,
-        body: JSON.stringify(devisData),
-      });
-
       let data;
-      if (filterClientId) {
-        data = await apiRequest(API_ENDPOINTS.DEVIS.BY_CLIENT(filterClientId));
+      
+      // Debug: Vérifier les données avant envoi
+      console.log("📤 Données envoyées au backend:", {
+        ...updatedDevis,
+        clientId: clientId
+      });
+      
+      // Log spécial pour TVA avant envoi
+      console.log("🔍 TVA avant envoi au backend:", {
+        entrepriseTva: updatedDevis.entrepriseTva,
+        type: typeof updatedDevis.entrepriseTva,
+        length: updatedDevis.entrepriseTva?.length
+      });
+      
+      if (isEdit) {
+        data = await apiRequest(API_ENDPOINTS.DEVIS.UPDATE(updatedDevis._id), {
+          method: "PUT",
+          body: JSON.stringify({
+            ...updatedDevis,
+            clientId: clientId
+          }),
+        });
       } else {
-        data = await apiRequest(API_ENDPOINTS.DEVIS.BASE);
+        data = await apiRequest(API_ENDPOINTS.DEVIS.BASE, {
+          method: "POST",
+          body: JSON.stringify({
+            ...updatedDevis,
+            clientId: clientId
+          }),
+        });
       }
       setDevisList(Array.isArray(data) ? data : []);
 
@@ -179,6 +216,19 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
     try {
       setLoading(true);
       
+      // Debug: Vérifier les données du devis
+      console.log("📋 Données du devis pour PDF:", devis);
+      console.log("🏢 SIRET dans les données:", devis.entrepriseSiret);
+      console.log("🔍 Toutes les propriétés entreprise:", {
+        nom: devis.entrepriseName,
+        adresse: devis.entrepriseAddress,
+        ville: devis.entrepriseCity,
+        siret: devis.entrepriseSiret,
+        tva: devis.entrepriseTva,
+        phone: devis.entreprisePhone,
+        email: devis.entrepriseEmail
+      });
+      
       // Créer un élément temporaire
       const tempDiv = document.createElement('div');
       tempDiv.style.position = 'absolute';
@@ -218,17 +268,16 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
         });
 
         const imgData = canvas.toDataURL('image/png');
-        const imgWidth = pageWidth - (margin * 2);
+        const imgWidth = pageWidth - (2 * margin);
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-        // Vérifier si on a besoin d'une nouvelle page
         if (currentY + imgHeight > pageHeight - margin && !isFirstPage) {
           pdf.addPage();
           currentY = margin;
         }
 
         pdf.addImage(imgData, 'PNG', margin, currentY, imgWidth, imgHeight);
-        currentY += imgHeight + 5;
+        currentY += imgHeight + 10;
 
         return imgHeight;
       };
@@ -257,18 +306,18 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
         const rowHTML = `
           <table style="width: 100%; border-collapse: collapse;">
             <tbody>
-              <tr style="background: ${bgColor};">
-                <td style="padding: 1rem 0.75rem; text-align: left; border-bottom: 1px solid #e2e8f0; width: 35%;">${article.description || ''}</td>
-                <td style="padding: 1rem 0.75rem; text-align: center; border-bottom: 1px solid #e2e8f0; width: 10%;">${article.unit || ''}</td>
-                <td style="padding: 1rem 0.75rem; text-align: center; border-bottom: 1px solid #e2e8f0; width: 10%;">${qty}</td>
-                <td style="padding: 1rem 0.75rem; text-align: center; border-bottom: 1px solid #e2e8f0; width: 15%;">${price.toFixed(2)} €</td>
-                <td style="padding: 1rem 0.75rem; text-align: center; border-bottom: 1px solid #e2e8f0; width: 10%;">${article.tvaRate || "20"}%</td>
-                <td style="padding: 1rem 0.75rem; text-align: center; border-bottom: 1px solid #e2e8f0; width: 20%; font-weight: 600; color: #48bb78;">${total.toFixed(2)} €</td>
+              <tr style="background-color: ${bgColor};">
+                <td style="padding: 12px; border: 1px solid #e2e8f0; width: 35%;">${article.description || ''}</td>
+                <td style="padding: 12px; border: 1px solid #e2e8f0; width: 10%; text-align: center;">${article.unit || 'u'}</td>
+                <td style="padding: 12px; border: 1px solid #e2e8f0; width: 10%; text-align: center;">${article.quantity || '1'}</td>
+                <td style="padding: 12px; border: 1px solid #e2e8f0; width: 15%; text-align: right;">${(article.unitPrice || 0)} €</td>
+                <td style="padding: 12px; border: 1px solid #e2e8f0; width: 10%; text-align: center;">${article.tvaRate || '20'}%</td>
+                <td style="padding: 12px; border: 1px solid #e2e8f0; width: 20%; text-align: right; font-weight: 600;">${total.toFixed(2)} €</td>
               </tr>
             </tbody>
           </table>
         `;
-
+        
         await addSectionToPDF(rowHTML);
       }
 
@@ -279,8 +328,8 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
       await addSectionToPDF(generateConditionsHTML(devis));
 
       // Télécharger le PDF
-      const fileName = devis.title?.replace(/[^a-zA-Z0-9]/g, '-') || `devis-${devis._id}`;
-      pdf.save(`${fileName}.pdf`);
+      const fileName = `devis_${devis._id || 'nouveau'}_${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(fileName);
 
       // Nettoyer
       document.body.removeChild(tempDiv);
@@ -320,6 +369,8 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
             <div style="font-weight: 600; font-size: 1.1rem; color: #2d3748;">${devis.entrepriseName || 'Nom de l\'entreprise'}</div>
             <div>${devis.entrepriseAddress || 'Adresse'}</div>
             <div>${devis.entrepriseCity || 'Code postal et ville'}</div>
+            ${devis.entrepriseSiret ? `<div>SIRET/SIREN: ${devis.entrepriseSiret}</div>` : ''}
+            ${devis.entrepriseTva ? `<div>N° TVA: ${devis.entrepriseTva}</div>` : ''}
             <div>${devis.entreprisePhone || 'Téléphone'}</div>
             <div>${devis.entrepriseEmail || 'Email'}</div>
           </div>
@@ -332,6 +383,7 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
             <div>${clientInfo.email || devis.clientEmail || 'Email du client'}</div>
             <div>${clientInfo.phone || devis.clientPhone || 'Téléphone du client'}</div>
             <div>${devis.clientAddress || clientInfo.address || 'Adresse du client'}</div>
+            ${clientInfo.postalCode && clientInfo.city ? `<div>${clientInfo.postalCode} ${clientInfo.city}</div>` : ''}
           </div>
         </div>
       </div>
@@ -478,6 +530,18 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
   `;
 
   const handleFieldChange = (name, value, index = null) => {
+    console.log("🔄 Changement de champ:", { name, value, index });
+    
+    // Log spécial pour le champ TVA
+    if (name === "entrepriseTva") {
+      console.log("🔍 CHAMP TVA MODIFIÉ:", { 
+        name, 
+        value, 
+        type: typeof value,
+        length: value?.length 
+      });
+    }
+    
     setCurrentDevis((prev) => {
       if (name.startsWith("article-") && index !== null) {
         const key = name.replace("article-", "");
@@ -486,7 +550,15 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
         );
         return { ...prev, articles: updatedArticles };
       } else {
-        return { ...prev, [name]: value };
+        const updated = { ...prev, [name]: value };
+        console.log("📝 Devis mis à jour:", updated);
+        
+        // Log spécial pour vérifier que le champ TVA est bien dans l'état
+        if (name === "entrepriseTva") {
+          console.log("✅ TVA dans l'état mis à jour:", updated.entrepriseTva);
+        }
+        
+        return updated;
       }
     });
   };
@@ -530,7 +602,7 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
       setSelectedDevisForInvoice(null);
       setSelectedClientForInvoice(null);
     } catch (err) {
-      console.error('Erreur création facture:', err);
+      console.error("Erreur création facture:", err);
       alert(`❌ Erreur lors de la création de la facture: ${err.message}`);
     }
   };
@@ -620,7 +692,7 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
             }
           </h2>
           <div className="preview-subtitle">
-            Total TTC : <span className="total-amount">{totalTTC.toFixed(2)} €</span>
+            Total: {calculateTTC(currentDevis).toFixed(2)} €
           </div>
         </div>
 

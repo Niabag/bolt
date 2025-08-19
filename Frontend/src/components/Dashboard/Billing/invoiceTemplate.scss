@@ -3,7 +3,7 @@
   border-radius: 16px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  max-width: 800px;
+  max-width: 900px;
   margin: 0 auto;
 }
 
@@ -53,135 +53,277 @@
 .invoice-document {
   padding: 3rem;
   background: white;
+  font-family: Arial, sans-serif;
+  color: black;
+  font-size: 12px;
+  line-height: 1.4;
 }
 
+/* EN-TÊTE */
 .invoice-header {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 3px solid #e2e8f0;
+}
+
+.header-content {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 3rem;
-  padding-bottom: 2rem;
-  border-bottom: 3px solid #f1f5f9;
+  align-items: flex-start;
 }
 
-.company-info h1 {
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: #0f172a;
-  margin-bottom: 1.5rem;
-  text-transform: uppercase;
-  letter-spacing: 2px;
+.logo-section {
+  flex: 1;
 }
 
-.company-name {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: #0f172a;
-  margin-bottom: 0.5rem;
+.company-logo {
+  max-width: 200px;
+  max-height: 100px;
+  object-fit: contain;
+  border-radius: 8px;
 }
 
-.company-info p {
-  color: #475569;
-  margin-bottom: 0.25rem;
-  font-size: 0.95rem;
+.logo-placeholder {
+  width: 120px;
+  height: 60px;
+  background: #f1f5f9;
+  border: 2px dashed #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: #64748b;
+  font-weight: 600;
 }
 
-.invoice-info {
+.title-section {
+  flex: 1;
   text-align: right;
 }
 
-.invoice-number {
-  font-size: 1.2rem;
+.invoice-title {
+  font-size: 3rem;
   font-weight: 700;
-  color: #0f172a;
-  margin-bottom: 1rem;
-  padding: 0.5rem 1rem;
-  background: #f8fafc;
-  border-radius: 8px;
-  display: inline-block;
+  margin: 0;
+  color: #2d3748;
+  letter-spacing: 2px;
 }
 
-.invoice-date,
-.invoice-due {
-  color: #475569;
-  margin-bottom: 0.5rem;
-  font-size: 0.95rem;
+/* INFORMATIONS PARTIES */
+.parties-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  margin-bottom: 30px;
 }
 
-.client-section {
-  margin-bottom: 3rem;
+.emetteur-section,
+.destinataire-section {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 2rem;
+  border-radius: 12px;
+  border-left: 4px solid #667eea;
 }
 
 .section-title {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: #64748b;
+  margin: 0 0 1.5rem 0;
+  color: #2d3748;
+  font-size: 1.2rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1px;
-  margin-bottom: 1rem;
 }
 
+.company-details,
 .client-details {
-  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.company-name,
+.client-name {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #2d3748;
+}
+
+/* MÉTADONNÉES */
+.metadata-section {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
   padding: 1.5rem;
   border-radius: 12px;
-  border-left: 4px solid #3b82f6;
+  margin-bottom: 30px;
 }
 
-.client-name {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #0f172a;
+.metadata-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.metadata-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.metadata-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  opacity: 0.9;
   margin-bottom: 0.5rem;
 }
 
-.client-details p {
-  color: #475569;
-  margin-bottom: 0.25rem;
-  font-size: 0.95rem;
+.metadata-value {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.5rem;
+  border-radius: 6px;
+  font-weight: 600;
 }
 
-.invoice-items {
-  margin-bottom: 3rem;
+/* TABLEAU DES PRESTATIONS */
+.prestations-section {
+  margin-bottom: 30px;
 }
 
-.invoice-items table {
-  width: 100%;
-  border-collapse: collapse;
+.prestations-title {
+  margin: 0 0 1.5rem 0;
+  color: #2d3748;
+  font-size: 1.3rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 0.5rem;
+}
+
+.prestations-table {
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
 
-.invoice-items th {
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+.table-header {
+  background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
   color: white;
-  padding: 1rem;
-  text-align: left;
-  font-size: 0.9rem;
+  display: grid;
+  grid-template-columns: 35% 10% 10% 15% 10% 20%;
+}
+
+.header-cell {
+  padding: 1rem 0.75rem;
+  text-align: center;
   font-weight: 600;
+  font-size: 0.9rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.invoice-items td {
-  padding: 1rem;
+.table-body {
+  background: white;
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: 35% 10% 10% 15% 10% 20%;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.table-row.even {
+  background: #ffffff;
+}
+
+.table-row.odd {
+  background: #f8f9fa;
+}
+
+.cell {
+  padding: 12px;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+}
+
+.cell.description {
+  justify-content: flex-start;
+}
+
+.cell.unite,
+.cell.qte,
+.cell.tva {
+  justify-content: center;
+}
+
+.cell.prix,
+.cell.total {
+  justify-content: flex-end;
+  font-weight: 600;
+}
+
+.cell:last-child {
+  border-right: none;
+}
+
+/* TOTAUX */
+.totaux-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin: 30px 0;
+}
+
+.recap-tva {
+  display: flex;
+  flex-direction: column;
+}
+
+.recap-title {
+  margin: 0 0 1rem 0;
+  color: #2d3748;
+  font-weight: 600;
+}
+
+.recap-table {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.recap-header {
+  background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+  color: white;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+}
+
+.recap-cell {
+  padding: 0.75rem;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.recap-row {
+  background: white;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
   border-bottom: 1px solid #f1f5f9;
+}
+
+.recap-row .recap-cell {
+  font-weight: normal;
+  text-transform: none;
+  font-size: 0.9rem;
   color: #475569;
-  font-size: 0.95rem;
 }
 
-.invoice-items tr:nth-child(even) {
-  background: #f8fafc;
-}
-
-.invoice-items tr:last-child td {
-  border-bottom: none;
-}
-
-.invoice-summary {
-  margin-left: auto;
-  width: 300px;
-  margin-bottom: 3rem;
+.summary-totals {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-self: end;
 }
 
 .summary-row {
@@ -189,49 +331,65 @@
   justify-content: space-between;
   padding: 0.75rem 1rem;
   background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
-  font-size: 0.95rem;
-  color: #475569;
-}
-
-.summary-row:first-child {
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
-}
-
-.summary-row:last-child {
-  border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
-  border-bottom: none;
+  border-radius: 6px;
+  font-weight: 500;
 }
 
 .summary-row.total {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
   color: white;
   font-weight: 700;
   font-size: 1.1rem;
-  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
+  box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
 }
 
-.invoice-notes {
-  margin-bottom: 3rem;
-}
-
-.invoice-notes p {
-  background: #f8fafc;
-  padding: 1.5rem;
+/* CONDITIONS */
+.conditions-section {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  padding: 2rem;
   border-radius: 12px;
-  color: #475569;
-  font-size: 0.95rem;
-  border-left: 4px solid #f59e0b;
+  border-left: 4px solid #667eea;
+  margin-top: 30px;
 }
 
-.invoice-footer {
+.conditions-content {
+  margin-bottom: 2rem;
+}
+
+.conditions-title {
+  margin: 0.5rem 0;
+  color: #4a5568;
+  line-height: 1.6;
+}
+
+.conditions-content p {
+  margin: 0.5rem 0;
+  color: #4a5568;
+  line-height: 1.6;
+}
+
+.signature-section {
   text-align: center;
-  padding-top: 2rem;
-  border-top: 1px solid #f1f5f9;
-  color: #64748b;
-  font-size: 0.85rem;
+}
+
+.signature-text {
+  font-style: italic;
+  color: #718096;
+  margin-bottom: 2rem;
+}
+
+.signature-boxes {
+  display: flex;
+  justify-content: space-around;
+  gap: 2rem;
+}
+
+.signature-box {
+  flex: 1;
+  padding: 1rem;
+  border-bottom: 2px solid #2d3748;
+  color: #4a5568;
+  font-weight: 500;
 }
 
 /* Responsive */

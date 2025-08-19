@@ -78,6 +78,43 @@
   flex: 1;
 }
 
+.logo-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 200px;
+  height: 100px;
+  border: 2px dashed #cbd5e0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  color: #718096;
+  text-align: center;
+  padding: 1rem;
+}
+
+.logo-placeholder:hover {
+  border-color: #667eea;
+  background: linear-gradient(135deg, #edf2f7 0%, #e2e8f0 100%);
+  color: #667eea;
+}
+
+.document-title {
+  flex: 1;
+  text-align: right;
+}
+
+.document-title h1 {
+  font-size: 3rem;
+  font-weight: 700;
+  margin: 0;
+  color: #2d3748;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+  letter-spacing: 2px;
+}
+
 .company-logo {
   max-width: 200px;
   max-height: 100px;
@@ -109,18 +146,80 @@
   color: #667eea;
 }
 
+.logo-container {
+  position: relative;
+  display: inline-block;
+}
+
+.remove-logo-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #e53e3e;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.remove-logo-btn:hover {
+  background: #c53030;
+  transform: scale(1.1);
+}
+
 .document-title {
   flex: 1;
   text-align: right;
 }
 
-.document-title h1 {
-  font-size: 3rem;
-  font-weight: 700;
-  margin: 0;
-  color: #2d3748;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
-  letter-spacing: 2px;
+/* Métadonnées du devis */
+.devis-metadata {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 3rem;
+}
+
+.metadata-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.metadata-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.metadata-item label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.metadata-value {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.devis-number,
+.client-id {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.5rem;
+  border-radius: 6px;
+  font-weight: 600;
 }
 
 /* Informations des parties */
@@ -162,6 +261,7 @@
   color: #2d3748 !important;
 }
 
+
 /* ✅ NOUVEAU: Style pour le champ d'adresse client */
 .client-address {
   background: rgba(255, 255, 255, 0.9) !important;
@@ -187,40 +287,6 @@
   background: rgba(255, 255, 255, 0.95) !important;
 }
 
-/* Métadonnées du devis */
-.devis-metadata {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  margin-bottom: 3rem;
-}
-
-.metadata-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-}
-
-.metadata-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.metadata-item label {
-  font-weight: 600;
-  font-size: 0.9rem;
-  opacity: 0.9;
-}
-
-.devis-number,
-.client-id {
-  background: rgba(255, 255, 255, 0.2);
-  padding: 0.5rem;
-  border-radius: 6px;
-  font-weight: 600;
-}
 
 /* Section prestations */
 .prestations-section {

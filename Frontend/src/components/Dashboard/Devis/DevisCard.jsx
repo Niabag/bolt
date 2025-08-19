@@ -123,6 +123,24 @@ const DevisCard = ({
           </div>
         )}
 
+        {/* Informations entreprise - masquer pour les modèles */}
+        {devis.title !== "Modèle de devis" && (
+          <div className="devis-entreprise-info">
+            {devis.entrepriseSiret && (
+              <div className="devis-info-item">
+                <span>🏢</span>
+                <span>SIRET: {devis.entrepriseSiret}</span>
+              </div>
+            )}
+            {devis.entrepriseTva && (
+              <div className="devis-info-item">
+                <span>🔢</span>
+                <span>N° TVA: {devis.entrepriseTva}</span>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Badge de statut */}
         <div 
           className="devis-status-badge" 

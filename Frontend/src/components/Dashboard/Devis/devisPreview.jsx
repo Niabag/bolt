@@ -14,6 +14,19 @@ const DevisPreview = ({
 }) => {
   const previewRef = useRef();
 
+  // Fonction pour gérer l'upload du logo
+  const handleLogoUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const logoUrl = e.target.result;
+        onFieldChange('logoUrl', logoUrl);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   if (!devisData || !Array.isArray(devisData.articles)) {
     return <div className="devis-preview error-message">⚠️ Données du devis invalides ou incomplètes.</div>;
   }
@@ -82,36 +95,40 @@ const DevisPreview = ({
         <div className="document-header">
           <div className="logo-section">
             {devisData.logoUrl ? (
-              <img src={devisData.logoUrl} alt="Logo entreprise" className="company-logo" />
+              <div className="logo-container">
+                <img src={devisData.logoUrl} alt="Logo entreprise" className="company-logo" />
+                <button 
+                  className="remove-logo-btn"
+                  onClick={() => onFieldChange('logoUrl', '')}
+                  title="Supprimer le logo"
+                >
+                  ✕
+                </button>
+              </div>
             ) : (
-              <label className="logo-upload-area">
-                📷 Cliquez pour ajouter un logo
-                <input
-                  type="file"
-                  accept="image/*"
-                  style={{ display: "none" }}
-                  onChange={(e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                      const reader = new FileReader();
-                      reader.onloadend = () => onFieldChange("logoUrl", reader.result);
-                      reader.readAsDataURL(file);
-                    }
-                  }}
+              <div className="logo-upload-area" onClick={() => document.getElementById('logo-upload').click()}>
+                <span>📷 Cliquez pour ajouter un logo</span>
+                <input 
+                  id="logo-upload"
+                  type="file" 
+                  accept="image/*" 
+                  style={{ display: 'none' }}
+                  onChange={handleLogoUpload}
                 />
-              </label>
+              </div>
             )}
           </div>
           
           <div className="document-title">
             <h1>DEVIS</h1>
+            <div className="devis-number">N° {devisData._id || devisData.devisNumber || "À définir"}</div>
           </div>
         </div>
 
         {/* Informations entreprise et client */}
         <div className="parties-info">
           <div className="entreprise-section">
-            <h3>Émetteur</h3>
+            <h3>ÉMETTEUR</h3>
             <div className="info-group">
               <EditableInput 
                 name="entrepriseName" 
@@ -133,6 +150,18 @@ const DevisPreview = ({
                 onChange={onFieldChange} 
               />
               <EditableInput 
+                name="entrepriseSiret" 
+                value={devisData.entrepriseSiret || ""} 
+                placeholder="SIRET / SIREN" 
+                onChange={onFieldChange} 
+              />
+              <EditableInput 
+                name="entrepriseTva" 
+                value={devisData.entrepriseTva || ""} 
+                placeholder="Numéro de TVA" 
+                onChange={onFieldChange} 
+              />
+              <EditableInput 
                 name="entreprisePhone" 
                 value={devisData.entreprisePhone || ""} 
                 placeholder="Téléphone" 
@@ -148,7 +177,7 @@ const DevisPreview = ({
           </div>
 
           <div className="client-section">
-            <h3>Destinataire</h3>
+            <h3>DESTINATAIRE</h3>
             <div className="info-group">
               <EditableInput 
                 name="clientName" 
@@ -169,19 +198,11 @@ const DevisPreview = ({
                 placeholder="Téléphone du client" 
                 onChange={onFieldChange} 
               />
-              {/* ✅ NOUVEAU: Champ d'adresse automatiquement rempli */}
-              <textarea
-                className="editable-input client-address"
-                placeholder="Adresse du client"
-                value={devisData.clientAddress || formatClientAddress()}
-                onChange={(e) => onFieldChange("clientAddress", e.target.value)}
-                rows={3}
-                style={{
-                  resize: 'vertical',
-                  minHeight: '80px',
-                  fontFamily: 'inherit',
-                  lineHeight: '1.5'
-                }}
+              <EditableInput 
+                name="clientAddress" 
+                value={devisData.clientAddress || formatClientAddress()} 
+                placeholder="Adresse du client" 
+                onChange={onFieldChange} 
               />
             </div>
           </div>
@@ -191,7 +212,7 @@ const DevisPreview = ({
         <div className="devis-metadata">
           <div className="metadata-grid">
             <div className="metadata-item">
-              <label>Date du devis :</label>
+              <label>Date d'émission</label>
               <EditableInput 
                 type="date" 
                 name="dateDevis" 
@@ -200,22 +221,13 @@ const DevisPreview = ({
               />
             </div>
             <div className="metadata-item">
-              <label>Numéro de devis :</label>
-              <span className="devis-number">{devisData._id || devisData.devisNumber || "À définir"}</span>
-            </div>
-            <div className="metadata-item">
-              <label>Date de validité :</label>
+              <label>Validité jusqu'au</label>
               <EditableInput 
                 type="date" 
                 name="dateValidite" 
                 value={devisData.dateValidite || ""} 
                 onChange={onFieldChange} 
               />
-            </div>
-            <div className="metadata-item">
-              <label>Client :</label>
-              {/* ✅ CORRECTION: Affichage sécurisé du nom du client */}
-              <span className="client-id">{clientInfo.name || "Client non défini"}</span>
             </div>
           </div>
         </div>

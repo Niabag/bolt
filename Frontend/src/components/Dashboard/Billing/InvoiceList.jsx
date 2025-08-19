@@ -274,72 +274,276 @@ const InvoiceList = ({ clients = [] }) => {
       }
       
       // Importer les modules nécessaires
-      const [{ default: jsPDF }] = await Promise.all([
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import('html2canvas'),
         import('jspdf')
       ]);
+      
+      // Créer un conteneur temporaire pour le PDF
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'absolute';
+      tempContainer.style.left = '-9999px';
+      tempContainer.style.top = '0';
+      tempContainer.style.width = '794px'; // A4 width in pixels at 96 DPI
+      tempContainer.style.backgroundColor = 'white';
+      tempContainer.style.fontFamily = 'Arial, sans-serif';
+      tempContainer.style.fontSize = '14px';
+      tempContainer.style.lineHeight = '1.4';
+      tempContainer.style.color = '#2d3748';
+      document.body.appendChild(tempContainer);
       
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = 210;
       const pageHeight = 297;
-      const margin = 10;
-      let currentY = margin;
+      const margin = 20;
+      let currentY = 0;
       
       // Fonction pour ajouter une section au PDF
-      const addSectionToPDF = (text, y) => {
-        pdf.text(text, margin, y);
-        return y + 10;
+      const addSectionToPDF = async (htmlContent, isFirstSection = false) => {
+        tempContainer.innerHTML = `
+          <div style="padding: ${margin}px; width: ${794 - (margin * 2)}px; box-sizing: border-box;">
+            ${htmlContent}
+          </div>
+        `;
+        
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        const canvas = await html2canvas(tempContainer, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          width: 794,
+          height: tempContainer.scrollHeight
+        });
+        
+        const imgData = canvas.toDataURL('image/png');
+        const imgWidth = pageWidth - (margin * 2);
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        if (!isFirstSection && currentY + imgHeight > pageHeight - margin) {
+          pdf.addPage();
+          currentY = margin;
+        } else if (isFirstSection) {
+          currentY = margin;
+        }
+        
+        pdf.addImage(imgData, 'PNG', margin, currentY, imgWidth, imgHeight);
+        currentY += imgHeight + 10;
+        
+        return currentY;
       };
-      
-      // En-tête
-      currentY = addSectionToPDF(`Facture ${invoice.invoiceNumber}`, currentY);
-      currentY = addSectionToPDF(`Date: ${formatDate(invoice.createdAt)}`, currentY + 5);
-      currentY = addSectionToPDF(`Échéance: ${formatDate(invoice.dueDate)}`, currentY + 5);
-      currentY = addSectionToPDF(`Client: ${client?.name || 'Client inconnu'}`, currentY + 5);
-      
-      // Détails des articles
-      currentY += 10;
-      pdf.text("Articles:", margin, currentY);
-      currentY += 10;
       
       // Fusionner tous les articles des devis
       const allArticles = devisDetails.flatMap(devis => devis.articles || []);
       
-      allArticles.forEach(article => {
-        const price = parseFloat(article.unitPrice || 0);
-        const qty = parseFloat(article.quantity || 0);
-        const total = price * qty;
+      // Calculer les totaux
+      const tauxTVA = {
+        "20": { ht: 0, tva: 0 },
+        "10": { ht: 0, tva: 0 },
+        "5.5": { ht: 0, tva: 0 },
+      };
+      
+      allArticles.forEach((item) => {
+        const price = parseFloat(item.unitPrice || "0");
+        const qty = parseFloat(item.quantity || "0");
+        const taux = item.tvaRate || "20";
         
-        pdf.text(`${article.description || 'Article'} - ${qty} x ${price.toFixed(2)} € = ${total.toFixed(2)} €`, margin, currentY);
-        currentY += 7;
-        
-        if (currentY > pageHeight - margin) {
-          pdf.addPage();
-          currentY = margin;
+        if (!isNaN(price) && !isNaN(qty) && tauxTVA[taux]) {
+          const ht = price * qty;
+          tauxTVA[taux].ht += ht;
+          tauxTVA[taux].tva += ht * (parseFloat(taux) / 100);
         }
       });
       
-      // Totaux
-      currentY += 10;
-      const totalHT = allArticles.reduce((sum, article) => {
-        const price = parseFloat(article.unitPrice || 0);
-        const qty = parseFloat(article.quantity || 0);
-        return sum + (price * qty);
-      }, 0);
-      
-      const totalTVA = allArticles.reduce((sum, article) => {
-        const price = parseFloat(article.unitPrice || 0);
-        const qty = parseFloat(article.quantity || 0);
-        const tva = parseFloat(article.tvaRate || 0);
-        return sum + (price * qty * tva / 100);
-      }, 0);
-      
+      const totalHT = Object.values(tauxTVA).reduce((sum, t) => sum + t.ht, 0);
+      const totalTVA = Object.values(tauxTVA).reduce((sum, t) => sum + t.tva, 0);
       const totalTTC = totalHT + totalTVA;
       
-      pdf.text(`Total HT: ${totalHT.toFixed(2)} €`, margin, currentY);
-      currentY += 7;
-      pdf.text(`Total TVA: ${totalTVA.toFixed(2)} €`, margin, currentY);
-      currentY += 7;
-      pdf.text(`Total TTC: ${totalTTC.toFixed(2)} €`, margin, currentY);
+      // 1. EN-TÊTE
+      await addSectionToPDF(`
+        <div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid #e2e8f0;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div style="flex: 1;">
+              ${devisDetails[0]?.logoUrl ? `<img src="${devisDetails[0].logoUrl}" alt="Logo" style="max-width: 200px; max-height: 100px; object-fit: contain; border-radius: 8px;">` : ''}
+            </div>
+            <div style="flex: 1; text-align: right;">
+              <h1 style="font-size: 3rem; font-weight: 700; margin: 0; color: #2d3748; letter-spacing: 2px;">FACTURE</h1>
+            </div>
+          </div>
+        </div>
+      `, true);
+      
+      // 2. INFORMATIONS DES PARTIES
+      await addSectionToPDF(`
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
+          <div style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); padding: 25px; border-radius: 15px; border: 2px solid #e2e8f0; border-left: 5px solid #3182ce;">
+            <h3 style="font-size: 16px; font-weight: 700; color: #2d3748; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px;">ÉMETTEUR</h3>
+            <div style="font-size: 14px; line-height: 1.6; color: #2d3748;">
+              <div style="font-weight: 700; font-size: 16px; margin-bottom: 8px;">${devisDetails[0]?.entrepriseName || 'Votre Entreprise'}</div>
+              <div>${devisDetails[0]?.entrepriseAddress || '123 Rue Exemple'}</div>
+              <div>${devisDetails[0]?.entrepriseCity || '75000 Paris'}</div>
+              ${devisDetails[0]?.entrepriseSiret ? `<div>SIRET/SIREN: ${devisDetails[0].entrepriseSiret}</div>` : ''}
+              ${devisDetails[0]?.entrepriseTva ? `<div>N° TVA: ${devisDetails[0].entrepriseTva}</div>` : ''}
+              <div>${devisDetails[0]?.entreprisePhone || '01 23 45 67 89'}</div>
+              <div>${devisDetails[0]?.entrepriseEmail || 'contact@entreprise.com'}</div>
+            </div>
+          </div>
+          
+          <div style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); padding: 25px; border-radius: 15px; border: 2px solid #e2e8f0; border-left: 5px solid #3182ce;">
+            <h3 style="font-size: 16px; font-weight: 700; color: #2d3748; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px;">DESTINATAIRE</h3>
+            <div style="font-size: 14px; line-height: 1.6; color: #2d3748;">
+              <div style="font-weight: 700; font-size: 16px; margin-bottom: 8px;">${client?.name || 'Client inconnu'}</div>
+              <div>${client?.email || ''}</div>
+              <div>${client?.phone || ''}</div>
+              <div>${client?.address || ''}</div>
+              <div>${client?.postalCode || ''} ${client?.city || ''}</div>
+              ${client?.company ? `<div style="font-weight: 600; color: #3182ce;">${client.company}</div>` : ''}
+            </div>
+          </div>
+        </div>
+      `);
+      
+      // 3. MÉTADONNÉES
+      await addSectionToPDF(`
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 15px; margin-bottom: 30px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div style="background: rgba(255, 255, 255, 0.15); padding: 15px; border-radius: 10px; backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2);">
+              <div style="font-weight: 600; color: white; font-size: 14px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Date de la facture :</div>
+              <div style="font-weight: 700; color: white; font-size: 16px;">${formatDate(invoice.createdAt)}</div>
+            </div>
+            <div style="background: rgba(255, 255, 255, 0.15); padding: 15px; border-radius: 10px; backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2);">
+              <div style="font-weight: 600; color: white; font-size: 14px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Numéro de facture :</div>
+              <div style="font-weight: 700; color: white; font-size: 16px;">${invoice.invoiceNumber}</div>
+            </div>
+            <div style="background: rgba(255, 255, 255, 0.15); padding: 15px; border-radius: 10px; backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2);">
+              <div style="font-weight: 600; color: white; font-size: 14px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Date d'échéance :</div>
+              <div style="font-weight: 700; color: white; font-size: 16px;">${formatDate(invoice.dueDate)}</div>
+            </div>
+            <div style="background: rgba(255, 255, 255, 0.15); padding: 15px; border-radius: 10px; backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2);">
+              <div style="font-weight: 600; color: white; font-size: 14px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Statut :</div>
+              <div style="font-weight: 700; color: white; font-size: 16px;">${getStatusLabel(invoice.status)}</div>
+            </div>
+          </div>
+        </div>
+      `);
+      
+      // 4. TABLEAU DES PRESTATIONS
+      if (allArticles.length > 0) {
+        await addSectionToPDF(`
+          <div style="margin-bottom: 30px;">
+            <h3 style="font-size: 18px; font-weight: 700; color: #2d3748; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px;">DÉTAIL DES PRESTATIONS</h3>
+            <table style="width: 100%; border-collapse: collapse; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">
+              <thead>
+                <tr style="background: #2d3748; color: white;">
+                  <th style="padding: 15px 12px; text-align: left; font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; width: 35%;">Description</th>
+                  <th style="padding: 15px 12px; text-align: center; font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; width: 10%;">Unité</th>
+                  <th style="padding: 15px 12px; text-align: center; font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; width: 10%;">Qté</th>
+                  <th style="padding: 15px 12px; text-align: right; font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; width: 15%;">Prix unitaire HT</th>
+                  <th style="padding: 15px 12px; text-align: center; font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; width: 10%;">TVA</th>
+                  <th style="padding: 15px 12px; text-align: right; font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; width: 20%;">Total HT</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${allArticles.map((article, index) => {
+                  const price = parseFloat(article.unitPrice || 0);
+                  const qty = parseFloat(article.quantity || 0);
+                  const lineTotal = isNaN(price) || isNaN(qty) ? 0 : price * qty;
+                  const isEven = index % 2 === 0;
+                  
+                  return `
+                    <tr style="background: ${isEven ? '#f8fafc' : 'white'}; border-bottom: 1px solid #e2e8f0;">
+                      <td style="padding: 12px; font-size: 14px; color: #2d3748; font-weight: 500;">${article.description || 'Article sans description'}</td>
+                      <td style="padding: 12px; font-size: 14px; color: #2d3748; text-align: center;">${article.unit || 'u'}</td>
+                      <td style="padding: 12px; font-size: 14px; color: #2d3748; text-align: center;">${qty}</td>
+                      <td style="padding: 12px; font-size: 14px; color: #2d3748; text-align: right; font-weight: 600;">${price.toFixed(2)} €</td>
+                      <td style="padding: 12px; font-size: 14px; color: #2d3748; text-align: center;">${article.tvaRate || 0}%</td>
+                      <td style="padding: 12px; font-size: 14px; color: #2d3748; text-align: right; font-weight: 600;">${lineTotal.toFixed(2)} €</td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        `);
+      }
+      
+      // 5. TOTAUX
+      await addSectionToPDF(`
+        <div style="margin-bottom: 30px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+            <div>
+              <h4 style="font-size: 16px; font-weight: 700; color: #2d3748; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px;">Récapitulatif TVA</h4>
+              <table style="width: 100%; border-collapse: collapse; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
+                <thead>
+                  <tr style="background: #3182ce; color: white;">
+                    <th style="padding: 12px; font-weight: 600; font-size: 14px; text-align: center;">Base HT</th>
+                    <th style="padding: 12px; font-weight: 600; font-size: 14px; text-align: center;">Taux TVA</th>
+                    <th style="padding: 12px; font-weight: 600; font-size: 14px; text-align: center;">Montant TVA</th>
+                    <th style="padding: 12px; font-weight: 600; font-size: 14px; text-align: center;">Total TTC</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${Object.entries(tauxTVA)
+                    .filter(([, { ht }]) => ht > 0)
+                    .map(([rate, { ht, tva }]) => `
+                      <tr style="background: white; border-bottom: 1px solid #e2e8f0;">
+                        <td style="padding: 12px; text-align: center; color: #2d3748; font-weight: 500;">${ht.toFixed(2)} €</td>
+                        <td style="padding: 12px; text-align: center; color: #2d3748; font-weight: 500;">${rate}%</td>
+                        <td style="padding: 12px; text-align: center; color: #2d3748; font-weight: 500;">${tva.toFixed(2)} €</td>
+                        <td style="padding: 12px; text-align: center; color: #2d3748; font-weight: 500;">${(ht + tva).toFixed(2)} €</td>
+                      </tr>
+                    `).join('')}
+                </tbody>
+              </table>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 12px; align-self: end; margin-left: auto; width: 350px;">
+              <div style="display: flex; justify-content: space-between; padding: 12px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-size: 15px; color: #2d3748; border-top-left-radius: 12px; border-top-right-radius: 12px;">
+                <span>Total HT :</span>
+                <span>${totalHT.toFixed(2)} €</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 12px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-size: 15px; color: #2d3748;">
+                <span>Total TVA :</span>
+                <span>${totalTVA.toFixed(2)} €</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 12px 20px; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; font-weight: 700; font-size: 18px; box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3); border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;">
+                <span>Total TTC :</span>
+                <span>${totalTTC.toFixed(2)} €</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `);
+      
+      // 6. CONDITIONS
+      await addSectionToPDF(`
+        <div style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); padding: 25px; border-radius: 15px; border: 2px solid #e2e8f0; border-left: 5px solid #3182ce;">
+          <div style="margin-bottom: 25px;">
+            <p style="font-size: 16px; font-weight: 700; color: #2d3748; margin-bottom: 15px;"><strong>Conditions :</strong></p>
+            <p style="margin-bottom: 8px; font-size: 14px; color: #2d3748; line-height: 1.5;">• Facture payable sous ${invoice.paymentTerms || 30} jours</p>
+            <p style="margin-bottom: 8px; font-size: 14px; color: #2d3748; line-height: 1.5;">• Date d'échéance : ${formatDate(invoice.dueDate)}</p>
+            <p style="margin-bottom: 8px; font-size: 14px; color: #2d3748; line-height: 1.5;">• ${invoice.notes || 'Merci pour votre confiance'}</p>
+          </div>
+          
+          <div style="border-top: 2px solid #e2e8f0; padding-top: 20px;">
+            <p style="font-size: 14px; color: #2d3748; margin-bottom: 15px; text-align: center;">
+              <em>Bon pour accord - Date et signature du client :</em>
+            </p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px;">
+              <div style="text-align: center; padding: 15px; border: 2px solid #e2e8f0; border-radius: 10px; background: white; min-height: 60px; display: flex; align-items: flex-end; justify-content: center;">
+                <span style="font-size: 14px; color: #718096; font-weight: 500;">Date : _______________</span>
+              </div>
+              <div style="text-align: center; padding: 15px; border: 2px solid #e2e8f0; border-radius: 10px; background: white; min-height: 60px; display: flex; align-items: flex-end; justify-content: center;">
+                <span style="font-size: 14px; color: #718096; font-weight: 500;">Signature :</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `);
+      
+      // Nettoyer le conteneur temporaire
+      document.body.removeChild(tempContainer);
       
       // Télécharger le PDF
       pdf.save(`facture-${invoice.invoiceNumber}.pdf`);

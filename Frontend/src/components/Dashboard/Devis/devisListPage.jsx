@@ -443,6 +443,8 @@ const DevisListPage = ({
             <div style="font-weight: 600; font-size: 1.1rem; color: #2d3748;">${devis.entrepriseName || 'Nom de l\'entreprise'}</div>
             <div>${devis.entrepriseAddress || 'Adresse'}</div>
             <div>${devis.entrepriseCity || 'Code postal et ville'}</div>
+            ${devis.entrepriseSiret ? `<div>SIRET/SIREN: ${devis.entrepriseSiret}</div>` : ''}
+            ${devis.entrepriseTva ? `<div>N° TVA: ${devis.entrepriseTva}</div>` : ''}
             <div>${devis.entreprisePhone || 'Téléphone'}</div>
             <div>${devis.entrepriseEmail || 'Email'}</div>
           </div>
@@ -455,6 +457,7 @@ const DevisListPage = ({
             <div>${clientInfo.email || devis.clientEmail || 'Email du client'}</div>
             <div>${clientInfo.phone || devis.clientPhone || 'Téléphone du client'}</div>
             <div>${devis.clientAddress || clientInfo.address || 'Adresse du client'}</div>
+            ${clientInfo.postalCode && clientInfo.city ? `<div>${clientInfo.postalCode} ${clientInfo.city}</div>` : ''}
           </div>
         </div>
       </div>
@@ -969,122 +972,235 @@ const DevisListPage = ({
                 </button>
               </div>
               
-              {/* Ici, nous utilisons un composant de prévisualisation de devis au lieu de facture */}
               <div className="devis-preview-container">
-                {/* En-tête */}
-                <div className="preview-header">
-                  <div className="company-info">
-                    {selectedDevis.logoUrl && (
-                      <img src={selectedDevis.logoUrl} alt="Logo" className="company-logo" />
-                    )}
-                    <div className="company-details">
-                      <div className="company-name">{selectedDevis.entrepriseName || "Votre Entreprise"}</div>
-                      <div>{selectedDevis.entrepriseAddress || "123 Rue Exemple"}</div>
-                      <div>{selectedDevis.entrepriseCity || "75000 Paris"}</div>
-                      <div>{selectedDevis.entreprisePhone || "01 23 45 67 89"}</div>
-                      <div>{selectedDevis.entrepriseEmail || "contact@entreprise.com"}</div>
+                <div className="preview-content">
+                  {/* En-tête avec logo et titre */}
+                  <div className="document-header">
+                    <div className="logo-section">
+                      {selectedDevis.logoUrl ? (
+                        <img src={selectedDevis.logoUrl} alt="Logo entreprise" className="company-logo" />
+                      ) : (
+                        <div className="logo-placeholder">
+                          <span>LOGO</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="document-title">
+                      <h1>DEVIS</h1>
+                      <div className="devis-number">N° {selectedDevis._id}</div>
                     </div>
                   </div>
-                  <div className="document-info">
-                    <h1>DEVIS</h1>
-                    <div className="document-number">N° {selectedDevis._id}</div>
-                    <div className="document-date">Date: {formatDate(selectedDevis.dateDevis)}</div>
-                    <div className="document-validity">Validité: {formatDate(selectedDevis.dateValidite)}</div>
-                  </div>
-                </div>
 
-                {/* Client */}
-                <div className="client-section">
-                  <div className="section-title">DESTINATAIRE</div>
-                  <div className="client-details">
-                    <p className="client-name">{selectedClient?.name || "Client"}</p>
-                    <p>{selectedClient?.email}</p>
-                    <p>{selectedClient?.phone}</p>
-                    <p>{selectedClient?.address}</p>
-                    <p>{selectedClient?.postalCode} {selectedClient?.city}</p>
-                  </div>
-                </div>
+                  {/* Informations entreprise et client */}
+                  <div className="parties-info">
+                    <div className="entreprise-section">
+                      <h3>ÉMETTEUR</h3>
+                      <div className="info-group">
+                        <div className="company-name">{selectedDevis.entrepriseName || "Nom de l'entreprise"}</div>
+                        <div>{selectedDevis.entrepriseAddress || "Adresse"}</div>
+                        <div>{selectedDevis.entrepriseCity || "Code postal et ville"}</div>
+                        {selectedDevis.entrepriseSiret && <div>SIRET: {selectedDevis.entrepriseSiret}</div>}
+                        {selectedDevis.entrepriseTva && <div>N° TVA: {selectedDevis.entrepriseTva}</div>}
+                        <div>{selectedDevis.entreprisePhone || "Téléphone"}</div>
+                        <div>{selectedDevis.entrepriseEmail || "Email"}</div>
+                      </div>
+                    </div>
 
-                {/* Articles */}
-                <div className="articles-section">
-                  <table className="articles-table">
-                    <thead>
-                      <tr>
-                        <th>Description</th>
-                        <th>Quantité</th>
-                        <th>Prix unitaire</th>
-                        <th>TVA</th>
-                        <th>Total HT</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedDevis.articles && selectedDevis.articles.map((article, index) => {
-                        const price = parseFloat(article.unitPrice || 0);
-                        const qty = parseFloat(article.quantity || 0);
-                        const lineTotal = isNaN(price) || isNaN(qty) ? 0 : price * qty;
-                        
-                        return (
-                          <tr key={index}>
-                            <td>{article.description || "Article sans description"}</td>
-                            <td>{qty}</td>
-                            <td>{price.toFixed(2)} €</td>
-                            <td>{article.tvaRate || 0}%</td>
-                            <td>{lineTotal.toFixed(2)} €</td>
+                    <div className="client-section">
+                      <h3>DESTINATAIRE</h3>
+                      <div className="info-group">
+                        <div className="client-name">{selectedClient?.name || selectedDevis.clientName || "Nom du client"}</div>
+                        <div>{selectedClient?.email || selectedDevis.clientEmail || "Email du client"}</div>
+                        <div>{selectedClient?.phone || selectedDevis.clientPhone || "Téléphone du client"}</div>
+                        <div>{selectedDevis.clientAddress || selectedClient?.address || "Adresse du client"}</div>
+                        {selectedClient?.postalCode && selectedClient?.city && (
+                          <div>{selectedClient.postalCode} {selectedClient.city}</div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Métadonnées du devis */}
+                  <div className="devis-metadata">
+                    <div className="metadata-grid">
+                      <div className="metadata-item">
+                        <label>Date d'émission</label>
+                        <div className="metadata-value">{formatDate(selectedDevis.dateDevis)}</div>
+                      </div>
+                      <div className="metadata-item">
+                        <label>Validité jusqu'au</label>
+                        <div className="metadata-value">{formatDate(selectedDevis.dateValidite)}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tableau des prestations */}
+                  <div className="prestations-section">
+                    <h3>Détail des prestations</h3>
+                    <table className="prestations-table">
+                      <thead>
+                        <tr>
+                          <th>Description</th>
+                          <th>Unité</th>
+                          <th>Qté</th>
+                          <th>Prix unitaire HT</th>
+                          <th>TVA</th>
+                          <th>Total HT</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedDevis.articles && selectedDevis.articles.map((article, index) => {
+                          const price = parseFloat(article.unitPrice || 0);
+                          const qty = parseFloat(article.quantity || 0);
+                          const lineTotal = isNaN(price) || isNaN(qty) ? 0 : price * qty;
+                          
+                          return (
+                            <tr key={index}>
+                              <td className="description-cell">{article.description || "Article sans description"}</td>
+                              <td>{article.unit || "u"}</td>
+                              <td>{qty}</td>
+                              <td>{price.toFixed(2)} €</td>
+                              <td>{article.tvaRate || 20}%</td>
+                              <td className="total-cell">{lineTotal.toFixed(2)} €</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Récapitulatif des totaux */}
+                  <div className="totaux-section">
+                    <div className="totaux-detail">
+                      <h4>Récapitulatif TVA</h4>
+                      <table className="tva-table">
+                        <thead>
+                          <tr>
+                            <th>Base HT</th>
+                            <th>Taux TVA</th>
+                            <th>Montant TVA</th>
+                            <th>Total TTC</th>
                           </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                        </thead>
+                        <tbody>
+                          {(() => {
+                            const tauxTVA = {
+                              "20": { ht: 0, tva: 0 },
+                              "10": { ht: 0, tva: 0 },
+                              "5.5": { ht: 0, tva: 0 },
+                            };
+                            
+                            selectedDevis.articles?.forEach((item) => {
+                              const price = parseFloat(item.unitPrice || "0");
+                              const qty = parseFloat(item.quantity || "0");
+                              const taux = item.tvaRate || "20";
+                            
+                              if (!isNaN(price) && !isNaN(qty) && tauxTVA[taux]) {
+                                const ht = price * qty;
+                                tauxTVA[taux].ht += ht;
+                                tauxTVA[taux].tva += ht * (parseFloat(taux) / 100);
+                              }
+                            });
+                            
+                            return Object.entries(tauxTVA)
+                              .filter(([, { ht }]) => ht > 0)
+                              .map(([rate, { ht, tva }]) => (
+                                <tr key={rate}>
+                                  <td>{ht.toFixed(2)} €</td>
+                                  <td>{rate}%</td>
+                                  <td>{tva.toFixed(2)} €</td>
+                                  <td>{(ht + tva).toFixed(2)} €</td>
+                                </tr>
+                              ));
+                          })()}
+                        </tbody>
+                      </table>
+                    </div>
 
-                {/* Totaux */}
-                <div className="totals-section">
-                  <div className="totals-summary">
-                    <div className="total-row">
-                      <span>Total HT:</span>
-                      <span>{calculateTTC(selectedDevis).toFixed(2)} €</span>
+                    <div className="totaux-finaux">
+                      <div className="total-line">
+                        <span>Total HT :</span>
+                        <span>{(() => {
+                          const totalHT = selectedDevis.articles?.reduce((sum, item) => {
+                            const price = parseFloat(item.unitPrice || 0);
+                            const qty = parseFloat(item.quantity || 0);
+                            return sum + (isNaN(price) || isNaN(qty) ? 0 : price * qty);
+                          }, 0) || 0;
+                          return totalHT.toFixed(2);
+                        })()} €</span>
+                      </div>
+                      <div className="total-line">
+                        <span>Total TVA :</span>
+                        <span>{(() => {
+                          const totalTVA = selectedDevis.articles?.reduce((sum, item) => {
+                            const price = parseFloat(item.unitPrice || 0);
+                            const qty = parseFloat(item.quantity || 0);
+                            const taux = parseFloat(item.tvaRate || 20);
+                            const ht = isNaN(price) || isNaN(qty) ? 0 : price * qty;
+                            return sum + (ht * (taux / 100));
+                          }, 0) || 0;
+                          return totalTVA.toFixed(2);
+                        })()} €</span>
+                      </div>
+                      <div className="total-line final-total">
+                        <span>Total TTC :</span>
+                        <span>{calculateTTC(selectedDevis).toFixed(2)} €</span>
+                      </div>
                     </div>
-                    <div className="total-row">
-                      <span>Total TVA:</span>
-                      <span>{(calculateTTC(selectedDevis) * 0.2).toFixed(2)} €</span>
+                  </div>
+
+                  {/* Conditions et signature */}
+                  <div className="conditions-section">
+                    <div className="conditions-text">
+                      <p><strong>Conditions :</strong></p>
+                      <p>• Devis valable jusqu'au {selectedDevis.dateValidite ? formatDate(selectedDevis.dateValidite) : "date à définir"}</p>
+                      <p>• Règlement à 30 jours fin de mois</p>
+                      <p>• TVA non applicable, art. 293 B du CGI (si applicable)</p>
                     </div>
-                    <div className="total-row final">
-                      <span>Total TTC:</span>
-                      <span>{(calculateTTC(selectedDevis) * 1.2).toFixed(2)} €</span>
+                    
+                    <div className="signature-area">
+                      <p className="signature-instruction">
+                        <em>Bon pour accord - Date et signature du client :</em>
+                      </p>
+                      <div className="signature-box">
+                        <div className="signature-line">
+                          <span>Date : _______________</span>
+                        </div>
+                        <div className="signature-line">
+                          <span>Signature :</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-
-                {/* Conditions */}
-                <div className="conditions-section">
-                  <div className="section-title">CONDITIONS</div>
-                  <p>• Devis valable jusqu'au {formatDate(selectedDevis.dateValidite)}</p>
-                  <p>• Règlement à 30 jours fin de mois</p>
-                  <p>• TVA non applicable, art. 293 B du CGI (si applicable)</p>
-                </div>
-
-                {/* Actions */}
-                <div className="preview-actions">
-                  <button 
-                    onClick={() => handleDownloadPDF(selectedDevis)}
-                    className="action-btn pdf-btn"
-                  >
-                    📄 Télécharger PDF
-                  </button>
-                  <button 
-                    onClick={() => handleSendEmail(selectedDevis._id)}
-                    className="action-btn pdf-btn"
-                    style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}
-                  >
-                    📧 Envoyer par email
-                  </button>
-                  <button 
-                    onClick={() => setSelectedDevis(null)}
-                    className="action-btn close-btn"
-                  >
-                    ✕ Fermer
-                  </button>
-                </div>
+              </div>
+              
+              {/* Actions */}
+              <div className="preview-actions">
+                <button 
+                  onClick={() => generatePDF(selectedDevis)}
+                  className="action-btn pdf-btn"
+                  disabled={loading}
+                >
+                  📄 Télécharger PDF
+                </button>
+                <button 
+                  onClick={() => sendEmailWithPDF(selectedDevis)}
+                  className="action-btn pdf-btn"
+                  style={{
+                    background: 'linear-gradient(135deg, rgb(245, 158, 11) 0%, rgb(217, 119, 6) 100%)'
+                  }}
+                  disabled={loading}
+                >
+                  📧 Envoyer par email
+                </button>
+                <button 
+                  onClick={() => setSelectedDevis(null)}
+                  className="action-btn close-btn"
+                >
+                  ✕ Fermer
+                </button>
               </div>
             </div>
           )}

@@ -1,4 +1,4 @@
-const Invoice = require("../models/invoice");
+const Invoice = require("../models/Invoice");
 const Devis = require("../models/devis");
 const Client = require("../models/client");
 const mongoose = require('mongoose');
@@ -23,6 +23,8 @@ exports.createInvoice = async (req, res) => {
       entrepriseCity,
       entreprisePhone,
       entrepriseEmail,
+      entrepriseSiret,
+      entrepriseTva,
       logoUrl
     } = req.body;
 
@@ -64,6 +66,8 @@ exports.createInvoice = async (req, res) => {
       entrepriseCity,
       entreprisePhone,
       entrepriseEmail,
+      entrepriseSiret,
+      entrepriseTva,
       logoUrl
     });
 
@@ -225,6 +229,8 @@ exports.updateInvoice = async (req, res) => {
       entrepriseCity,
       entreprisePhone,
       entrepriseEmail,
+      entrepriseSiret,
+      entrepriseTva,
       logoUrl
     } = req.body;
 
@@ -277,6 +283,8 @@ exports.updateInvoice = async (req, res) => {
         entrepriseCity,
         entreprisePhone,
         entrepriseEmail,
+        entrepriseSiret,
+        entrepriseTva,
         logoUrl
       },
       { new: true }

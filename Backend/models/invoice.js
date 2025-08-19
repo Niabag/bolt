@@ -54,6 +54,8 @@ const invoiceSchema = new mongoose.Schema({
   entrepriseCity: String,
   entreprisePhone: String,
   entrepriseEmail: String,
+  entrepriseSiret: String,
+  entrepriseTva: String,
   logoUrl: String
 });
 

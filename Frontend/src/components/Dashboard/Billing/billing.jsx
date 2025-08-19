@@ -227,7 +227,45 @@ const Billing = ({ clients = [], onRefresh }) => {
       setLoading(true);
       
       const invoiceToSave = updatedInvoice || newInvoice;
+      
+      // Si pas de clientId dans l'invoice, essayer de le récupérer depuis les devis sélectionnés
+      if (!invoiceToSave.clientId && selectedDevis.length > 0) {
+        const firstDevis = devisList.find(d => d._id === selectedDevis[0]);
+        if (firstDevis) {
+          const clientId = typeof firstDevis.clientId === "object" ? firstDevis.clientId._id : firstDevis.clientId;
+          invoiceToSave.clientId = clientId;
+          invoiceToSave.devisIds = selectedDevis;
+          
+          // Récupérer les informations entreprise depuis le devis
+          invoiceToSave.entrepriseName = firstDevis.entrepriseName || invoiceToSave.entrepriseName;
+          invoiceToSave.entrepriseAddress = firstDevis.entrepriseAddress || invoiceToSave.entrepriseAddress;
+          invoiceToSave.entrepriseCity = firstDevis.entrepriseCity || invoiceToSave.entrepriseCity;
+          invoiceToSave.entreprisePhone = firstDevis.entreprisePhone || invoiceToSave.entreprisePhone;
+          invoiceToSave.entrepriseEmail = firstDevis.entrepriseEmail || invoiceToSave.entrepriseEmail;
+          invoiceToSave.entrepriseSiret = firstDevis.entrepriseSiret || invoiceToSave.entrepriseSiret;
+          invoiceToSave.entrepriseTva = firstDevis.entrepriseTva || invoiceToSave.entrepriseTva;
+          invoiceToSave.logoUrl = firstDevis.logoUrl || invoiceToSave.logoUrl;
+        }
+      }
+      
+      console.log('🔍 InvoiceToSave:', invoiceToSave);
+      console.log('🔍 SelectedDevis:', selectedDevis);
+      
+      // Vérifier que le clientId est valide
+      if (!invoiceToSave.clientId) {
+        alert('❌ Veuillez sélectionner un client');
+        return;
+      }
+      
       const client = clients.find(c => c._id === invoiceToSave.clientId);
+      if (!client) {
+        alert('❌ Client introuvable');
+        return;
+      }
+      
+      console.log('🔍 Client trouvé:', client);
+      console.log('🔍 ClientId envoyé:', invoiceToSave.clientId);
+      
       const selectedDevisData = devisList.filter(d => invoiceToSave.devisIds.includes(d._id));
       const total = updatedInvoice ? updatedInvoice.amount : calculateInvoiceTotal();
 
@@ -248,6 +286,8 @@ const Billing = ({ clients = [], onRefresh }) => {
         entrepriseCity: invoiceToSave.entrepriseCity,
         entreprisePhone: invoiceToSave.entreprisePhone,
         entrepriseEmail: invoiceToSave.entrepriseEmail,
+        entrepriseSiret: invoiceToSave.entrepriseSiret,
+        entrepriseTva: invoiceToSave.entrepriseTva,
         logoUrl: invoiceToSave.logoUrl
       };
 
@@ -304,6 +344,8 @@ const Billing = ({ clients = [], onRefresh }) => {
         entrepriseCity: updatedInvoice.entrepriseCity,
         entreprisePhone: updatedInvoice.entreprisePhone,
         entrepriseEmail: updatedInvoice.entrepriseEmail,
+        entrepriseSiret: updatedInvoice.entrepriseSiret,
+        entrepriseTva: updatedInvoice.entrepriseTva,
         logoUrl: updatedInvoice.logoUrl
       };
 

@@ -7,6 +7,8 @@ export const DEFAULT_DEVIS = {
   entrepriseName: "Nom de l’entreprise",
   entrepriseAddress: "123 Rue Exemple",
   entrepriseCity: "75000 Paris",
+  entrepriseSiret: "",
+  entrepriseTva: "",
   entreprisePhone: "01 23 45 67 89",
   entrepriseEmail: "contact@entreprise.com",
   dateDevis: new Date().toISOString().slice(0, 10),

@@ -22,6 +22,8 @@ const devisSchema = new mongoose.Schema({
   entreprisePhone: String,
   entrepriseAddress: String,
   entrepriseCity: String,
+  entrepriseSiret: String,
+  entrepriseTva: String,
   logoUrl: { type: String }, // base64 ou URL
   articles: [
     {
