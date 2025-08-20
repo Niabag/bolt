@@ -335,3 +335,47 @@ exports.deleteDevis = async (req, res) => {
     res.status(500).json({ message: "Erreur lors de la suppression du devis." });
   }
 };
+
+// Récupérer un devis par son ID (authentification requise)
+exports.getDevisById = async (req, res) => {
+  try {
+    const devis = await Devis.findOne({
+      _id: req.params.id,
+      userId: req.userId
+    }).populate("clientId", "name email phone address postalCode city");
+
+    if (!devis) {
+      return res.status(404).json({ message: "Devis introuvable ou non autorisé" });
+    }
+
+    res.json(devis);
+  } catch (error) {
+    console.error("❌ Erreur récupération devis:", error);
+    res.status(500).json({
+      message: "Erreur lors de la récupération du devis",
+      error: error.message
+    });
+  }
+};
+
+// Route publique pour récupérer un devis sans authentification
+exports.getPublicDevis = async (req, res) => {
+  try {
+    const devis = await Devis.findById(req.params.id).populate(
+      "clientId",
+      "name email phone address postalCode city"
+    );
+
+    if (!devis) {
+      return res.status(404).json({ message: "Devis introuvable" });
+    }
+
+    res.json({ devis });
+  } catch (error) {
+    console.error("❌ Erreur récupération publique devis:", error);
+    res.status(500).json({
+      message: "Erreur lors de la récupération publique du devis",
+      error: error.message
+    });
+  }
+};
